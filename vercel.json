@@ -31,11 +31,6 @@
     "REACT_APP_API_URL": "https://property-dealing-backend.onrender.com/api",
     "REACT_APP_BASE_URL": "https://property-dealing-frontend.vercel.app"
   },
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
