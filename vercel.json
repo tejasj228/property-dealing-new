@@ -1,5 +1,10 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npx react-scripts build",
   "outputDirectory": "build",
-  "installCommand": "npm install"
+  "installCommand": "npm ci",
+  "devCommand": "npx react-scripts start",
+  "env": {
+    "REACT_APP_API_URL": "https://property-dealing-backend.onrender.com/api",
+    "REACT_APP_BASE_URL": "https://property-dealing-frontend.vercel.app"
+  }
 }
