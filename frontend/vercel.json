@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "version": 2,
   "builds": [
     {
@@ -42,4 +43,14 @@
       "destination": "/index.html"
     }
   ]
+=======
+  "buildCommand": "npx react-scripts build",
+  "outputDirectory": "build",
+  "installCommand": "npm ci",
+  "devCommand": "npx react-scripts start",
+  "env": {
+    "REACT_APP_API_URL": "https://property-dealing-backend.onrender.com/api",
+    "REACT_APP_BASE_URL": "https://property-dealing-frontend.vercel.app"
+  }
+>>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
 }
