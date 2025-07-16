@@ -24,8 +24,10 @@ app.use(cors({
         'https://pawan-buildhome.vercel.app',
         // Allow all Vercel preview domains for testing
         /https:\/\/.*\.vercel\.app$/,
-        // Allow Render domains
-        /https:\/\/.*\.onrender\.com$/
+        // Allow Render domains - UPDATED
+        /https:\/\/.*\.onrender\.com$/,
+        // Add the new backend URL for self-requests
+        'https://property-dealing-qle8.onrender.com'
       ]
     : [
         'http://localhost:3000',

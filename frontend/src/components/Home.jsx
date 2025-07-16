@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { features } from '../data/data'; // Keep features as static for now
-<<<<<<< HEAD
 import { fetchAreas, checkBackendHealth } from '../services/api';
-=======
 import { fetchAreas, checkBackendHealth, getImageUrl } from '../services/api'; // 🆕 Import from api.js
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
 import Modal from './Modal';
 import ImageSlider from './ImageSlider';
 import './Home.css';
@@ -135,19 +132,11 @@ const Home = () => {
     document.getElementById('areas').scrollIntoView({ behavior: 'smooth' });
   };
 
-<<<<<<< HEAD
-  // Function to get the correct image for sub-area cards
-  const getSubAreaImage = (subArea) => {
-    if (subArea.mapImage) {
-      console.log('🗺️ Using uploaded map for card:', subArea.mapImage);
-      return `http://localhost:5000${subArea.mapImage}`;
-=======
   // 🆕 FIXED: Function to get the correct image for sub-area cards
   const getSubAreaImage = (subArea) => {
     if (subArea.mapImage) {
       console.log('🗺️ Using uploaded map for card:', subArea.mapImage);
       return getImageUrl(subArea.mapImage); // Use helper function from api.js
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
     } else {
       console.log('🗺️ Using default map for card');
       return '/assets/map.webp';
@@ -192,27 +181,6 @@ const Home = () => {
 
   return (
     <div className="home">
-<<<<<<< HEAD
-      {/* Backend Status Indicator (only in development) */}
-      {/* {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed',
-          top: '10px',
-          right: '10px',
-          zIndex: 9999,
-          background: backendConnected ? '#4caf50' : '#ff9800',
-          color: 'white',
-          padding: '8px 12px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          fontWeight: 'bold'
-        }}>
-          {backendConnected ? '✅ API Connected' : '⚠️ Using Static Data'}
-        </div>
-      )} */}
-
-=======
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
       {/* Hero Section with Video */}
       <section className="hero">
         <div className="hero-video-overlay"></div>
@@ -283,13 +251,6 @@ const Home = () => {
           <div className="section-title">
             <h2>Areas Under Us</h2>
             <p>Explore our premium service areas with comprehensive property solutions</p>
-<<<<<<< HEAD
-            {backendConnected && (
-              <p style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
-              </p>
-            )}
-=======
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
           </div>
           <div className="main-areas-container">
             {Object.entries(areas).map(([key, area], index) => (

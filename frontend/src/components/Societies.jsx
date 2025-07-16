@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 // frontend/src/components/Societies.jsx - Fixed modal navbar hiding and mobile visibility
-=======
 // frontend/src/components/Societies.jsx - Complete Fixed Version (680+ lines)
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTransition from './PageTransition';
