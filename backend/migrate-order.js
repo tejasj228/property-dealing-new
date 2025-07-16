@@ -41,7 +41,7 @@ async function migrateOrderFields() {
     console.log('🏠 Adding order fields to properties...');
     
     // Get properties grouped by area for proper ordering
-    const areaKeys = ['central-noida', 'noida-expressway', 'yamuna-expressway'];
+    const areaKeys = ['noida', 'yamuna-expressway'];
     
     for (const areaKey of areaKeys) {
       const properties = await Property.find({ areaKey }).sort({ createdAt: 1 });
