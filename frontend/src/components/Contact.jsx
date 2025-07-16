@@ -49,18 +49,11 @@ const Contact = () => {
       
       console.log('📤 Submitting contact form:', formData);
       
-      // 🆕 UPDATED API URL for production
-      const API_URL = process.env.NODE_ENV === 'production' 
-        ? 'https://pawan-buildhome-backend-d8vm7thpr.vercel.app/api/contacts'
-        : 'http://localhost:5000/api/contacts';
-      
-      // Submit to backend API
-      // 🆕 FIXED API URL - Force use Render backend (working one)
+      // 🆕 UPDATED API URL - Use the new backend URL
+      const API_URL = 'https://property-dealing-qle8.onrender.com/api/contacts';
       
       // Debug logs
       console.log('🔗 Environment REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-      console.log('🔗 Forcing API URL to:', API_URL);
-      
       console.log('🔗 Using API URL:', API_URL);
       console.log('🔗 Environment:', process.env.NODE_ENV);
       
@@ -71,15 +64,12 @@ const Contact = () => {
         phone: formData.phone.trim(),
         interest: formData.interest.trim(),
         message: formData.message.trim()
-<<<<<<< HEAD
-=======
       }, {
         headers: {
           'Content-Type': 'application/json',
         },
         timeout: 15000, // Increased timeout
         withCredentials: false // Disable credentials for CORS
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
       });
       
       console.log('✅ Contact form submitted successfully:', response.data);
@@ -103,11 +93,6 @@ const Contact = () => {
       
     } catch (error) {
       console.error('❌ Error submitting contact form:', error);
-<<<<<<< HEAD
-      
-      if (error.response?.data?.message) {
-        setSubmitError(error.response.data.message);
-=======
       console.error('❌ Error details:', {
         message: error.message,
         response: error.response?.data,
@@ -121,7 +106,6 @@ const Contact = () => {
         setSubmitError('Network error. Please check your connection and try again.');
       } else if (error.code === 'ECONNREFUSED') {
         setSubmitError('Unable to connect to server. Please try again later.');
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
       } else {
         setSubmitError('Failed to send message. Please try again or contact us directly.');
       }
@@ -274,8 +258,7 @@ const Contact = () => {
                   disabled={submitting}
                 >
                   <option value="">Select an area</option>
-                  <option value="central-noida">Central Noida</option>
-                  <option value="noida-expressway">Noida Greater Noida Expressway</option>
+                  <option value="noida">Noida</option>
                   <option value="yamuna-expressway">Yamuna Expressway</option>
                 </select>
               </div>

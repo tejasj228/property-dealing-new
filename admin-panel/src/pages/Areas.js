@@ -1,4 +1,4 @@
-// admin-panel/src/pages/Areas.js - Complete with enhanced society images
+// admin-panel/src/pages/Areas.js - Complete with enhanced drag & drop functionality
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 import React, { useState, useEffect } from 'react';
 import {
@@ -655,6 +655,184 @@ const SortableSubArea = ({
   );
 };
 
+// 🆕 NEW: Sortable Area Component
+const SortableArea = ({ 
+  areaKey, 
+  area, 
+  propertyCounts,
+  onEdit, 
+  onDelete,
+  onEditSubArea,
+  onDeleteSubArea,
+  onAddSubArea,
+  onEditSociety,
+  onDeleteSociety,
+  onAddSociety,
+  onSocietyReorder,
+  onSubAreaReorder
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `area-${areaKey}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  // Set up sensors for sub-area drag and drop
+  const subAreaSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  return (
+    <Accordion 
+      ref={setNodeRef}
+      style={style}
+      expanded={expanded}
+      onChange={() => setExpanded(!expanded)}
+      sx={{ 
+        mb: 2,
+        border: isDragging ? '2px dashed #B8860B' : '1px solid #e0e0e0',
+        borderRadius: 2,
+        '&:before': {
+          display: 'none',
+        },
+      }}
+    >
+      <AccordionSummary>
+        <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+          <Box display="flex" alignItems="center">
+            {/* 🆕 Area Drag Handle */}
+            <Box
+              {...attributes}
+              {...listeners}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                mr: 2,
+                cursor: isDragging ? 'grabbing' : 'grab',
+                '&:active': {
+                  cursor: 'grabbing',
+                },
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DragIcon color="primary" />
+            </Box>
+            <MapIcon sx={{ mr: 2, color: 'primary.main' }} />
+            <Box>
+              <Typography variant="h6">{area.name}</Typography>
+              <Typography variant="body2" color="textSecondary">
+                {area.subAreas?.length || 0} sub-areas • {propertyCounts[areaKey] || 0} properties
+              </Typography>
+            </Box>
+          </Box>
+          <Box onClick={(e) => e.stopPropagation()}>
+            <Chip
+              label={`${propertyCounts[areaKey] || 0} properties`}
+              color={propertyCounts[areaKey] > 0 ? 'primary' : 'default'}
+              size="small"
+              sx={{ mr: 1 }}
+            />
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(area);
+              }}
+              color="primary"
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(areaKey);
+              }}
+              color="error"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box width="100%">
+          <Typography variant="body1" paragraph>
+            {area.description}
+          </Typography>
+          
+          <Divider sx={{ my: 2 }} />
+          
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">Sub-Areas</Typography>
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => onAddSubArea(areaKey)}
+            >
+              Add Sub-Area
+            </Button>
+          </Box>
+
+          {area.subAreas && area.subAreas.length > 0 ? (
+            <DndContext
+              sensors={subAreaSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(result) => onSubAreaReorder(areaKey, result)}
+            >
+              <SortableContext
+                items={area.subAreas.map(sa => `subarea-${areaKey}-${sa.id}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                <Box>
+                  {area.subAreas.map((subArea) => (
+                    <SortableSubArea
+                      key={subArea.id}
+                      subArea={subArea}
+                      areaKey={areaKey}
+                      onEdit={onEditSubArea}
+                      onDelete={onDeleteSubArea}
+                      onEditSociety={onEditSociety}
+                      onDeleteSociety={onDeleteSociety}
+                      onAddSociety={onAddSociety}
+                      onSocietyReorder={onSocietyReorder}
+                    />
+                  ))}
+                </Box>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: '#f8f9fa' }}>
+              <BusinessIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+              <Typography variant="body2" color="textSecondary">
+                No sub-areas yet. Add some sub-areas to organize this area better.
+              </Typography>
+            </Paper>
+          )}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  );
+};
+
 // Main Areas component
 function Areas() {
   const [areas, setAreas] = useState({});
@@ -684,7 +862,7 @@ function Areas() {
     contactEmail: '',
   });
 
-  // Set up sensors for area drag and drop
+  // Set up sensors for main area drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -730,6 +908,77 @@ function Areas() {
       setError(`Failed to load areas: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 🆕 NEW: Handle main area reordering
+  const handleAreaReorder = async (result) => {
+    const { active, over } = result;
+
+    if (over && active.id !== over.id) {
+      setSavingOrder(true);
+      
+      const activeAreaKey = active.id.replace('area-', '');
+      const overAreaKey = over.id.replace('area-', '');
+      
+      const areaEntries = Object.entries(areas);
+      const activeIndex = areaEntries.findIndex(([key]) => key === activeAreaKey);
+      const overIndex = areaEntries.findIndex(([key]) => key === overAreaKey);
+
+      const reorderedEntries = arrayMove(areaEntries, activeIndex, overIndex);
+      const reorderedAreas = Object.fromEntries(reorderedEntries);
+
+      setAreas(reorderedAreas);
+
+      try {
+        // Save the new order to backend
+        const areaKeys = Object.keys(reorderedAreas);
+        await areaAPI.reorder(areaKeys);
+        console.log('✅ Area order saved to backend');
+        setError(null);
+      } catch (error) {
+        console.error('❌ Error updating area order:', error);
+        setError('Failed to update area order');
+        loadData();
+      } finally {
+        setSavingOrder(false);
+      }
+    }
+  };
+
+  // 🆕 NEW: Handle sub-area reordering
+  const handleSubAreaReorder = async (areaKey, result) => {
+    const { active, over } = result;
+
+    if (over && active.id !== over.id) {
+      setSavingOrder(true);
+      
+      const area = areas[areaKey];
+      const activeSubAreaId = parseInt(active.id.replace(`subarea-${areaKey}-`, ''));
+      const overSubAreaId = parseInt(over.id.replace(`subarea-${areaKey}-`, ''));
+      
+      const activeIndex = area.subAreas.findIndex(sa => sa.id === activeSubAreaId);
+      const overIndex = area.subAreas.findIndex(sa => sa.id === overSubAreaId);
+
+      const reorderedSubAreas = arrayMove(area.subAreas, activeIndex, overIndex);
+      const updatedArea = { ...area, subAreas: reorderedSubAreas };
+
+      setAreas(prev => ({
+        ...prev,
+        [areaKey]: updatedArea
+      }));
+
+      try {
+        await areaAPI.update(areaKey, updatedArea);
+        console.log('✅ Sub-area order saved to backend');
+        setError(null);
+      } catch (error) {
+        console.error('❌ Error updating sub-area order:', error);
+        setError('Failed to update sub-area order');
+        loadData();
+      } finally {
+        setSavingOrder(false);
+      }
     }
   };
 
@@ -1160,100 +1409,40 @@ function Areas() {
         </Alert>
       )}
 
-      {/* Areas List with Sub-areas and Societies */}
+      {/* 🆕 NEW: Areas List with Full Drag & Drop Support */}
       {Object.keys(areas).length > 0 ? (
-        <Box>
-          {Object.entries(areas).map(([areaKey, area]) => (
-            <Accordion key={areaKey} sx={{ mb: 2 }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
-                  <Box display="flex" alignItems="center">
-                    <MapIcon sx={{ mr: 2, color: 'primary.main' }} />
-                    <Box>
-                      <Typography variant="h6">{area.name}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {area.subAreas?.length || 0} sub-areas • {propertyCounts[areaKey] || 0} properties
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box onClick={(e) => e.stopPropagation()}>
-                    <Chip
-                      label={`${propertyCounts[areaKey] || 0} properties`}
-                      color={propertyCounts[areaKey] > 0 ? 'primary' : 'default'}
-                      size="small"
-                      sx={{ mr: 1 }}
-                    />
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenAreaDialog(area);
-                      }}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteArea(areaKey);
-                      }}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box width="100%">
-                  <Typography variant="body1" paragraph>
-                    {area.description}
-                  </Typography>
-                  
-                  <Divider sx={{ my: 2 }} />
-                  
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6">Sub-Areas</Typography>
-                    <Button
-                      size="small"
-                      startIcon={<AddIcon />}
-                      onClick={() => handleOpenSubAreaDialog(areaKey)}
-                    >
-                      Add Sub-Area
-                    </Button>
-                  </Box>
-
-                  {area.subAreas && area.subAreas.length > 0 ? (
-                    <Box>
-                      {area.subAreas.map((subArea) => (
-                        <SortableSubArea
-                          key={subArea.id}
-                          subArea={subArea}
-                          areaKey={areaKey}
-                          onEdit={handleOpenSubAreaDialog}
-                          onDelete={handleDeleteSubArea}
-                          onEditSociety={handleOpenSocietyDialog}
-                          onDeleteSociety={handleDeleteSociety}
-                          onAddSociety={handleOpenSocietyDialog}
-                          onSocietyReorder={handleSocietyReorder}
-                        />
-                      ))}
-                    </Box>
-                  ) : (
-                    <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: '#f8f9fa' }}>
-                      <BusinessIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
-                      <Typography variant="body2" color="textSecondary">
-                        No sub-areas yet. Add some sub-areas to organize this area better.
-                      </Typography>
-                    </Paper>
-                  )}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Box>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleAreaReorder}
+        >
+          <SortableContext
+            items={Object.keys(areas).map(key => `area-${key}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            <Box>
+              {Object.entries(areas).map(([areaKey, area]) => (
+                <SortableArea
+                  key={areaKey}
+                  areaKey={areaKey}
+                  area={area}
+                  propertyCounts={propertyCounts}
+                  onEdit={handleOpenAreaDialog}
+                  onDelete={handleDeleteArea}
+                  onEditSubArea={handleOpenSubAreaDialog}
+                  onDeleteSubArea={handleDeleteSubArea}
+                  onAddSubArea={handleOpenSubAreaDialog}
+                  onEditSociety={handleOpenSocietyDialog}
+                  onDeleteSociety={handleDeleteSociety}
+                  onAddSociety={handleOpenSocietyDialog}
+                  onSocietyReorder={handleSocietyReorder}
+                  onSubAreaReorder={handleSubAreaReorder}
+                />
+              ))}
+            </Box>
+          </SortableContext>
+        </DndContext>
       ) : (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <MapIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />

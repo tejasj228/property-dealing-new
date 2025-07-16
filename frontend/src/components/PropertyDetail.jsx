@@ -12,8 +12,6 @@ const PropertyDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-<<<<<<< HEAD
-=======
   // 🆕 FIXED: Helper function to get correct image URL
   const getImageUrl = (imageUrl) => {
     // If it's already a full URL (Cloudinary), return as-is
@@ -24,19 +22,15 @@ const PropertyDetail = () => {
     return `http://localhost:5000${imageUrl}`;
   };
 
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
   useEffect(() => {
     // Get property data from navigation state or fetch from API
     if (location.state?.property) {
       setProperty(location.state.property);
       setAreaName(location.state.areaName || '');
       setLoading(false);
-<<<<<<< HEAD
-=======
       
       console.log('🏠 Property loaded from state:', location.state.property.title);
       console.log('🏠 Property images:', location.state.property.images);
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
     } else {
       // If no state data, you can fetch property by ID from API
       // For now, redirect back to properties
@@ -115,14 +109,11 @@ const PropertyDetail = () => {
     );
   }
 
-<<<<<<< HEAD
-=======
   // 🆕 FIXED: Get current image URL using helper function
   const currentImageUrl = property.images && property.images.length > 0 
     ? getImageUrl(property.images[currentImageIndex]) 
     : null;
 
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
   return (
     <PageTransition>
       <div className="property-detail-page">
@@ -163,14 +154,6 @@ const PropertyDetail = () => {
                 {/* Main Image */}
                 <div className="main-image-container">
                   <img
-<<<<<<< HEAD
-                    src={`http://localhost:5000${property.images[currentImageIndex]}`}
-                    alt={`${property.title} - Image ${currentImageIndex + 1}`}
-                    className="main-image"
-                    onError={(e) => {
-                      e.target.src = '/assets/placeholder-property.jpg';
-                    }}
-=======
                     src={currentImageUrl}
                     alt={`${property.title} - Image ${currentImageIndex + 1}`}
                     className="main-image"
@@ -181,7 +164,6 @@ const PropertyDetail = () => {
                     onLoad={() => {
                       console.log('✅ Property detail image loaded:', currentImageUrl);
                     }}
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
                   />
                   
                   {/* Navigation Arrows */}
@@ -205,23 +187,6 @@ const PropertyDetail = () => {
                 {/* Thumbnail Gallery */}
                 {property.images.length > 1 && (
                   <div className="thumbnail-gallery">
-<<<<<<< HEAD
-                    {property.images.map((image, index) => (
-                      <div
-                        key={index}
-                        className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
-                        onClick={() => goToImage(index)}
-                      >
-                        <img
-                          src={`http://localhost:5000${image}`}
-                          alt={`${property.title} - Thumbnail ${index + 1}`}
-                          onError={(e) => {
-                            e.target.src = '/assets/placeholder-property.jpg';
-                          }}
-                        />
-                      </div>
-                    ))}
-=======
                     {property.images.map((image, index) => {
                       const thumbnailUrl = getImageUrl(image);
                       return (
@@ -257,7 +222,6 @@ const PropertyDetail = () => {
                     <strong>Debug Info:</strong><br />
                     Current Image: {currentImageIndex + 1}/{property.images.length}<br />
                     URL: {currentImageUrl}
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
                   </div>
                 )}
               </>

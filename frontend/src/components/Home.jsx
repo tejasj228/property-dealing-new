@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { features } from '../data/data'; // Keep features as static for now
-import { fetchAreas, checkBackendHealth } from '../services/api';
 import { fetchAreas, checkBackendHealth, getImageUrl } from '../services/api'; // 🆕 Import from api.js
 import Modal from './Modal';
 import ImageSlider from './ImageSlider';
@@ -81,8 +80,11 @@ const Home = () => {
     return () => window.removeEventListener('scroll', revealElements);
   }, []);
 
+ 
   const handleSubAreaClick = (areaKey, subArea, event) => {
     console.log('🎯 Card clicked - capturing position');
+    console.log('🏘️ Area key:', areaKey);
+    console.log('🏘️ Sub-area data:', subArea);
     
     // Get the clicked card element
     const cardElement = event.currentTarget;
@@ -103,8 +105,10 @@ const Home = () => {
     const subAreaData = {
       ...subArea,
       parentArea: areaData,
-      areaKey: areaKey
+      areaKey: areaKey // Make sure this is set correctly
     };
+    
+    console.log('🏘️ Final subArea data with areaKey:', subAreaData);
     
     // Set both states immediately to avoid delays
     setSelectedSubArea(subAreaData);

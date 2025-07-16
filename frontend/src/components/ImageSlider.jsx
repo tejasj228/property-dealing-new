@@ -20,8 +20,6 @@ const ImageSlider = () => {
     loadSliderImages();
   }, []);
 
-<<<<<<< HEAD
-=======
   // 🆕 FIXED: Helper function to get correct image URL
   const getImageUrl = (item) => {
     // If imageUrl is already a full URL (Cloudinary), return as-is
@@ -32,27 +30,11 @@ const ImageSlider = () => {
     return `http://localhost:5000${item.imageUrl}`;
   };
 
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
   const loadSliderImages = async () => {
     try {
       setLoading(true);
       setError(null);
       
-<<<<<<< HEAD
-      // Try to fetch from API
-      const response = await fetchSliderImages();
-      
-      if (response && response.length > 0) {
-        // Convert API response to image URLs
-        const imageUrls = response.map(item => {
-          // Check if it's a local upload or external URL
-          if (item.imageUrl.startsWith('http')) {
-            return item.imageUrl; // External URL
-          } else {
-            return `http://localhost:5000${item.imageUrl}`; // Local upload
-          }
-        });
-=======
       console.log('🖼️ Loading slider images from API...');
       
       // Try to fetch from API
@@ -72,7 +54,6 @@ const ImageSlider = () => {
           return url;
         });
         
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
         setImages(imageUrls);
         console.log('✅ Loaded slider images from API:', imageUrls.length);
       } else {
@@ -124,10 +105,6 @@ const ImageSlider = () => {
               alt={`Property ${index % images.length + 1}`}
               onError={(e) => {
                 // If image fails to load, replace with a fallback
-<<<<<<< HEAD
-                console.warn('Image failed to load:', image);
-                e.target.src = fallbackImages[index % fallbackImages.length];
-=======
                 console.warn('❌ Image failed to load:', image);
                 const fallbackIndex = index % fallbackImages.length;
                 if (e.target.src !== fallbackImages[fallbackIndex]) {
@@ -136,7 +113,6 @@ const ImageSlider = () => {
               }}
               onLoad={() => {
                 console.log('✅ Image loaded successfully:', image);
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
               }}
             />
           </div>

@@ -66,7 +66,7 @@ const Footer = () => {
             <a href="#areas" onClick={(e) => { e.preventDefault(); scrollToAreas(); }}>
               Our Areas
             </a>
-            <a href="#" onClick={() => handleAreaClick('central-noida')}>
+            <a href="#" onClick={() => handleAreaClick('noida')}>
               Property Listings
             </a>
             <Link to="/contact">Contact Us</Link>
@@ -74,11 +74,8 @@ const Footer = () => {
 
           <div className="footer-section">
             <h3>Our Areas</h3>
-            <a href="#" onClick={() => handleAreaClick('central-noida')}>
-              Central Noida
-            </a>
-            <a href="#" onClick={() => handleAreaClick('noida-expressway')}>
-              Noida Expressway
+            <a href="#" onClick={() => handleAreaClick('noida')}>
+              Noida
             </a>
             <a href="#" onClick={() => handleAreaClick('yamuna-expressway')}>
               Yamuna Expressway

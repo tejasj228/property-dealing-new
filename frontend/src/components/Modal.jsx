@@ -1,13 +1,7 @@
-<<<<<<< HEAD
-// frontend/src/components/Modal.jsx - Updated with "View Areas" button
-import React, { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-=======
 // frontend/src/components/Modal.jsx - Fixed with api.js helper
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getImageUrl } from '../services/api'; // 🆕 Import from api.js
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
 import './Modal.css';
 
 const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => {
@@ -99,11 +93,7 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
     }
   };
 
-<<<<<<< HEAD
-  // 🆕 NEW: Handle "View Areas" button click
-=======
   // 🆕 Handle "View Areas" button click
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
   const handleViewAreas = () => {
     console.log('🏘️ Navigating to societies page for:', subArea);
     onClose(); // Close modal first
@@ -111,20 +101,12 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
     navigate(`/societies/${subArea.areaKey}/${subArea.id}`);
   };
 
-<<<<<<< HEAD
-  // Determine which map image to show
-=======
   // 🆕 FIXED: Determine which map image to show using helper function from api.js
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
   const getMapImage = () => {
     // Priority: 1. Sub-area's uploaded map, 2. Default map
     if (subArea.mapImage) {
       console.log('🗺️ Using uploaded map:', subArea.mapImage);
-<<<<<<< HEAD
-      return `http://localhost:5000${subArea.mapImage}`;
-=======
       return getImageUrl(subArea.mapImage); // Use helper function from api.js
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
     } else {
       console.log('🗺️ Using default map');
       return '/assets/map.webp';
@@ -157,15 +139,6 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
                 objectFit: 'cover'
               }}
               onLoad={() => {
-<<<<<<< HEAD
-                console.log('✅ Map image loaded successfully:', mapImageSrc);
-              }}
-              onError={(e) => {
-                console.error('❌ Map image failed to load:', mapImageSrc);
-                // Fallback to default map if uploaded map fails
-                if (subArea.mapImage && e.target.src !== '/assets/map.webp') {
-                  console.log('🔄 Falling back to default map');
-=======
                 console.log('✅ Modal map image loaded successfully:', mapImageSrc);
               }}
               onError={(e) => {
@@ -173,7 +146,6 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
                 // Fallback to default map if uploaded map fails
                 if (subArea.mapImage && e.target.src !== '/assets/map.webp') {
                   console.log('🔄 Modal falling back to default map');
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
                   e.target.src = '/assets/map.webp';
                 }
               }}
@@ -196,21 +168,13 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
               className="btn btn-secondary modal-map-btn" 
               onClick={() => {
                 const mapUrl = subArea.mapImage 
-<<<<<<< HEAD
-                  ? `http://localhost:5000${subArea.mapImage}`
-=======
                   ? getImageUrl(subArea.mapImage) // Use helper function from api.js
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
                   : '/assets/map.webp';
                 window.open(mapUrl, '_blank');
               }}
             >
               Open Map in New Tab
             </button>
-<<<<<<< HEAD
-            {/* 🆕 UPDATED: Changed from "View Listings" to "View Areas" */}
-=======
->>>>>>> 52345b40bccaacc373a33ab3f10d65f254fd6ea5
             <button className="btn btn-primary" onClick={handleViewAreas}>
               View Areas Under {subArea.title}
             </button>
