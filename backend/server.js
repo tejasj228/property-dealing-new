@@ -15,29 +15,36 @@ app.use(morgan('combined'));
 
 // 🆕 FIXED CORS for production
 // 🆕 FIXED CORS for production - Add this to your backend/server.js
+// Fixed CORS configuration for your backend/server.js
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        // Add your actual frontend URLs from the screenshots
+        // Your main domain (the one that should work)
+        'https://pawanbuildhome.com',
+        'https://www.pawanbuildhome.com',
+        
+        // Old Vercel domains for fallback
         'https://prop-dealing-frontend-e2fw.vercel.app',
         'https://pawan-buildhome-frontend.vercel.app',
         'https://pawan-buildhome.vercel.app',
-        'https://www.pawanbuildhome.com/',
-        // Allow all Vercel preview domains for testing
-        /https:\/\/.*\.vercel\.app$/,
-        // Allow Render domains - UPDATED
-        /https:\/\/.*\.onrender\.com$/,
-        // Add the new backend URL for self-requests
+        'https://prop-dealing-frontend-373j.vercel.app',
+        'https://pawanbuildhome.vercel.app',
+        
+        // Allow all Vercel preview domains
+        'https://prop-dealing-frontend-373j.vercel.app',
+        
+        // Backend self-requests
         'https://property-dealing-qle8.onrender.com'
       ]
     : [
         'http://localhost:3000',
         'http://localhost:3001'
       ],
-  credentials: false, // Set to false to avoid CORS issues
+  credentials: true, // Change this back to true for cookies/auth
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  optionsSuccessStatus: 200 // For legacy browser support
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }));
 
 app.use(express.json({ limit: '10mb' }));
