@@ -22,6 +22,7 @@ app.use(cors({
         'https://prop-dealing-frontend-e2fw.vercel.app',
         'https://pawan-buildhome-frontend.vercel.app',
         'https://pawan-buildhome.vercel.app',
+        'https://www.pawanbuildhome.com/',
         // Allow all Vercel preview domains for testing
         /https:\/\/.*\.vercel\.app$/,
         // Allow Render domains - UPDATED
