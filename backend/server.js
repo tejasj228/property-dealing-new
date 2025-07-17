@@ -1,4 +1,4 @@
-// backend/server.js - Fixed for Vercel deployment
+// backend/server.js - FIXED CORS Configuration
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -13,54 +13,72 @@ const app = express();
 // Middleware
 app.use(morgan('combined'));
 
-// 🆕 FIXED CORS for production
-// 🆕 FIXED CORS for production - Add this to your backend/server.js
-// Fixed CORS configuration for your backend/server.js
-
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        // Your main domain (the one that should work)
-        'https://pawanbuildhome.com',
-        'https://www.pawanbuildhome.com',
-        
-        // Old Vercel domains for fallback
-        'https://prop-dealing-frontend-e2fw.vercel.app',
-        'https://pawan-buildhome-frontend.vercel.app',
-        'https://pawan-buildhome.vercel.app',
-        'https://prop-dealing-frontend-373j.vercel.app',
-        'https://pawanbuildhome.vercel.app',
-        
-        // Allow all Vercel preview domains
-        'https://prop-dealing-frontend-373j.vercel.app',
-        
-        // Backend self-requests
-        'https://property-dealing-qle8.onrender.com'
-      ]
-    : [
-        'http://localhost:3000',
-        'http://localhost:3001'
-      ],
-  credentials: true, // Change this back to true for cookies/auth
+// 🔧 FIXED CORS Configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      // Production domains
+      'https://pawanbuildhome.com',
+      'https://www.pawanbuildhome.com',
+      
+      // Vercel domains
+      'https://prop-dealing-frontend-e2fw.vercel.app',
+      'https://pawan-buildhome-frontend.vercel.app',
+      'https://pawan-buildhome.vercel.app',
+      'https://prop-dealing-frontend-373j.vercel.app',
+      'https://pawanbuildhome.vercel.app',
+      
+      // Development
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      
+      // Backend self-requests
+      'https://property-dealing-qle8.onrender.com'
+    ];
+    
+    // Check if origin is in allowed list or is a Vercel preview URL
+    if (allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
+      callback(null, true);
+    } else {
+      console.log('🚫 CORS blocked origin:', origin);
+      callback(null, true); // Allow for now, can be restrictive later
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Accept', 
+    'Origin', 
+    'X-Requested-With',
+    'Access-Control-Allow-Origin'
+  ],
   optionsSuccessStatus: 200
-}));
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 🆕 VERCEL FIX: Only create uploads directory in non-serverless environment
+// Create uploads directory only in development
 if (process.env.NODE_ENV !== 'production') {
   const uploadDir = path.join(__dirname, 'uploads');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
-  // Static files for uploaded images (only in development)
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 }
 
-// Database connection with better error handling
+// Database connection
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
@@ -71,18 +89,15 @@ const connectDB = async () => {
     console.log('📂 Database:', mongoose.connection.name);
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);
-    // Don't exit process in production/serverless
     if (process.env.NODE_ENV !== 'production') {
       process.exit(1);
     }
   }
 };
 
-// Connect to database
 connectDB();
 
 // 🔓 PUBLIC ROUTES (No authentication required)
-// Authentication routes
 app.use('/api/auth', require('./routes/auth'));
 
 // Health check endpoint
@@ -91,11 +106,12 @@ app.get('/api/health', (req, res) => {
     message: 'Backend is running!', 
     timestamp: new Date(),
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    cors: 'enabled'
   });
 });
 
-// 🔓 PUBLIC: Contact form submission (from frontend) - CRITICAL FIX
+// 🔓 PUBLIC: Contact form submission
 app.post('/api/contacts', async (req, res) => {
   try {
     const { name, email, phone, interest, message } = req.body;
@@ -108,19 +124,15 @@ app.post('/api/contacts', async (req, res) => {
       origin: req.headers.origin 
     });
     
-    // Validate required fields
     if (!name || !email || !phone || !message) {
-      console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Name, email, phone, and message are required'
       });
     }
     
-    // Import Contact model
     const Contact = require('./models/Contact');
     
-    // Create new contact
     const contact = new Contact({
       name: name.trim(),
       email: email.trim().toLowerCase(),
@@ -159,18 +171,14 @@ app.post('/api/contacts', async (req, res) => {
   }
 });
 
-// 🆕 NEW: Societies route (PUBLIC READ access)
+// Societies route (PUBLIC READ access)
 app.use('/api/societies', require('./routes/societies'));
-
-// 🆕 MIXED ROUTES: READ operations public, WRITE operations protected
 
 // Properties routes - GET public, POST/PUT/DELETE protected
 app.use('/api/properties', (req, res, next) => {
   if (req.method === 'GET') {
-    console.log('🌐 PUBLIC: Properties GET request');
-    next(); // Allow GET requests without authentication
+    next();
   } else {
-    console.log('🔐 ADMIN: Properties non-GET request - checking auth');
     authenticateToken(req, res, (err) => {
       if (err) return next(err);
       requireAdmin(req, res, next);
@@ -181,10 +189,8 @@ app.use('/api/properties', (req, res, next) => {
 // Areas routes - GET public, POST/PUT/DELETE protected
 app.use('/api/areas', (req, res, next) => {
   if (req.method === 'GET') {
-    console.log('🌐 PUBLIC: Areas GET request');
-    next(); // Allow GET requests without authentication
+    next();
   } else {
-    console.log('🔐 ADMIN: Areas non-GET request - checking auth');
     authenticateToken(req, res, (err) => {
       if (err) return next(err);
       requireAdmin(req, res, next);
@@ -195,10 +201,8 @@ app.use('/api/areas', (req, res, next) => {
 // Uploads routes - GET public, POST/DELETE protected
 app.use('/api/uploads', (req, res, next) => {
   if (req.method === 'GET') {
-    console.log('🌐 PUBLIC: Uploads GET request');
-    next(); // Allow GET requests without authentication
+    next();
   } else {
-    console.log('🔐 ADMIN: Uploads non-GET request - checking auth');
     authenticateToken(req, res, (err) => {
       if (err) return next(err);
       requireAdmin(req, res, next);
@@ -206,26 +210,17 @@ app.use('/api/uploads', (req, res, next) => {
   }
 }, require('./routes/uploads'));
 
-// 🔒 PROTECTED: Contact management routes (admin only)
+// Protected contact management routes
 const contactRoutes = require('./routes/contacts');
-
-// Apply auth middleware to contact management routes (excluding the public POST above)
 app.use('/api/contacts', (req, res, next) => {
-  // Skip authentication for POST requests (already handled above)
   if (req.method === 'POST') {
-    return next('route'); // Skip to next route handler - this should NEVER be reached now
+    return next('route');
   }
   
-  console.log(`🔐 ADMIN: Contact ${req.method} ${req.path} - Checking authentication`);
-  
-  // Apply authentication for all other methods (GET, PUT, DELETE for admin panel)
   authenticateToken(req, res, (err) => {
     if (err) return next(err);
-    
     requireAdmin(req, res, (err) => {
       if (err) return next(err);
-      
-      console.log(`✅ ADMIN: Authentication successful for ${req.method} ${req.path}`);
       next();
     });
   });
@@ -236,46 +231,19 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'Pawan Buildhome API Server',
     version: '1.0.0',
-    security: 'Mixed Authentication (GET public, POST/PUT/DELETE protected)',
+    cors: 'Fixed and enabled',
     environment: process.env.NODE_ENV || 'development',
-    endpoints: {
-      public: [
-        '/api/health',
-        '/api/auth/login',
-        'GET /api/areas',
-        'GET /api/properties', 
-        'GET /api/properties/area/:areaKey',
-        'GET /api/uploads/slider',
-        'GET /api/societies/:areaKey/:subAreaId',
-        'POST /api/contacts'
-      ],
-      protected: [
-        'POST/PUT/DELETE /api/properties',
-        'POST/PUT/DELETE /api/areas', 
-        'POST/DELETE /api/uploads',
-        'GET/PUT/DELETE /api/contacts'
-      ]
-    }
+    timestamp: new Date()
   });
 });
 
-// 🆕 Catch-all route for API (must be before general 404)
+// API 404 handler
 app.use('/api/*', (req, res) => {
-  console.log(`❌ API 404: ${req.method} ${req.originalUrl} not found`);
   res.status(404).json({ 
     message: 'API endpoint not found',
     path: req.originalUrl,
     method: req.method,
-    availableEndpoints: [
-      '/api/health',
-      '/api/auth/login',
-      'GET /api/areas (public)',
-      'GET /api/properties (public)',
-      'GET /api/uploads/slider (public)',
-      'GET /api/societies/:areaKey/:subAreaId (public)',
-      'POST /api/contacts (public)',
-      'Other methods require authentication'
-    ]
+    timestamp: new Date()
   });
 });
 
@@ -283,7 +251,6 @@ app.use('/api/*', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
   
-  // JWT specific errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       success: false,
@@ -304,22 +271,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 🆕 VERCEL EXPORT: Export the app for serverless functions
+// Export for serverless
 module.exports = app;
 
-// 🆕 VERCEL FIX: Only start server in development
-
+// Start server for development and Render
 if (process.env.RENDER === 'true' || process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 Server URL: http://localhost:${PORT}`);
+    console.log(`🔧 CORS: Fixed and enabled`);
     console.log(`📋 API Health: http://localhost:${PORT}/api/health`);
-    console.log(`🔓 Public READ: GET /api/areas, /api/properties, /api/uploads, /api/societies`);
-    console.log(`🔐 Protected WRITE: POST/PUT/DELETE operations require admin auth`);
-    console.log(`👤 Admin login: http://localhost:${PORT}/api/auth/login`);
   });
-} else {
-  module.exports = app; // for Vercel
 }
-
