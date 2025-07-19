@@ -34,6 +34,14 @@ const propertySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  // 🆕 NEW: Property Type Field
+  propertyType: {
+    type: String,
+    required: true,
+    enum: ['residential', 'commercial'],
+    default: 'residential',
+    trim: true
+  },
   description: {
     type: String,
     trim: true

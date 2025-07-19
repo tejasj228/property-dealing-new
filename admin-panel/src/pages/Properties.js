@@ -38,6 +38,8 @@ import {
   DragIndicator as DragIcon,
   ChevronLeft as PrevIcon,
   ChevronRight as NextIcon,
+  Business as CommercialIcon,
+  House as ResidentialIcon,
 } from '@mui/icons-material';
 
 // Modern drag & drop imports
@@ -67,6 +69,12 @@ const areaOptions = [
   { value: 'central-noida', label: 'Central Noida' },
   { value: 'noida-expressway', label: 'Noida Expressway' },
   { value: 'yamuna-expressway', label: 'Yamuna Expressway' },
+];
+
+// 🆕 NEW: Property Type Options
+const propertyTypeOptions = [
+  { value: 'residential', label: 'Residential', icon: <ResidentialIcon /> },
+  { value: 'commercial', label: 'Commercial', icon: <CommercialIcon /> },
 ];
 
 // Image Carousel Component for Property Cards
@@ -197,6 +205,16 @@ const PropertyImageCarousel = ({ images, title }) => {
   );
 };
 
+// 🆕 Helper function to get property type icon and color
+const getPropertyTypeInfo = (propertyType) => {
+  const typeInfo = propertyTypeOptions.find(option => option.value === propertyType);
+  return {
+    icon: typeInfo?.icon || <HomeIcon />,
+    label: typeInfo?.label || propertyType,
+    color: propertyType === 'commercial' ? 'primary' : 'secondary'
+  };
+};
+
 // Sortable Property Card Component using @dnd-kit
 const SortablePropertyCard = ({ property, onEdit, onDelete, index }) => {
   const {
@@ -213,6 +231,9 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index }) => {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  // 🆕 Get property type info
+  const propertyTypeInfo = getPropertyTypeInfo(property.propertyType);
 
   return (
     <Grid item xs={12} md={6} lg={4}>
@@ -240,6 +261,21 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index }) => {
             zIndex: 1,
             backgroundColor: 'primary.main',
             color: 'white'
+          }}
+        />
+
+        {/* 🆕 Property Type Badge */}
+        <Chip
+          icon={propertyTypeInfo.icon}
+          label={propertyTypeInfo.label}
+          size="small"
+          color={propertyTypeInfo.color}
+          sx={{ 
+            position: 'absolute', 
+            top: 8, 
+            right: 8, 
+            zIndex: 1,
+            fontWeight: 600
           }}
         />
 
@@ -303,12 +339,21 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index }) => {
             </Typography>
           </Box>
 
-          <Chip
-            label={getAreaLabel(property.areaKey)}
-            size="small"
-            color="secondary"
-            sx={{ mb: 2 }}
-          />
+          <Box display="flex" gap={1} mb={2}>
+            <Chip
+              label={getAreaLabel(property.areaKey)}
+              size="small"
+              color="secondary"
+            />
+            {/* 🆕 Property Type Chip */}
+            <Chip
+              icon={propertyTypeInfo.icon}
+              label={propertyTypeInfo.label}
+              size="small"
+              color={propertyTypeInfo.color}
+              variant="outlined"
+            />
+          </Box>
 
           <Box display="flex" gap={2} mb={1}>
             <Box display="flex" alignItems="center">
@@ -364,7 +409,7 @@ function Properties() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [savingOrder, setSavingOrder] = useState(false); // 🆕 Added saving state
+  const [savingOrder, setSavingOrder] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProperty, setEditingProperty] = useState(null);
   const [formData, setFormData] = useState({
@@ -375,6 +420,7 @@ function Properties() {
     baths: '',
     area: '',
     areaKey: '',
+    propertyType: 'residential', // 🆕 NEW: Default to residential
     description: '',
     features: '',
     images: [],
@@ -409,12 +455,12 @@ function Properties() {
     }
   };
 
-  // 🆕 Handle drag end for reordering - UPDATED WITH PERSISTENCE
+  // Handle drag end for reordering
   const handleDragEnd = async (event) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
-      setSavingOrder(true); // Show saving indicator
+      setSavingOrder(true);
       
       // Update local state immediately for responsive UI
       const newProperties = arrayMove(
@@ -428,11 +474,11 @@ function Properties() {
       console.log('🔄 Reordered properties locally');
       
       try {
-        // 🆕 Persist order to backend
+        // Persist order to backend
         const propertyIds = newProperties.map(property => property._id);
         await propertyAPI.reorder(propertyIds);
         console.log('✅ Properties order saved to backend');
-        setError(null); // Clear any previous errors
+        setError(null);
       } catch (error) {
         console.error('❌ Error saving properties order:', error);
         setError('Failed to save properties order');
@@ -455,6 +501,7 @@ function Properties() {
         baths: property.baths?.toString() || '',
         area: property.area || '',
         areaKey: property.areaKey || '',
+        propertyType: property.propertyType || 'residential', // 🆕 NEW
         description: property.description || '',
         features: Array.isArray(property.features) ? property.features.join(', ') : '',
         images: property.images || [],
@@ -473,6 +520,7 @@ function Properties() {
         baths: '',
         area: '',
         areaKey: '',
+        propertyType: 'residential', // 🆕 NEW: Default to residential
         description: '',
         features: '',
         images: [],
@@ -496,6 +544,7 @@ function Properties() {
       baths: '',
       area: '',
       areaKey: '',
+      propertyType: 'residential', // 🆕 NEW
       description: '',
       features: '',
       images: [],
@@ -600,7 +649,7 @@ function Properties() {
         </Button>
       </Box>
 
-      {/* 🆕 Saving Order Feedback */}
+      {/* Saving Order Feedback */}
       {savingOrder && (
         <Alert severity="info" sx={{ mb: 2 }}>
           💾 Saving new property order...
@@ -686,6 +735,26 @@ function Properties() {
                 placeholder="e.g., ₹85 Lakhs"
                 required
               />
+            </Grid>
+            {/* 🆕 NEW: Property Type Selection */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Property Type</InputLabel>
+                <Select
+                  value={formData.propertyType}
+                  onChange={handleInputChange('propertyType')}
+                  label="Property Type"
+                >
+                  {propertyTypeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        {option.icon}
+                        {option.label}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required>
@@ -809,6 +878,7 @@ function Properties() {
               !formData.price || 
               !formData.location || 
               !formData.areaKey ||
+              !formData.propertyType || // 🆕 NEW: Required field
               !formData.links.acres99 ||
               !formData.links.magicbricks
             }
