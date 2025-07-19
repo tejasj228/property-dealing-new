@@ -34,12 +34,11 @@ const propertySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  // 🆕 NEW: Property Type Field
+  // 🔧 FIXED: Property Type Field - Not required for backward compatibility
   propertyType: {
     type: String,
-    required: true,
     enum: ['residential', 'commercial'],
-    default: 'residential',
+    default: 'residential', // Default to residential
     trim: true
   },
   description: {
@@ -54,19 +53,19 @@ const propertySchema = new mongoose.Schema({
     acres99: {
       type: String,
       trim: true,
-      required: true // Made mandatory
+      required: true
     },
     magicbricks: {
       type: String,
       trim: true,
-      required: true // Made mandatory
+      required: true
     }
   },
   features: [{
     type: String,
     trim: true
   }],
-  // Add order field for drag & drop reordering
+  // Order field for drag & drop reordering
   order: {
     type: Number,
     default: 0
@@ -85,9 +84,15 @@ const propertySchema = new mongoose.Schema({
   }
 });
 
-// Pre-save middleware to update the updatedAt field
+// 🔧 FIXED: Pre-save middleware to ensure propertyType is set
 propertySchema.pre('save', function(next) {
   this.updatedAt = Date.now();
+  
+  // Ensure propertyType is set to default if not provided
+  if (!this.propertyType) {
+    this.propertyType = 'residential';
+  }
+  
   next();
 });
 

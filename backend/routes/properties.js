@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
     const { area, active, propertyType } = req.query;
     let filter = {};
     
-    if (area) {
+    if (area && area !== 'all') {
       filter.areaKey = area;
     }
     
@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
       filter.isActive = true;
     }
 
-    // 🆕 NEW: Property Type Filter
+    // 🔧 FIXED: Property Type Filter - handle undefined propertyType gracefully
     if (propertyType && propertyType !== 'all') {
       filter.propertyType = propertyType;
     }
@@ -27,6 +27,8 @@ router.get('/', async (req, res) => {
 
     // Sort by order field, then by createdAt
     const properties = await Property.find(filter).sort({ order: 1, createdAt: 1 });
+    
+    console.log(`✅ Found ${properties.length} properties`);
     
     res.json({
       success: true,
@@ -39,7 +41,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching properties:', error);
+    console.error('❌ Error fetching properties:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching properties',
@@ -48,13 +50,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 🆕 PUT /api/properties/reorder - Update properties order (MOVED TO TOP!)
+// PUT /api/properties/reorder - Update properties order
 router.put('/reorder', async (req, res) => {
   try {
     console.log('🔄 PROPERTIES REORDER ROUTE HIT!');
     console.log('📊 Request body:', req.body);
     
-    const { propertyIds } = req.body; // Array of property IDs in new order
+    const { propertyIds } = req.body;
     
     if (!propertyIds || !Array.isArray(propertyIds)) {
       return res.status(400).json({
@@ -92,59 +94,18 @@ router.put('/reorder', async (req, res) => {
   }
 });
 
-// 🆕 GET /api/properties/filter - Advanced filtering endpoint
-router.get('/filter', async (req, res) => {
-  try {
-    const { area, propertyType, active } = req.query;
-    let filter = {};
-    
-    if (area && area !== 'all') {
-      filter.areaKey = area;
-    }
-    
-    if (propertyType && propertyType !== 'all') {
-      filter.propertyType = propertyType;
-    }
-    
-    if (active !== undefined) {
-      filter.isActive = active === 'true';
-    } else {
-      filter.isActive = true;
-    }
-
-    console.log('🔍 Advanced filter applied:', filter);
-
-    // Sort by order field, then by createdAt
-    const properties = await Property.find(filter).sort({ order: 1, createdAt: 1 });
-    
-    res.json({
-      success: true,
-      count: properties.length,
-      data: properties,
-      filters: filter
-    });
-  } catch (error) {
-    console.error('Error fetching filtered properties:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching filtered properties',
-      error: error.message
-    });
-  }
-});
-
-// GET /api/properties/area/:areaKey - Get properties by area (MUST be before /:id route)
+// GET /api/properties/area/:areaKey - Get properties by area
 router.get('/area/:areaKey', async (req, res) => {
   try {
     const { areaKey } = req.params;
-    const { propertyType } = req.query; // 🆕 Added propertyType filter
+    const { propertyType } = req.query;
     
     let filter = { 
       areaKey: areaKey, 
       isActive: true 
     };
 
-    // 🆕 Add property type filter if specified
+    // 🔧 FIXED: Add property type filter if specified
     if (propertyType && propertyType !== 'all') {
       filter.propertyType = propertyType;
     }
@@ -154,6 +115,8 @@ router.get('/area/:areaKey', async (req, res) => {
     // Sort by order field, then by createdAt
     const properties = await Property.find(filter).sort({ order: 1, createdAt: 1 });
     
+    console.log(`✅ Found ${properties.length} properties for area ${areaKey}`);
+    
     res.json({
       success: true,
       area: areaKey,
@@ -162,7 +125,7 @@ router.get('/area/:areaKey', async (req, res) => {
       data: properties
     });
   } catch (error) {
-    console.error('Error fetching properties by area:', error);
+    console.error('❌ Error fetching properties by area:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching properties by area',
@@ -171,7 +134,7 @@ router.get('/area/:areaKey', async (req, res) => {
   }
 });
 
-// GET /api/properties/:id - Get single property (MUST be after /reorder and /area/:areaKey routes)
+// GET /api/properties/:id - Get single property
 router.get('/:id', async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
@@ -188,7 +151,7 @@ router.get('/:id', async (req, res) => {
       data: property
     });
   } catch (error) {
-    console.error('Error fetching property:', error);
+    console.error('❌ Error fetching property:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching property',
@@ -200,7 +163,12 @@ router.get('/:id', async (req, res) => {
 // POST /api/properties - Create new property
 router.post('/', async (req, res) => {
   try {
-    // 🆕 Validate property type
+    // 🔧 FIXED: Set default propertyType if not provided
+    if (!req.body.propertyType) {
+      req.body.propertyType = 'residential';
+    }
+
+    // Validate property type
     const { propertyType } = req.body;
     if (propertyType && !['residential', 'commercial'].includes(propertyType)) {
       return res.status(400).json({
@@ -224,7 +192,7 @@ router.post('/', async (req, res) => {
       data: property
     });
   } catch (error) {
-    console.error('Error creating property:', error);
+    console.error('❌ Error creating property:', error);
     res.status(400).json({
       success: false,
       message: 'Error creating property',
@@ -236,7 +204,7 @@ router.post('/', async (req, res) => {
 // PUT /api/properties/:id - Update property
 router.put('/:id', async (req, res) => {
   try {
-    // 🆕 Validate property type if provided
+    // 🔧 FIXED: Validate property type if provided
     const { propertyType } = req.body;
     if (propertyType && !['residential', 'commercial'].includes(propertyType)) {
       return res.status(400).json({
@@ -270,7 +238,7 @@ router.put('/:id', async (req, res) => {
       data: property
     });
   } catch (error) {
-    console.error('Error updating property:', error);
+    console.error('❌ Error updating property:', error);
     res.status(400).json({
       success: false,
       message: 'Error updating property',
@@ -296,7 +264,7 @@ router.delete('/:id', async (req, res) => {
       message: 'Property deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting property:', error);
+    console.error('❌ Error deleting property:', error);
     res.status(500).json({
       success: false,
       message: 'Error deleting property',
