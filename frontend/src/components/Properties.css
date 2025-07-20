@@ -2,17 +2,15 @@
 .properties-page {
     padding: 120px 0 80px;
     background: var(--bg-light);
-    /* Use variable for light mode */
     min-height: 100vh;
     transition: all 0.5s ease;
 }
 
 .dark-mode .properties-page {
     background: #0d0d0d;
-    /* Match contact page */
 }
 
-/* Filter Section */
+/* 🆕 UPDATED: Enhanced Filter Section */
 .filter-section {
     margin: 40px 0;
     padding: 30px;
@@ -22,14 +20,40 @@
     transition: all 0.5s ease;
 }
 
-.filter-container h3 {
-    margin-bottom: 20px;
-    color: var(--primary-color);
-    font-size: 1.2rem;
-    font-weight: 600;
+.filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
 }
 
+/* 🆕 NEW: Filter Groups */
+.filter-group h3 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group h3::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: var(--accent-color);
+    border-radius: 2px;
+}
+
+/* Area Filters */
 .area-filters {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* 🆕 NEW: Property Type Filters */
+.property-type-filters {
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
@@ -45,6 +69,14 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-btn i {
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
 }
 
 .filter-btn:hover {
@@ -56,15 +88,27 @@
 
 .filter-btn.active {
     background: var(--accent-color);
-    color: var(--text-white);
+    color: #1a1a1a;
     border-color: var(--accent-color);
     box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
 }
 
 .filter-btn.active:hover {
-    background: #9b7209;
-    border-color: #9b7209;
-    color: var(--text-white);
+    background: #d4a915;
+    border-color: #d4a915;
+    color: #1a1a1a;
+}
+
+/* 🆕 NEW: Property Type Button Specific Styles */
+.property-type-btn.active {
+    background: var(--accent-color);
+    color: #1a1a1a;
+    border-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.property-type-btn.active i {
+    color: #1a1a1a;
 }
 
 /* Properties Grid */
@@ -75,6 +119,7 @@
     margin-top: 50px;
 }
 
+/* Property Card with Flexbox Layout */
 .property-card {
     background: var(--bg-white);
     border-radius: 12px;
@@ -82,6 +127,9 @@
     box-shadow: 0 10px 30px var(--shadow-light);
     transition: all 0.3s ease;
     border: 2px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .property-card:hover {
@@ -96,6 +144,7 @@
     width: 100%;
     height: 250px;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .property-image {
@@ -213,8 +262,18 @@
     transform: scale(1.3);
 }
 
+/* Property Details with Flex Layout */
 .property-details {
     padding: 25px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+.property-content {
+    flex-grow: 1;
+    margin-bottom: 20px;
 }
 
 .property-price {
@@ -238,7 +297,7 @@
 
 .property-location {
     color: var(--text-light);
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
     font-size: 0.95rem;
@@ -250,6 +309,14 @@
     font-size: 0.9rem;
 }
 
+/* 🆕 NEW: Property Badges Container */
+.property-badges {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
 .property-area-badge {
     display: inline-flex;
     align-items: center;
@@ -259,13 +326,54 @@
     border-radius: 15px;
     font-size: 0.85rem;
     font-weight: 500;
-    margin-bottom: 15px;
     border: 1px solid var(--accent-color);
 }
 
 .property-area-badge i {
     margin-right: 5px;
     font-size: 0.8rem;
+}
+
+/* 🆕 NEW: Property Type Badge Styles */
+.property-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid;
+    transition: all 0.3s ease;
+}
+
+.property-type-badge i {
+    font-size: 0.8rem;
+}
+
+/* Residential Property Type */
+.property-type-residential {
+    background: rgba(76, 175, 80, 0.1);
+    color: #388e3c;
+    border-color: #4caf50;
+}
+
+/* Commercial Property Type */
+.property-type-commercial {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+    border-color: #2196f3;
+}
+
+/* Property Type Badge Hover Effects */
+.property-card:hover .property-type-badge.property-type-residential {
+    background: #4caf50;
+    color: white;
+}
+
+.property-card:hover .property-type-badge.property-type-commercial {
+    background: #2196f3;
+    color: white;
 }
 
 .property-features {
@@ -303,33 +411,12 @@
     color: var(--text-white);
 }
 
+/* Property Buttons Always at Bottom */
 .property-buttons {
     display: flex;
     gap: 10px;
-}
-
-.btn-small {
-    padding: 8px 15px;
-    font-size: 0.9rem;
-    border-radius: 6px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    text-align: center;
-    flex: 1;
-}
-
-.btn-outline {
-    border: 2px solid var(--accent-color);
-    color: var(--accent-color);
-    background: transparent;
-}
-
-.btn-outline:hover {
-    background: var(--accent-color);
-    color: var(--text-white);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    margin-top: auto;
+    flex-shrink: 0;
 }
 
 /* No Properties Section */
@@ -377,11 +464,51 @@
     margin-bottom: 25px;
 }
 
+/* 🆕 NEW: No Properties Actions */
+.no-properties-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.no-properties-actions .btn {
+    padding: 12px 20px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid;
+    font-size: 0.9rem;
+}
+
+.no-properties-actions .btn-primary {
+    background: var(--accent-color);
+    color: #1a1a1a;
+    border-color: var(--accent-color);
+}
+
+.no-properties-actions .btn-primary:hover {
+    background: #d4a915;
+    border-color: #d4a915;
+}
+
+.no-properties-actions .btn-outline {
+    background: transparent;
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.no-properties-actions .btn-outline:hover {
+    background: var(--accent-color);
+    color: #1a1a1a;
+}
+
 /* Dark mode adjustments */
 .dark-mode .property-card {
     background: var(--bg-card);
     border: 1px solid #2a2a2a;
-    /* Much darker border */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
@@ -393,12 +520,10 @@
 .dark-mode .filter-section {
     background: var(--bg-card);
     border: 1px solid #2a2a2a;
-    /* Much darker border */
 }
 
 .dark-mode .filter-btn {
     border: 1px solid #2a2a2a;
-    /* Much darker border */
     background: var(--bg-white);
     color: var(--text-dark);
 }
@@ -423,7 +548,6 @@
 .dark-mode .no-properties-content {
     background: var(--bg-card);
     border: 1px solid #2a2a2a;
-    /* Much darker border */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -432,11 +556,82 @@
     border-color: var(--accent-color);
 }
 
-/* Responsive Design - Fixed mobile header spacing */
+/* 🆕 NEW: Dark Mode Property Type Badges */
+.dark-mode .property-type-residential {
+    background: rgba(76, 175, 80, 0.2);
+    color: #66bb6a;
+    border-color: #4caf50;
+}
+
+.dark-mode .property-type-commercial {
+    background: rgba(33, 150, 243, 0.2);
+    color: #64b5f6;
+    border-color: #2196f3;
+}
+
+/* View Property Button Styling */
+.view-property-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background: var(--accent-color) !important;
+    color: #1a1a1a !important;
+    border: 2px solid var(--accent-color) !important;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.view-property-btn:hover {
+    background: #d4a915 !important;
+    color: #1a1a1a !important;
+    border-color: #d4a915 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(184, 134, 11, 0.4);
+}
+
+.view-property-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
+}
+
+.view-property-btn i {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.view-property-btn:hover i {
+    transform: scale(1.1);
+}
+
+/* Dark Mode View Property Button */
+.dark-mode .view-property-btn {
+    background: var(--accent-color) !important;
+    color: #1a1a1a !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.4);
+}
+
+.dark-mode .view-property-btn:hover {
+    background: #d4a915 !important;
+    color: #1a1a1a !important;
+    border-color: #d4a915 !important;
+    box-shadow: 0 6px 20px rgba(184, 134, 11, 0.5);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .properties-page {
         padding: 140px 0 60px;
-        /* Increased top padding from 120px to 140px */
     }
 
     .properties-grid {
@@ -447,11 +642,17 @@
     .filter-section {
         padding: 20px;
         margin: 20px 0;
-        /* Added margin for more spacing */
     }
 
-    .area-filters {
+    /* 🆕 UPDATED: Mobile Filter Layout */
+    .filter-container {
+        gap: 20px;
+    }
+
+    .area-filters,
+    .property-type-filters {
         justify-content: center;
+        gap: 10px;
     }
 
     .filter-btn {
@@ -475,10 +676,6 @@
     .property-buttons {
         flex-direction: column;
         gap: 8px;
-    }
-
-    .btn-small {
-        padding: 10px 15px;
     }
 
     /* Mobile carousel adjustments */
@@ -511,45 +708,69 @@
         height: 6px;
     }
 
-    /* Additional spacing for section title */
     .section-title {
         margin-top: 20px;
-        /* Added extra margin at top */
         margin-bottom: 40px;
-        /* Increased bottom margin */
     }
 
     .section-title h2 {
         font-size: 2rem;
         margin-bottom: 20px;
-        /* Increased margin */
     }
 
     .section-title p {
         font-size: 1rem;
         line-height: 1.6;
     }
+
+    /* 🆕 NEW: Mobile Property Badges */
+    .property-badges {
+        gap: 8px;
+    }
+
+    .property-type-badge,
+    .property-area-badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+
+    /* 🆕 NEW: Mobile No Properties Actions */
+    .no-properties-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .no-properties-actions .btn {
+        min-width: 150px;
+    }
 }
 
 @media (max-width: 480px) {
     .properties-page {
         padding: 120px 0 60px;
-        /* Increased top padding from 100px to 120px */
     }
 
     .filter-section {
         margin: 25px 0;
-        /* Increased margin */
         padding: 15px;
     }
 
-    .area-filters {
-        gap: 10px;
+    .area-filters,
+    .property-type-filters {
+        gap: 8px;
     }
 
     .filter-btn {
         padding: 8px 16px;
         font-size: 0.8rem;
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+        min-width: 80px;
+    }
+
+    .filter-btn i {
+        font-size: 0.9rem;
     }
 
     .property-card {
@@ -591,10 +812,8 @@
         font-size: 1.3rem;
     }
 
-    /* Additional spacing for very small screens */
     .section-title {
         margin-top: 25px;
-        /* Even more spacing */
         margin-bottom: 35px;
     }
 
@@ -602,103 +821,19 @@
         font-size: 1.8rem;
         margin-bottom: 15px;
     }
-}
-/* Add these styles to your existing Properties.css file */
 
-/* 🆕 Updated Property Buttons - Single Button */
-.property-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-/* 🆕 View Property Button Styling */
-.view-property-btn {
-    width: 100%;
-    padding: 12px 20px;
-    background: var(--accent-color) !important;
-    color: #1a1a1a !important;
-    border: 2px solid var(--accent-color) !important;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    text-decoration: none;
-    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
-}
-
-.view-property-btn:hover {
-    background: #d4a915 !important;
-    color: #1a1a1a !important;
-    border-color: #d4a915 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(184, 134, 11, 0.4);
-}
-
-.view-property-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
-}
-
-.view-property-btn i {
-    font-size: 0.9rem;
-    transition: transform 0.3s ease;
-}
-
-.view-property-btn:hover i {
-    transform: scale(1.1);
-}
-
-/* Dark Mode View Property Button */
-.dark-mode .view-property-btn {
-    background: var(--accent-color) !important;
-    color: #1a1a1a !important;
-    border-color: var(--accent-color) !important;
-    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.4);
-}
-
-.dark-mode .view-property-btn:hover {
-    background: #d4a915 !important;
-    color: #1a1a1a !important;
-    border-color: #d4a915 !important;
-    box-shadow: 0 6px 20px rgba(184, 134, 11, 0.5);
-}
-
-/* Remove old button styles if they exist */
-.btn-small,
-.btn-outline {
-    display: none;
-    /* Hide old styles if they exist */
-}
-
-/* Mobile optimizations for single button */
-@media (max-width: 768px) {
-    .view-property-btn {
-        padding: 14px 20px;
+    /* 🆕 NEW: Very Small Screen Filter Adjustments */
+    .filter-group h3 {
         font-size: 1rem;
+        text-align: center;
+    }
+
+    .property-badges {
+        justify-content: center;
     }
 }
 
-@media (max-width: 480px) {
-    .view-property-btn {
-        padding: 12px 18px;
-        font-size: 0.95rem;
-    }
-}
-
-/* Property card hover effects for single button */
-.property-card:hover .view-property-btn {
-    background: #d4a915 !important;
-    color: #1a1a1a !important;
-    transform: translateY(-1px);
-}
-
-/* Pulse animation for new button */
+/* Pulse animation for buttons */
 @keyframes pulse-gold {
     0% {
         box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { features } from '../data/data'; // Keep features as static for now
-import { fetchAreas, checkBackendHealth, getImageUrl } from '../services/api'; // 🆕 Import from api.js
+import { fetchAreas, checkBackendHealth, getImageUrl } from '../services/api';
 import Modal from './Modal';
 import ImageSlider from './ImageSlider';
 import './Home.css';
@@ -13,50 +13,73 @@ const Home = () => {
   const [areas, setAreas] = useState({});
   const [loading, setLoading] = useState(true);
   const [backendConnected, setBackendConnected] = useState(false);
+  
+  // 🆕 NEW: Separate loading state for areas data vs UI rendering
+  const [areasLoading, setAreasLoading] = useState(true);
+  const [initialUILoaded, setInitialUILoaded] = useState(false);
+  
   const navigate = useNavigate();
 
-  // Load areas from API
+  // 🆕 OPTIMIZED: Load static fallback data immediately for faster UI rendering
   useEffect(() => {
-    loadAreas();
+    const loadFallbackDataImmediate = async () => {
+      try {
+        // Load static data immediately to show UI faster
+        const { areas: fallbackAreas } = await import('../data/data');
+        setAreas(fallbackAreas);
+        setInitialUILoaded(true);
+        setLoading(false); // Allow UI to render with fallback data
+        console.log('🚀 Initial UI loaded with fallback data');
+      } catch (error) {
+        console.error('Error loading fallback data:', error);
+        setInitialUILoaded(true);
+        setLoading(false);
+      }
+    };
+    
+    loadFallbackDataImmediate();
   }, []);
 
-  const loadAreas = async () => {
+  // 🆕 OPTIMIZED: Load API data in parallel after UI is rendered
+  useEffect(() => {
+    if (initialUILoaded) {
+      loadAreasFromAPI();
+    }
+  }, [initialUILoaded]);
+
+  const loadAreasFromAPI = async () => {
     try {
-      setLoading(true);
+      setAreasLoading(true);
       
-      // Check if backend is connected
-      try {
-        await checkBackendHealth();
-        setBackendConnected(true);
-        console.log('✅ Backend connected successfully');
-      } catch (error) {
-        setBackendConnected(false);
-        console.warn('⚠️ Backend not connected, using fallback data');
-      }
+      // Check backend connection in parallel
+      const backendHealthCheck = checkBackendHealth()
+        .then(() => {
+          setBackendConnected(true);
+          console.log('✅ Backend connected successfully');
+        })
+        .catch(() => {
+          setBackendConnected(false);
+          console.warn('⚠️ Backend not connected, keeping fallback data');
+        });
 
       // Fetch areas from API
-      const areasData = await fetchAreas();
+      const areasDataPromise = fetchAreas();
+      
+      // Wait for both operations
+      const [areasData] = await Promise.all([areasDataPromise, backendHealthCheck]);
       
       if (Object.keys(areasData).length > 0) {
         setAreas(areasData);
-        console.log('📊 Loaded areas from API:', Object.keys(areasData).length);
+        console.log('📊 API areas data loaded and updated:', Object.keys(areasData).length);
       } else {
-        // Fallback to static data if API fails
-        const { areas: fallbackAreas } = await import('../data/data');
-        setAreas(fallbackAreas);
-        console.log('📊 Using fallback areas data');
+        console.log('📊 No API data, keeping fallback areas');
       }
     } catch (error) {
-      console.error('Error loading areas:', error);
-      // Load fallback data
-      try {
-        const { areas: fallbackAreas } = await import('../data/data');
-        setAreas(fallbackAreas);
-      } catch (fallbackError) {
-        console.error('Error loading fallback data:', fallbackError);
-      }
+      console.error('Error loading areas from API:', error);
+      // Keep existing fallback data
+      console.log('📊 API failed, keeping fallback areas data');
     } finally {
-      setLoading(false);
+      setAreasLoading(false);
     }
   };
 
@@ -80,7 +103,6 @@ const Home = () => {
     return () => window.removeEventListener('scroll', revealElements);
   }, []);
 
- 
   const handleSubAreaClick = (areaKey, subArea, event) => {
     console.log('🎯 Card clicked - capturing position');
     console.log('🏘️ Area key:', areaKey);
@@ -147,7 +169,8 @@ const Home = () => {
     }
   };
 
-  if (loading) {
+  // 🆕 OPTIMIZED: Show loading only on complete failure
+  if (loading && !initialUILoaded) {
     return (
       <div className="home">
         <section className="hero">
@@ -249,12 +272,36 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Areas Section - Now powered by API with Dynamic Maps */}
+      {/* Areas Section - Now renders immediately with fallback data */}
       <section id="areas" className="areas-section scroll-reveal">
         <div className="container">
           <div className="section-title">
             <h2>Areas Under Us</h2>
             <p>Explore our premium service areas with comprehensive property solutions</p>
+            {/* 🆕 SUBTLE INDICATOR: Show if data is being updated */}
+            {areasLoading && (
+              <div style={{ 
+                fontSize: '0.9rem', 
+                color: '#666', 
+                marginTop: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                <div 
+                  style={{ 
+                    width: '12px', 
+                    height: '12px', 
+                    border: '2px solid #ddd',
+                    borderTop: '2px solid #B8860B',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}
+                ></div>
+                Updating latest data...
+              </div>
+            )}
           </div>
           <div className="main-areas-container">
             {Object.entries(areas).map(([key, area], index) => (

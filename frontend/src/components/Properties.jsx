@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { fetchAreas, fetchProperties, fetchPropertiesByArea } from '../services/api';
 import PageTransition from './PageTransition';
 import './Properties.css';
 
-// Image Carousel Component for Frontend Property Cards
-// Clean PropertyImageCarousel without debug info
+// 🔧 FIXED: Simplified API calls
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://property-dealing-qle8.onrender.com/api'
+  : 'http://localhost:5000/api';
 
+// Image Carousel Component for Frontend Property Cards
 const PropertyImageCarousel = ({ images, title }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Helper function to get correct image URL
   const getImageUrl = (imageUrl) => {
-    // If it's already a full URL (Cloudinary), return as-is
     if (imageUrl && imageUrl.startsWith('http')) {
       return imageUrl;
     }
-    // If it's a relative path, add localhost (for old local uploads)
     return `http://localhost:5000${imageUrl}`;
   };
 
@@ -28,7 +28,6 @@ const PropertyImageCarousel = ({ images, title }) => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // Auto-cycle images every 3 seconds
   useEffect(() => {
     if (images && images.length > 1) {
       const interval = setInterval(nextImage, 3000);
@@ -40,7 +39,7 @@ const PropertyImageCarousel = ({ images, title }) => {
     return (
       <div className="property-image">
         <div style={{
-          height: '200px',
+          height: '250px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -63,7 +62,7 @@ const PropertyImageCarousel = ({ images, title }) => {
         className="property-image"
         style={{
           position: 'relative',
-          height: '200px',
+          height: '250px',
           overflow: 'hidden',
           borderRadius: '8px'
         }}
@@ -86,7 +85,6 @@ const PropertyImageCarousel = ({ images, title }) => {
 
         {images.length > 1 && (
           <>
-            {/* Navigation Arrows */}
             <button 
               className="carousel-btn carousel-btn-prev"
               onClick={(e) => {
@@ -94,7 +92,6 @@ const PropertyImageCarousel = ({ images, title }) => {
                 e.stopPropagation();
                 prevImage();
               }}
-              aria-label="Previous image"
               style={{
                 position: 'absolute',
                 left: '10px',
@@ -113,12 +110,6 @@ const PropertyImageCarousel = ({ images, title }) => {
                 transition: 'all 0.3s ease',
                 zIndex: 2
               }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(0,0,0,0.7)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(0,0,0,0.5)';
-              }}
             >
               <i className="fas fa-chevron-left"></i>
             </button>
@@ -130,7 +121,6 @@ const PropertyImageCarousel = ({ images, title }) => {
                 e.stopPropagation();
                 nextImage();
               }}
-              aria-label="Next image"
               style={{
                 position: 'absolute',
                 right: '10px',
@@ -149,19 +139,11 @@ const PropertyImageCarousel = ({ images, title }) => {
                 transition: 'all 0.3s ease',
                 zIndex: 2
               }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(0,0,0,0.7)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(0,0,0,0.5)';
-              }}
             >
               <i className="fas fa-chevron-right"></i>
             </button>
 
-            {/* Image Counter */}
             <div 
-              className="image-counter"
               style={{
                 position: 'absolute',
                 top: '10px',
@@ -177,9 +159,7 @@ const PropertyImageCarousel = ({ images, title }) => {
               {currentImageIndex + 1}/{images.length}
             </div>
 
-            {/* Dot Indicators */}
             <div 
-              className="carousel-dots"
               style={{
                 position: 'absolute',
                 bottom: '10px',
@@ -192,13 +172,11 @@ const PropertyImageCarousel = ({ images, title }) => {
               {images.map((_, index) => (
                 <button
                   key={index}
-                  className={`carousel-dot ${index === currentImageIndex ? 'active' : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setCurrentImageIndex(index);
                   }}
-                  aria-label={`Go to image ${index + 1}`}
                   style={{
                     width: '8px',
                     height: '8px',
@@ -218,14 +196,59 @@ const PropertyImageCarousel = ({ images, title }) => {
   );
 };
 
+// Property Type Badge Component
+const PropertyTypeBadge = ({ propertyType }) => {
+  const getTypeInfo = (type) => {
+    switch (type) {
+      case 'commercial':
+        return {
+          icon: 'fas fa-building',
+          label: 'Commercial',
+          className: 'property-type-commercial'
+        };
+      case 'residential':
+      default:
+        return {
+          icon: 'fas fa-home',
+          label: 'Residential',
+          className: 'property-type-residential'
+        };
+    }
+  };
+
+  const typeInfo = getTypeInfo(propertyType);
+
+  return (
+    <div className={`property-type-badge ${typeInfo.className}`}>
+      <i className={typeInfo.icon}></i>
+      <span>{typeInfo.label}</span>
+    </div>
+  );
+};
+
 const Properties = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || 'all');
+  const [selectedPropertyType, setSelectedPropertyType] = useState(searchParams.get('type') || 'all');
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [areas, setAreas] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // Property Type Options
+  const propertyTypeOptions = [
+    { value: 'all', label: 'All Types', icon: 'fas fa-list' },
+    { value: 'residential', label: 'Residential', icon: 'fas fa-home' },
+    { value: 'commercial', label: 'Commercial', icon: 'fas fa-building' }
+  ];
+
+  // Hardcoded areas for now since areas API is failing
+  const fallbackAreas = {
+    'central-noida': { name: 'Central Noida' },
+    'noida-expressway': { name: 'Noida Expressway' },
+    'yamuna-expressway': { name: 'Yamuna Expressway' }
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -233,8 +256,13 @@ const Properties = () => {
 
   useEffect(() => {
     const areaFromUrl = searchParams.get('area');
+    const typeFromUrl = searchParams.get('type');
+    
     if (areaFromUrl && areaFromUrl !== selectedArea) {
       setSelectedArea(areaFromUrl);
+    }
+    if (typeFromUrl && typeFromUrl !== selectedPropertyType) {
+      setSelectedPropertyType(typeFromUrl);
     }
   }, [searchParams]);
 
@@ -242,109 +270,84 @@ const Properties = () => {
     if (Object.keys(areas).length > 0) {
       filterProperties();
     }
-  }, [selectedArea, areas]);
+  }, [selectedArea, selectedPropertyType, areas]);
 
   const loadInitialData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('🏢 Loading areas from API...');
-      
-      // Load areas first
-      const areasData = await fetchAreas();
-      setAreas(areasData);
-      
-      console.log('🏢 Areas loaded:', Object.keys(areasData));
-      
-      // If no areas loaded from API, load fallback
-      if (Object.keys(areasData).length === 0) {
-        const { areas: fallbackAreas } = await import('../data/data');
-        setAreas(fallbackAreas);
-        console.log('⚠️ Using fallback areas');
-      }
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-      setError('Failed to load data');
-      
-      // Load fallback data
+      // Try to load areas, but use fallback if it fails
       try {
-        const { areas: fallbackAreas, properties: fallbackProperties } = await import('../data/data');
+        console.log('🏢 Trying to load areas from API...');
+        const areasResponse = await fetch(`${API_BASE_URL}/areas`);
+        if (areasResponse.ok) {
+          const areasData = await areasResponse.json();
+          setAreas(areasData.data || {});
+          console.log('✅ Areas loaded from API');
+        } else {
+          throw new Error('Areas API failed');
+        }
+      } catch (areasError) {
+        console.warn('⚠️ Areas API failed, using fallback areas');
         setAreas(fallbackAreas);
-        console.log('⚠️ Using fallback data due to error');
-      } catch (fallbackError) {
-        console.error('Error loading fallback data:', fallbackError);
       }
+      
+    } catch (error) {
+      console.error('❌ Error loading initial data:', error);
+      setError('Failed to load data');
+      setAreas(fallbackAreas);
     } finally {
       setLoading(false);
     }
   };
 
+  // 🔧 FIXED: Simplified property fetching
   const filterProperties = async () => {
     try {
       setLoading(true);
-      let properties = [];
+      
+      console.log(`🏠 Loading properties for area: ${selectedArea}, type: ${selectedPropertyType}`);
 
-      console.log(`🏠 Loading properties for area: ${selectedArea}`);
-
-      if (selectedArea === 'all') {
-        // Get all properties
-        properties = await fetchProperties();
-      } else {
-        // Get properties for specific area
-        properties = await fetchPropertiesByArea(selectedArea);
+      // Build URL with filters
+      const params = new URLSearchParams();
+      if (selectedArea !== 'all') {
+        params.append('area', selectedArea);
       }
+      if (selectedPropertyType !== 'all') {
+        params.append('propertyType', selectedPropertyType);
+      }
+      
+      const queryString = params.toString();
+      const url = `${API_BASE_URL}/properties${queryString ? `?${queryString}` : ''}`;
+      
+      console.log(`🌐 Fetching from: ${url}`);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const properties = data.data || [];
 
-      console.log(`🏠 Properties loaded: ${properties.length}`);
-      console.log(`🏠 First property images:`, properties[0]?.images);
+      console.log(`✅ Properties loaded: ${properties.length}`);
 
       // Add area information to each property
       const propertiesWithAreaInfo = properties.map(property => ({
         ...property,
-        areaName: areas[property.areaKey]?.name || property.areaKey
+        areaName: areas[property.areaKey]?.name || property.areaKey,
+        propertyType: property.propertyType || 'residential' // Ensure propertyType exists
       }));
 
       setFilteredProperties(propertiesWithAreaInfo);
-    } catch (error) {
-      console.error('Error filtering properties:', error);
+      setError(null);
       
-      // Fallback to static data
-      try {
-        const { properties: fallbackProperties } = await import('../data/data');
-        if (selectedArea === 'all') {
-          const allProperties = [];
-          Object.entries(fallbackProperties).forEach(([areaKey, areaProperties]) => {
-            const areaData = areas[areaKey];
-            if (areaData) {
-              areaProperties.forEach(property => {
-                allProperties.push({
-                  ...property,
-                  areaKey,
-                  areaName: areaData.name
-                });
-              });
-            }
-          });
-          setFilteredProperties(allProperties);
-        } else {
-          const areaProperties = fallbackProperties[selectedArea] || [];
-          const areaData = areas[selectedArea];
-          if (areaData) {
-            const propertiesWithArea = areaProperties.map(property => ({
-              ...property,
-              areaKey: selectedArea,
-              areaName: areaData.name
-            }));
-            setFilteredProperties(propertiesWithArea);
-          } else {
-            setFilteredProperties([]);
-          }
-        }
-        console.log('⚠️ Using fallback properties due to API error');
-      } catch (fallbackError) {
-        console.error('Error loading fallback properties:', fallbackError);
-        setFilteredProperties([]);
-      }
+    } catch (error) {
+      console.error('❌ Error filtering properties:', error);
+      setError(`Failed to load properties: ${error.message}`);
+      setFilteredProperties([]);
     } finally {
       setLoading(false);
     }
@@ -352,14 +355,32 @@ const Properties = () => {
 
   const handleAreaChange = (areaKey) => {
     setSelectedArea(areaKey);
-    if (areaKey === 'all') {
-      setSearchParams({});
+    updateUrlParams(areaKey, selectedPropertyType);
+  };
+
+  const handlePropertyTypeChange = (propertyType) => {
+    setSelectedPropertyType(propertyType);
+    updateUrlParams(selectedArea, propertyType);
+  };
+
+  const updateUrlParams = (area, type) => {
+    const params = new URLSearchParams();
+    
+    if (area !== 'all') {
+      params.set('area', area);
+    }
+    
+    if (type !== 'all') {
+      params.set('type', type);
+    }
+    
+    if (params.toString()) {
+      setSearchParams(params);
     } else {
-      setSearchParams({ area: areaKey });
+      setSearchParams({});
     }
   };
 
-  // 🆕 Navigate to property detail page
   const handleViewProperty = (property) => {
     console.log('🏠 Navigating to property details:', property.title);
     navigate(`/property/${property._id || property.id}`, { 
@@ -368,17 +389,43 @@ const Properties = () => {
   };
 
   const getPageTitle = () => {
-    if (selectedArea === 'all') {
-      return 'All Properties';
+    let title = '';
+    
+    if (selectedPropertyType === 'all') {
+      title += 'All Properties';
+    } else {
+      const typeOption = propertyTypeOptions.find(opt => opt.value === selectedPropertyType);
+      title += typeOption ? typeOption.label + ' Properties' : 'Properties';
     }
-    return areas[selectedArea]?.name + ' Properties' || 'Properties';
+    
+    if (selectedArea !== 'all') {
+      const areaName = areas[selectedArea]?.name;
+      if (areaName) {
+        title += ` in ${areaName}`;
+      }
+    }
+    
+    return title;
   };
 
   const getPageDescription = () => {
-    if (selectedArea === 'all') {
-      return 'Browse all available properties across our premium locations';
+    let description = 'Explore ';
+    
+    if (selectedPropertyType === 'all') {
+      description += 'all types of properties ';
+    } else {
+      const typeOption = propertyTypeOptions.find(opt => opt.value === selectedPropertyType);
+      description += `${typeOption?.label.toLowerCase()} properties `;
     }
-    return areas[selectedArea]?.description || 'Explore premium properties in this area';
+    
+    if (selectedArea === 'all') {
+      description += 'across our premium locations';
+    } else {
+      const areaData = areas[selectedArea];
+      description += `in ${areaData?.name || selectedArea}`;
+    }
+    
+    return description;
   };
 
   if (loading && Object.keys(areas).length === 0) {
@@ -414,30 +461,54 @@ const Properties = () => {
               marginBottom: '20px',
               border: '1px solid #ef5350'
             }}>
-              {error}
+              <strong>Error:</strong> {error}
+              <br />
+              <small>Check browser console for more details.</small>
             </div>
           )}
 
-          {/* Filter Section */}
+          {/* Enhanced Filter Section */}
           <div className="filter-section">
             <div className="filter-container">
-              <h3>Filter by Area:</h3>
-              <div className="area-filters">
-                <button
-                  className={`filter-btn ${selectedArea === 'all' ? 'active' : ''}`}
-                  onClick={() => handleAreaChange('all')}
-                >
-                  All Areas
-                </button>
-                {Object.entries(areas).map(([key, area]) => (
+              {/* Area Filters */}
+              <div className="filter-group">
+                <h3>Filter by Area:</h3>
+                <div className="area-filters">
                   <button
-                    key={key}
-                    className={`filter-btn ${selectedArea === key ? 'active' : ''}`}
-                    onClick={() => handleAreaChange(key)}
+                    className={`filter-btn ${selectedArea === 'all' ? 'active' : ''}`}
+                    onClick={() => handleAreaChange('all')}
                   >
-                    {area.name}
+                    <i className="fas fa-globe"></i>
+                    All Areas
                   </button>
-                ))}
+                  {Object.entries(areas).map(([key, area]) => (
+                    <button
+                      key={key}
+                      className={`filter-btn ${selectedArea === key ? 'active' : ''}`}
+                      onClick={() => handleAreaChange(key)}
+                    >
+                      <i className="fas fa-map-marker-alt"></i>
+                      {area.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Property Type Filters */}
+              <div className="filter-group">
+                <h3>Filter by Property Type:</h3>
+                <div className="property-type-filters">
+                  {propertyTypeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      className={`filter-btn property-type-btn ${selectedPropertyType === option.value ? 'active' : ''}`}
+                      onClick={() => handlePropertyTypeChange(option.value)}
+                    >
+                      <i className={option.icon}></i>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -464,33 +535,40 @@ const Properties = () => {
                     title={property.title}
                   />
                   
+                  {/* Property Details */}
                   <div className="property-details">
-                    <div className="property-price">{property.price}</div>
-                    <div className="property-title">{property.title}</div>
-                    <div className="property-location">
-                      <i className="fas fa-map-marker-alt"></i>
-                      {property.location}
-                    </div>
-                    <div className="property-area-badge">
-                      <i className="fas fa-building"></i>
-                      {property.areaName}
-                    </div>
-                    <div className="property-features">
-                      <div className="feature">
-                        <i className="fas fa-bed"></i>
-                        {property.beds} Beds
+                    <div className="property-content">
+                      <div className="property-price">{property.price}</div>
+                      <div className="property-title">{property.title}</div>
+                      <div className="property-location">
+                        <i className="fas fa-map-marker-alt"></i>
+                        {property.location}
                       </div>
-                      <div className="feature">
-                        <i className="fas fa-bath"></i>
-                        {property.baths} Baths
+                      <div className="property-badges">
+                        <div className="property-area-badge">
+                          <i className="fas fa-building"></i>
+                          {property.areaName}
+                        </div>
+                        {/* Property Type Badge */}
+                        <PropertyTypeBadge propertyType={property.propertyType} />
                       </div>
-                      <div className="feature">
-                        <i className="fas fa-expand-arrows-alt"></i>
-                        {property.area}
+                      <div className="property-features">
+                        <div className="feature">
+                          <i className="fas fa-bed"></i>
+                          {property.beds} Beds
+                        </div>
+                        <div className="feature">
+                          <i className="fas fa-bath"></i>
+                          {property.baths} Baths
+                        </div>
+                        <div className="feature">
+                          <i className="fas fa-expand-arrows-alt"></i>
+                          {property.area}
+                        </div>
                       </div>
                     </div>
                     
-                    {/* 🆕 Single View Property Button */}
+                    {/* View Property Button */}
                     <div className="property-buttons">
                       <button
                         className="btn btn-primary view-property-btn"
@@ -510,17 +588,29 @@ const Properties = () => {
                 <i className="fas fa-home"></i>
                 <h3>No Properties Available</h3>
                 <p>
-                  {selectedArea === 'all' 
-                    ? "No properties found. Check back soon or contact us for the latest available properties."
-                    : `No properties found in ${areas[selectedArea]?.name || selectedArea}. Try selecting a different area or contact us for more information.`
+                  {selectedArea === 'all' && selectedPropertyType === 'all'
+                    ? "No properties found. This might be due to server connectivity issues. Please try again later or contact us."
+                    : `No ${selectedPropertyType !== 'all' ? propertyTypeOptions.find(opt => opt.value === selectedPropertyType)?.label.toLowerCase() + ' ' : ''}properties found${selectedArea !== 'all' ? ` in ${areas[selectedArea]?.name || selectedArea}` : ''}. Try adjusting your filters or contact us for more information.`
                   }
                 </p>
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => window.location.href = '/contact'}
-                >
-                  Contact Us
-                </button>
+                <div className="no-properties-actions">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => window.location.href = '/contact'}
+                  >
+                    Contact Us
+                  </button>
+                  <button 
+                    className="btn btn-outline"
+                    onClick={() => {
+                      setSelectedArea('all');
+                      setSelectedPropertyType('all');
+                      setSearchParams({});
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                </div>
               </div>
             </div>
           )}

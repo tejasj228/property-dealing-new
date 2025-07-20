@@ -22,8 +22,18 @@ const Footer = () => {
     }
   };
 
-  const handleAreaClick = (area) => {
-    navigate(`/listings/${area}`);
+  // 🆕 FUNCTIONAL CONTACT METHODS
+  const handleEmailClick = (email) => {
+    window.open(`mailto:${email}`, '_blank');
+  };
+
+  const handlePhoneClick = (phone) => {
+    window.open(`tel:${phone}`, '_self');
+  };
+
+  const handleLocationClick = (address) => {
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank');
   };
 
   return (
@@ -41,19 +51,35 @@ const Footer = () => {
           <div className="footer-section">
             <h3>Contact Info</h3>
             <div className="footer-contact-list">
-              <div className="footer-contact-item">
+              <div 
+                className="footer-contact-item clickable"
+                onClick={() => handleEmailClick('pawan127jitendra@gmail.com')}
+                style={{ cursor: 'pointer' }}
+              >
                 <i className="fas fa-envelope"></i>
                 <span>pawan127jitendra@gmail.com</span>
               </div>
-              <div className="footer-contact-item">
+              <div 
+                className="footer-contact-item clickable"
+                onClick={() => handlePhoneClick('+91-9811186086')}
+                style={{ cursor: 'pointer' }}
+              >
                 <i className="fas fa-phone"></i>
                 <span>+91-9811186086</span>
               </div>
-              <div className="footer-contact-item">
+              <div 
+                className="footer-contact-item clickable"
+                onClick={() => handlePhoneClick('+91-9811186083')}
+                style={{ cursor: 'pointer' }}
+              >
                 <i className="fas fa-phone"></i>
                 <span>+91-9811186083</span>
               </div>
-              <div className="footer-contact-item">
+              <div 
+                className="footer-contact-item clickable"
+                onClick={() => handleLocationClick('S-1 Skytech Matrott Market, Sector-76, Noida (U.P) 201307')}
+                style={{ cursor: 'pointer' }}
+              >
                 <i className="fas fa-map-marker-alt"></i>
                 <span>S-1 Skytech Matrott Market, Sector-76, Noida (U.P) 201307</span>
               </div>
@@ -66,21 +92,12 @@ const Footer = () => {
             <a href="#areas" onClick={(e) => { e.preventDefault(); scrollToAreas(); }}>
               Our Areas
             </a>
-            <a href="#" onClick={() => handleAreaClick('noida')}>
-              Property Listings
-            </a>
+            <Link to="/properties">Property Listings</Link>
             <Link to="/contact">Contact Us</Link>
           </div>
 
-          <div className="footer-section">
-            <h3>Our Areas</h3>
-            <a href="#" onClick={() => handleAreaClick('noida')}>
-              Noida
-            </a>
-            <a href="#" onClick={() => handleAreaClick('yamuna-expressway')}>
-              Yamuna Expressway
-            </a>
-          </div>
+          {/* 🆕 REMOVED: Hardcoded "Our Areas" section that was causing spacing issues */}
+          {/* Since areas are now empty in data.js, we don't show this section */}
         </div>
 
         <div className="footer-bottom">

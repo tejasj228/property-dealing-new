@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
+import useAreas from '../hooks/useAreas';
 import './Header.css';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [isTransparent, setIsTransparent] = useState(true);
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Use areas hook with fallback enabled
+  const { areasArray, areasLoading, areasError } = useAreas({
+    autoLoad: true,
+    fallbackToDefault: true,
+    enableCache: false // Disable cache for debugging
+  });
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -64,21 +71,13 @@ const Header = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      console.log('Searching for:', searchQuery);
-      // Add actual search functionality here
-    }
-  };
-
   const handlePropertiesClick = () => {
     navigate('/properties');
     setIsMenuOpen(false);
   };
 
-  const handleAreaClick = (area) => {
-    navigate(`/properties?area=${area}`);
+  const handleAreaClick = (areaKey) => {
+    navigate(`/properties?area=${areaKey}`);
     setIsMenuOpen(false);
   };
 
@@ -96,6 +95,48 @@ const Header = () => {
   };
 
   const currentPage = getCurrentPage();
+
+  // Render areas dropdown content
+  const renderAreasDropdown = () => {
+    console.log('🔄 Rendering areas dropdown:', { areasLoading, areasError, areasArray });
+    
+    if (areasLoading) {
+      return (
+        <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+          <i className="fas fa-spinner fa-spin" style={{ marginRight: '5px' }}></i>
+          Loading areas...
+        </div>
+      );
+    }
+
+    if (areasError) {
+      return (
+        <div style={{ padding: '10px', textAlign: 'center', color: '#e74c3c' }}>
+          <i className="fas fa-exclamation-triangle" style={{ marginRight: '5px' }}></i>
+          Using default areas
+        </div>
+      );
+    }
+
+    if (areasArray.length === 0) {
+      return (
+        <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+          No areas available
+        </div>
+      );
+    }
+
+    return areasArray.map((area) => (
+      <a 
+        key={area.key}
+        href="#" 
+        onClick={(e) => { e.preventDefault(); handleAreaClick(area.key); }}
+        title={area.description}
+      >
+        {area.displayName}
+      </a>
+    ));
+  };
 
   // Mobile Navigation
   if (isMobile) {
@@ -128,20 +169,6 @@ const Header = () => {
           </div>
           
           <div className="mobile-sidebar-content">
-            <div className="mobile-search">
-              <form onSubmit={handleSearch}>
-                <input
-                  type="text"
-                  placeholder="Search properties..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button type="submit">
-                  <i className="fas fa-search"></i>
-                </button>
-              </form>
-            </div>
-
             <nav className="mobile-nav">
               <Link 
                 to="/" 
@@ -161,12 +188,15 @@ const Header = () => {
                   Properties
                 </button>
                 <div className="mobile-subnav">
-                  <button onClick={() => handleAreaClick('noida')}>
-                    Noida
-                  </button>
-                  <button onClick={() => handleAreaClick('yamuna-expressway')}>
-                    Yamuna Expressway
-                  </button>
+                  {areasArray.map((area) => (
+                    <button 
+                      key={area.key}
+                      onClick={() => handleAreaClick(area.key)}
+                      title={area.description}
+                    >
+                      {area.displayName}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -214,12 +244,7 @@ const Header = () => {
               Properties
             </a>
             <div className="dropdown">
-              <a href="#" onClick={(e) => { e.preventDefault(); handleAreaClick('noida'); }}>
-                Noida
-              </a>
-              <a href="#" onClick={(e) => { e.preventDefault(); handleAreaClick('yamuna-expressway'); }}>
-                Yamuna Expressway
-              </a>
+              {renderAreasDropdown()}
             </div>
           </li>
           <li>
@@ -232,7 +257,7 @@ const Header = () => {
           </li>
         </ul>
 
-        <div className="search-container">
+        <div className="theme-container">
           <button 
             className="theme-toggle" 
             onClick={toggleTheme}
@@ -241,19 +266,6 @@ const Header = () => {
             <i className={isDarkMode ? 'fas fa-sun' : 'fas fa-moon'}></i>
             <span>{isDarkMode ? 'Light' : 'Dark'}</span>
           </button>
-
-          <form className="search-form" onSubmit={handleSearch}>
-            <input
-              type="text"
-              className="search-box"
-              placeholder="Search properties..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="search-btn">
-              <i className="fas fa-search"></i>
-            </button>
-          </form>
         </div>
       </nav>
     </div>

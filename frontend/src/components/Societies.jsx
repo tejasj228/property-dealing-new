@@ -1,4 +1,4 @@
-// frontend/src/components/Societies.jsx - Complete Fixed Version (680+ lines)
+// frontend/src/components/Societies.jsx - Enhanced with responsive modal
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTransition from './PageTransition';
@@ -13,7 +13,7 @@ const getImageUrl = (imagePath) => {
   }
   
   const baseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://property-dealing-backend.onrender.com'
+    ? 'https://property-dealing-qle8.onrender.com'
     : 'http://localhost:5000';
   
   return `${baseUrl}${imagePath}`;
@@ -28,10 +28,11 @@ const getApiUrl = (endpoint) => {
   return `${baseUrl}${endpoint}`;
 };
 
-// Enhanced Society Modal Component with Navbar Hiding and Mobile Fixes
+// Enhanced Society Modal Component with Responsive Design
 const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
   const wasModalOpen = React.useRef(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isKeyboardNavEnabled, setIsKeyboardNavEnabled] = useState(true);
 
   React.useEffect(() => {
     const handleEscape = (e) => {
@@ -40,66 +41,64 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
       }
     };
 
+    const handleKeyboard = (e) => {
+      if (!isKeyboardNavEnabled || !isOpen) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevImage();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextImage();
+      }
+    };
+
     if (isOpen) {
-      console.log('📂 Society modal opening - hiding navbar and preventing scroll');
+      console.log('📂 Society Modal opening for:', society?.name);
       wasModalOpen.current = true;
-      setCurrentImageIndex(0); // Reset to first image
+      setCurrentImageIndex(0);
       
       document.addEventListener('keydown', handleEscape);
+      document.addEventListener('keydown', handleKeyboard);
+      
+      // Lock body scroll and hide navigation
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
       document.body.classList.add('modal-open');
       
-      // 🆕 HIDE ALL NAVIGATION ELEMENTS
-      // Hide desktop navbar
+      // Hide all navigation elements
       const navbar = document.querySelector('.nav-container');
-      if (navbar) {
-        navbar.style.display = 'none';
-        console.log('✅ Desktop navbar hidden');
-      }
+      if (navbar) navbar.style.display = 'none';
       
-      // Hide mobile header
       const mobileHeader = document.querySelector('.mobile-header');
-      if (mobileHeader) {
-        mobileHeader.style.display = 'none';
-        console.log('✅ Mobile header hidden');
-      }
+      if (mobileHeader) mobileHeader.style.display = 'none';
       
-      // Hide mobile sidebar
       const mobileSidebar = document.querySelector('.mobile-sidebar');
-      if (mobileSidebar) {
-        mobileSidebar.style.display = 'none';
-        console.log('✅ Mobile sidebar hidden');
-      }
+      if (mobileSidebar) mobileSidebar.style.display = 'none';
       
     } else if (wasModalOpen.current) {
-      console.log('📂 Society modal closing - restoring navbar and scroll');
+      console.log('📂 Society Modal closing, restoring position to:', cardPosition);
       
+      // Restore body scroll and navigation
       document.body.style.overflow = 'unset';
+      document.body.style.position = 'unset';
+      document.body.style.width = 'unset';
+      document.body.style.height = 'unset';
       document.body.classList.remove('modal-open');
       
-      // 🆕 RESTORE ALL NAVIGATION ELEMENTS
-      // Show desktop navbar
+      // Restore all navigation elements
       const navbar = document.querySelector('.nav-container');
-      if (navbar) {
-        navbar.style.display = 'block';
-        console.log('✅ Desktop navbar restored');
-      }
+      if (navbar) navbar.style.display = 'block';
       
-      // Show mobile header
       const mobileHeader = document.querySelector('.mobile-header');
-      if (mobileHeader) {
-        mobileHeader.style.display = 'flex';
-        console.log('✅ Mobile header restored');
-      }
+      if (mobileHeader) mobileHeader.style.display = 'flex';
       
-      // Show mobile sidebar
       const mobileSidebar = document.querySelector('.mobile-sidebar');
-      if (mobileSidebar) {
-        mobileSidebar.style.display = '';
-        console.log('✅ Mobile sidebar restored');
-      }
+      if (mobileSidebar) mobileSidebar.style.display = '';
       
-      // Scroll back to the card position after a small delay
+      // Scroll back to card position
       if (cardPosition && cardPosition.y !== undefined) {
         setTimeout(() => {
           console.log('🎯 Scrolling back to card position:', cardPosition.y);
@@ -116,10 +115,16 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyboard);
+      
+      // Ensure cleanup
       document.body.style.overflow = 'unset';
+      document.body.style.position = 'unset';
+      document.body.style.width = 'unset';
+      document.body.style.height = 'unset';
       document.body.classList.remove('modal-open');
       
-      // Ensure navbar is always restored on cleanup
+      // Ensure navbar is always restored
       const navbar = document.querySelector('.nav-container');
       if (navbar) navbar.style.display = 'block';
       
@@ -129,7 +134,7 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
       const mobileSidebar = document.querySelector('.mobile-sidebar');
       if (mobileSidebar) mobileSidebar.style.display = '';
     };
-  }, [isOpen, onClose, cardPosition]);
+  }, [isOpen, onClose, cardPosition, society, isKeyboardNavEnabled]);
 
   if (!isOpen || !society) return null;
 
@@ -139,19 +144,31 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
     }
   };
 
-  // Get all available images (gallery + map)
+  // Get all available images
   const getAllImages = () => {
     const images = [];
     if (society.images && society.images.length > 0) {
       society.images.forEach(img => {
-        images.push(getImageUrl(img));
+        images.push({
+          url: getImageUrl(img),
+          type: 'gallery',
+          alt: `${society.name} gallery image`
+        });
       });
     }
     if (society.mapImage) {
-      images.push(getImageUrl(society.mapImage));
+      images.push({
+        url: getImageUrl(society.mapImage),
+        type: 'map',
+        alt: `${society.name} map`
+      });
     }
     if (images.length === 0) {
-      images.push('/assets/map.webp');
+      images.push({
+        url: '/assets/map.webp',
+        type: 'default',
+        alt: 'Default map'
+      });
     }
     return images;
   };
@@ -166,61 +183,151 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
     setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
+  const goToImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
+  const handleImageError = (e, imageIndex) => {
+    console.error('❌ Image failed to load:', allImages[imageIndex]?.url);
+    if (e.target.src !== '/assets/map.webp') {
+      e.target.src = '/assets/map.webp';
+    }
+  };
+
+  const handleImageLoad = (imageIndex) => {
+    console.log('✅ Image loaded successfully:', allImages[imageIndex]?.url);
+  };
+
+  const openImageInNewTab = () => {
+    const currentImage = allImages[currentImageIndex];
+    if (currentImage) {
+      window.open(currentImage.url, '_blank');
+    }
+  };
+
+  const handleContactUs = () => {
+    window.location.href = '/contact';
+  };
+
   return (
-    <div className="modal-overlay society-modal-overlay" onClick={handleBackdropClick}>
+    <div 
+      className="modal-overlay society-modal-overlay" 
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className="modal-content society-modal">
-        <button className="modal-close" onClick={onClose}>
+        <button 
+          className="modal-close" 
+          onClick={onClose}
+          aria-label="Close modal"
+          title="Close (Esc)"
+        >
           <i className="fas fa-times"></i>
         </button>
         
+        {/* Left Section: Image Gallery */}
         <div className="modal-left">
           <div className="modal-gallery">
             <img 
-              src={allImages[currentImageIndex]}
-              alt={`${society.name} - Image ${currentImageIndex + 1}`}
+              src={allImages[currentImageIndex]?.url}
+              alt={allImages[currentImageIndex]?.alt}
               style={{
                 width: '100%', 
                 height: '100%', 
                 objectFit: 'cover'
               }}
-              onError={(e) => {
-                e.target.src = '/assets/map.webp';
-              }}
+              onLoad={() => handleImageLoad(currentImageIndex)}
+              onError={(e) => handleImageError(e, currentImageIndex)}
             />
             
-            {/* Gallery Navigation */}
+            {/* Navigation arrows for multiple images */}
             {allImages.length > 1 && (
               <>
-                <button className="gallery-nav gallery-prev" onClick={prevImage}>
+                <button 
+                  className="gallery-nav gallery-prev" 
+                  onClick={prevImage}
+                  aria-label="Previous image"
+                  title="Previous image (←)"
+                >
                   <i className="fas fa-chevron-left"></i>
                 </button>
-                <button className="gallery-nav gallery-next" onClick={nextImage}>
+                <button 
+                  className="gallery-nav gallery-next" 
+                  onClick={nextImage}
+                  aria-label="Next image"
+                  title="Next image (→)"
+                >
                   <i className="fas fa-chevron-right"></i>
                 </button>
+                
+                {/* Image counter */}
                 <div className="gallery-counter">
                   {currentImageIndex + 1} / {allImages.length}
                 </div>
               </>
             )}
+
+            {/* Image thumbnails for quick navigation */}
+            {allImages.length > 1 && (
+              <div className="gallery-thumbnails" style={{
+                position: 'absolute',
+                bottom: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '5px',
+                background: 'rgba(0, 0, 0, 0.7)',
+                padding: '5px',
+                borderRadius: '15px',
+                maxWidth: '90%',
+                overflowX: 'auto'
+              }}>
+                {allImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToImage(index)}
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      border: 'none',
+                      background: index === currentImageIndex ? '#b8860b' : 'rgba(255, 255, 255, 0.5)',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Right Section: Society Information */}
         <div className="modal-right">
-          <h2>{society.name}</h2>
+          <h2 id="modal-title">{society.name}</h2>
           <p className="modal-description">{society.description}</p>
           
-          {/* Gallery Info */}
+          {/* Gallery Information */}
           {society.images && society.images.length > 0 && (
             <div className="modal-gallery-info">
-              <h4>Photo Gallery</h4>
-              <p>{society.images.length} images available</p>
+              <h4>
+                <i className="fas fa-images" style={{ marginRight: '8px' }}></i>
+                Photo Gallery
+              </h4>
+              <p>{society.images.length} image{society.images.length !== 1 ? 's' : ''} available</p>
             </div>
           )}
           
-          {/* Amenities */}
+          {/* Amenities Section */}
           {society.amenities && society.amenities.length > 0 && (
             <div className="modal-amenities">
-              <h4>Amenities</h4>
+              <h4>
+                <i className="fas fa-star" style={{ marginRight: '8px' }}></i>
+                Amenities & Features
+              </h4>
               <div className="amenities-grid">
                 {society.amenities.map((amenity, index) => (
                   <div key={index} className="amenity-item">
@@ -232,43 +339,22 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
             </div>
           )}
           
-          {/* Contact Information */}
-          {society.contact && (
-            <div className="modal-contact">
-              <h4>Contact Information</h4>
-              <div className="contact-info">
-                {society.contact.phone && (
-                  <div className="contact-item">
-                    <i className="fas fa-phone"></i>
-                    <span>{society.contact.phone}</span>
-                  </div>
-                )}
-                {society.contact.email && (
-                  <div className="contact-item">
-                    <i className="fas fa-envelope"></i>
-                    <span>{society.contact.email}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
+          {/* Action Buttons */}
           <div className="modal-button">
             <button 
               className="btn btn-secondary modal-map-btn" 
-              onClick={() => {
-                const mapUrl = allImages[currentImageIndex];
-                window.open(mapUrl, '_blank');
-              }}
+              onClick={openImageInNewTab}
+              title="Open current image in new tab"
             >
+              <i className="fas fa-external-link-alt" style={{ marginRight: '5px' }}></i>
               Open Image in New Tab
             </button>
             <button 
               className="btn btn-primary" 
-              onClick={() => {
-                window.location.href = '/contact';
-              }}
+              onClick={handleContactUs}
+              title="Contact us for more information"
             >
+              <i className="fas fa-envelope" style={{ marginRight: '5px' }}></i>
               Contact Us
             </button>
           </div>
@@ -278,10 +364,11 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
   );
 };
 
-// Enhanced Image Slider Component for Societies
+// Enhanced Image Slider Component
 const SocietiesImageSlider = ({ societies = [] }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Create slides array from all society images
   const slides = [];
@@ -295,7 +382,6 @@ const SocietiesImageSlider = ({ societies = [] }) => {
         });
       });
     } else if (society.mapImage) {
-      // Fallback to map image if no gallery images
       slides.push({
         image: getImageUrl(society.mapImage),
         societyName: society.name,
@@ -310,10 +396,16 @@ const SocietiesImageSlider = ({ societies = [] }) => {
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4000); // Change slide every 4 seconds
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [isPlaying, slides.length]);
+
+  useEffect(() => {
+    if (slides.length > 0) {
+      setIsLoading(false);
+    }
+  }, [slides]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -325,6 +417,10 @@ const SocietiesImageSlider = ({ societies = [] }) => {
 
   const goToSlide = (index) => {
     setCurrentSlide(index);
+  };
+
+  const handleSlideImageError = (e) => {
+    e.target.src = '/assets/map.webp';
   };
 
   if (slides.length === 0) {
@@ -342,18 +438,28 @@ const SocietiesImageSlider = ({ societies = [] }) => {
   return (
     <div className="societies-slider">
       <div className="slider-container">
-        {/* Main Image */}
         <div className="slider-main">
+          {isLoading && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: 'white',
+              fontSize: '1.2rem'
+            }}>
+              Loading...
+            </div>
+          )}
+          
           <img
             src={slides[currentSlide].image}
             alt={slides[currentSlide].societyName}
             className="slider-image"
-            onError={(e) => {
-              e.target.src = '/assets/map.webp';
-            }}
+            onError={handleSlideImageError}
+            onLoad={() => setIsLoading(false)}
           />
           
-          {/* Overlay with Society Name */}
           <div className="slider-overlay">
             <div className="slider-content">
               <h2 className="society-name">{slides[currentSlide].societyName}</h2>
@@ -363,13 +469,13 @@ const SocietiesImageSlider = ({ societies = [] }) => {
             </div>
           </div>
 
-          {/* Navigation Arrows */}
           {slides.length > 1 && (
             <>
               <button 
                 className="slider-nav prev" 
                 onClick={prevSlide}
                 aria-label="Previous image"
+                title="Previous image"
               >
                 <i className="fas fa-chevron-left"></i>
               </button>
@@ -377,25 +483,25 @@ const SocietiesImageSlider = ({ societies = [] }) => {
                 className="slider-nav next" 
                 onClick={nextSlide}
                 aria-label="Next image"
+                title="Next image"
               >
                 <i className="fas fa-chevron-right"></i>
               </button>
             </>
           )}
 
-          {/* Play/Pause Button */}
           {slides.length > 1 && (
             <button 
               className="slider-play-pause"
               onClick={() => setIsPlaying(!isPlaying)}
               aria-label={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
+              title={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
             >
               <i className={`fas fa-${isPlaying ? 'pause' : 'play'}`}></i>
             </button>
           )}
         </div>
 
-        {/* Thumbnails/Dots */}
         {slides.length > 1 && (
           <div className="slider-thumbnails">
             {slides.map((slide, index) => (
@@ -409,6 +515,7 @@ const SocietiesImageSlider = ({ societies = [] }) => {
                   backgroundPosition: 'center'
                 }}
                 aria-label={`Go to ${slide.societyName} image`}
+                title={slide.societyName}
               >
                 <span className="thumbnail-label">{slide.societyName}</span>
               </button>
@@ -418,6 +525,49 @@ const SocietiesImageSlider = ({ societies = [] }) => {
       </div>
     </div>
   );
+};
+
+// Helper function to validate URL parameters
+const validateParams = (areaKey, subAreaId) => {
+  if (!areaKey || !subAreaId) {
+    return false;
+  }
+  
+  const subAreaIdNum = parseInt(subAreaId);
+  if (isNaN(subAreaIdNum) || subAreaIdNum <= 0) {
+    return false;
+  }
+  
+  return true;
+};
+
+// Helper function to fetch area info from areas API
+const fetchAreaInfo = async (areaKey, subAreaId) => {
+  try {
+    const response = await fetch(getApiUrl(`/areas/${areaKey}`));
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    if (data.success && data.data) {
+      const area = data.data;
+      const subArea = area.subAreas?.find(sa => sa.id === parseInt(subAreaId));
+      
+      if (subArea) {
+        return {
+          areaName: area.name,
+          subAreaName: subArea.title,
+          subAreaDescription: subArea.description
+        };
+      }
+    }
+    
+    throw new Error('Sub-area not found');
+  } catch (error) {
+    console.error('Error fetching area info:', error);
+    return null;
+  }
 };
 
 const Societies = () => {
@@ -431,7 +581,15 @@ const Societies = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cardPosition, setCardPosition] = useState(null);
 
+  // Validate parameters on component mount
   useEffect(() => {
+    if (!validateParams(areaKey, subAreaId)) {
+      console.error('❌ Invalid URL parameters:', { areaKey, subAreaId });
+      setError('Invalid URL parameters. Please check the area and sub-area values.');
+      setLoading(false);
+      return;
+    }
+    
     loadSocieties();
   }, [areaKey, subAreaId]);
 
@@ -442,13 +600,28 @@ const Societies = () => {
       
       console.log(`🏘️ Loading societies for area: ${areaKey}, sub-area: ${subAreaId}`);
       
-      // Use helper function for API URL
+      // First, fetch area info to validate the URL parameters
+      const areaInfoResult = await fetchAreaInfo(areaKey, subAreaId);
+      if (!areaInfoResult) {
+        setError('Area or sub-area not found. Please check the URL.');
+        setLoading(false);
+        return;
+      }
+      
+      setAreaInfo(areaInfoResult);
+      
+      // Then fetch societies
       const apiUrl = getApiUrl(`/societies/${areaKey}/${subAreaId}`);
-      console.log(`🔗 Fetching from: ${apiUrl}`);
+      console.log(`🔗 Fetching societies from: ${apiUrl}`);
       
       const response = await fetch(apiUrl);
       
       if (!response.ok) {
+        if (response.status === 404) {
+          setError('Area or sub-area not found. Please check the URL.');
+          setLoading(false);
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -456,27 +629,41 @@ const Societies = () => {
       
       if (data.success) {
         setSocieties(data.data.societies || []);
-        setAreaInfo({
-          areaName: data.data.areaName,
-          subAreaName: data.data.subAreaName,
-          subAreaDescription: data.data.subAreaDescription
-        });
+        // Update area info from API response if available
+        if (data.data.areaName) {
+          setAreaInfo({
+            areaName: data.data.areaName,
+            subAreaName: data.data.subAreaName,
+            subAreaDescription: data.data.subAreaDescription
+          });
+        }
         console.log('✅ Societies loaded successfully:', data.data.societies.length);
       } else {
         throw new Error(data.message || 'Failed to load societies');
       }
     } catch (error) {
       console.error('❌ Error loading societies:', error);
-      setError(error.message);
-      // Load fallback data with sample images
-      loadFallbackData();
+      
+      // Better error handling
+      if (error.message.includes('fetch')) {
+        setError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else if (error.message.includes('404') || error.message.includes('not found')) {
+        setError('The requested area or sub-area could not be found. Please check the URL.');
+      } else {
+        setError(error.message || 'An unexpected error occurred while loading societies.');
+      }
+      
+      // Don't load fallback data on parameter validation errors
+      if (validateParams(areaKey, subAreaId)) {
+        loadFallbackData();
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const loadFallbackData = () => {
-    // Enhanced fallback society data with sample images
+    // Enhanced fallback society data
     const fallbackSocieties = [
       {
         id: 1,
@@ -511,18 +698,19 @@ const Societies = () => {
     ];
     
     setSocieties(fallbackSocieties);
-    setAreaInfo({
-      areaName: 'Sample Area',
-      subAreaName: 'Sample Sub-Area',
-      subAreaDescription: 'This is sample data as the backend connection failed.'
-    });
-    console.log('⚠️ Using fallback society data with sample images');
+    if (!areaInfo.areaName) {
+      setAreaInfo({
+        areaName: 'Sample Area',
+        subAreaName: 'Sample Sub-Area',
+        subAreaDescription: 'This is sample data as the backend connection failed.'
+      });
+    }
+    console.log('⚠️ Using fallback society data');
   };
 
   const handleSocietyClick = (society, event) => {
     console.log('🏘️ Society card clicked:', society.name);
     
-    // Get the clicked card element position
     const cardElement = event.currentTarget;
     const rect = cardElement.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -539,6 +727,7 @@ const Societies = () => {
   };
 
   const handleCloseModal = () => {
+    console.log('🏘️ Closing society modal');
     setIsModalOpen(false);
     setTimeout(() => {
       setSelectedSociety(null);
@@ -549,7 +738,6 @@ const Societies = () => {
   };
 
   const getSocietyImage = (society) => {
-    // Priority: 1. First gallery image, 2. Map image, 3. Default
     if (society.images && society.images.length > 0) {
       return getImageUrl(society.images[0]);
     } else if (society.mapImage) {
@@ -558,6 +746,52 @@ const Societies = () => {
     return '/assets/map.webp';
   };
 
+  const handleImageError = (e) => {
+    if (e.target.src !== '/assets/map.webp') {
+      e.target.src = '/assets/map.webp';
+    }
+  };
+
+  // Better error handling for invalid parameters
+  if (error && error.includes('Invalid URL parameters')) {
+    return (
+      <PageTransition>
+        <div className="societies-page">
+          <div className="container">
+            <div className="back-navigation">
+              <button 
+                className="back-btn"
+                onClick={() => navigate('/')}
+              >
+                <i className="fas fa-arrow-left"></i>
+                Back to Home
+              </button>
+            </div>
+            
+            <div className="section-title">
+              <h2>Invalid URL</h2>
+              <p>The URL parameters are invalid. Please check the area and sub-area values.</p>
+            </div>
+            
+            <div className="no-societies">
+              <div className="no-societies-content">
+                <i className="fas fa-exclamation-triangle"></i>
+                <h3>Invalid Parameters</h3>
+                <p>The area key "{areaKey}" or sub-area ID "{subAreaId}" is invalid.</p>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => navigate('/')}
+                >
+                  Go to Home
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
   if (loading) {
     return (
       <PageTransition>
@@ -565,7 +799,15 @@ const Societies = () => {
           <div className="container">
             <div className="section-title">
               <h2>Loading Societies...</h2>
-              <div className="loading-spinner" style={{ margin: '50px auto' }}></div>
+              <div className="loading-spinner" style={{ 
+                margin: '50px auto',
+                width: '40px',
+                height: '40px',
+                border: '4px solid var(--border-light)',
+                borderTop: '4px solid var(--accent-color)',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }}></div>
             </div>
           </div>
         </div>
@@ -582,6 +824,7 @@ const Societies = () => {
             <button 
               className="back-btn"
               onClick={() => navigate(-1)}
+              title="Go back to previous page"
             >
               <i className="fas fa-arrow-left"></i>
               Back
@@ -590,17 +833,20 @@ const Societies = () => {
 
           {/* Page Header */}
           <div className="section-title">
-            <h2>{areaInfo.subAreaName} Societies</h2>
-            <p>{areaInfo.subAreaDescription}</p>
-            <div className="breadcrumb">
-              {/* <span>{areaInfo.areaName}</span> */}
-              {/* <i className="fas fa-chevron-right"></i> */}
-              {/* <span>{areaInfo.subAreaName}</span> */}
-            </div>
+            <h2>{areaInfo.subAreaName || 'Societies'}</h2>
+            <p>{areaInfo.subAreaDescription || 'Explore societies in this area'}</p>
+            {areaInfo.areaName && (
+              <div className="breadcrumb">
+                <span>{areaInfo.areaName}</span>
+                <i className="fas fa-chevron-right"></i>
+                <span>{areaInfo.subAreaName}</span>
+              </div>
+            )}
           </div>
 
           {error && (
             <div className="alert alert-error">
+              <i className="fas fa-exclamation-triangle"></i>
               {error}
             </div>
           )}
@@ -619,16 +865,23 @@ const Societies = () => {
                   style={{
                     animationDelay: `${index * 0.1}s`
                   }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSocietyClick(society, e);
+                    }
+                  }}
+                  aria-label={`View details for ${society.name}`}
                 >
                   <div className="society-image">
                     <img 
                       src={getSocietyImage(society)}
                       alt={`${society.name} Image`}
-                      onError={(e) => {
-                        e.target.src = '/assets/map.webp';
-                      }}
+                      onError={handleImageError}
+                      loading="lazy"
                     />
-                    {/* Image Counter Badge */}
                     {society.images && society.images.length > 0 && (
                       <div className="image-count-badge">
                         <i className="fas fa-images"></i>
@@ -641,7 +894,6 @@ const Societies = () => {
                     <h3>{society.name}</h3>
                     <p className="society-description">{society.description}</p>
                     
-                    {/* Amenities */}
                     {society.amenities && society.amenities.length > 0 && (
                       <div className="amenities-preview">
                         <div className="amenities-list">
@@ -660,17 +912,20 @@ const Societies = () => {
                       </div>
                     )}
                     
-                    {/* Contact Info */}
-                    {society.contact && (
-                      <div className="contact-preview">
-                        {society.contact.phone && (
-                          <span className="contact-item">
-                            <i className="fas fa-phone"></i>
-                            {society.contact.phone}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    {/* Open Button */}
+                    <div className="society-open-button">
+                      <button 
+                        className="btn btn-primary society-open-btn"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click
+                          handleSocietyClick(society, e);
+                        }}
+                        title={`View details for ${society.name}`}
+                      >
+                        <i className="fas fa-eye" style={{ marginRight: '5px' }}></i>
+                        Open
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -695,7 +950,7 @@ const Societies = () => {
           )}
         </div>
 
-        {/* Enhanced Society Modal */}
+        {/* Enhanced Responsive Society Modal */}
         <SocietyModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
@@ -703,6 +958,14 @@ const Societies = () => {
           cardPosition={cardPosition}
         />
       </div>
+
+      {/* Add CSS for loading spinner animation */}
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </PageTransition>
   );
 };

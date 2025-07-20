@@ -7,10 +7,13 @@
     "REACT_APP_API_URL": "https://property-dealing-qle8.onrender.com/api",
     "REACT_APP_BASE_URL": "https://property-dealing-frontend.vercel.app"
   },
+
+  
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
+
 }
+
+  
+

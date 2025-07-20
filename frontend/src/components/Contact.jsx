@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import useAreas from '../hooks/useAreas';
 import './Contact.css';
 
 const Contact = () => {
@@ -14,6 +15,13 @@ const Contact = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  
+  // Use areas hook with fallback enabled
+  const { areasArray, areasLoading, areasError } = useAreas({
+    autoLoad: true,
+    fallbackToDefault: true,
+    enableCache: false // Disable cache for debugging
+  });
 
   const handleChange = (e) => {
     setFormData({
@@ -49,16 +57,13 @@ const Contact = () => {
       
       console.log('📤 Submitting contact form:', formData);
       
-      // 🆕 UPDATED API URL - Use the new backend URL
-      const API_URL = 'https://property-dealing-qle8.onrender.com/api/contacts';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://property-dealing-qle8.onrender.com';
       
       // Debug logs
-      console.log('🔗 Environment REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
       console.log('🔗 Using API URL:', API_URL);
-      console.log('🔗 Environment:', process.env.NODE_ENV);
       
-      // Submit to backend API with explicit headers
-      const response = await axios.post(API_URL, {
+      // Submit to backend API
+      const response = await axios.post(`${API_URL}/api/contacts`, {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
@@ -68,8 +73,8 @@ const Contact = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 15000, // Increased timeout
-        withCredentials: false // Disable credentials for CORS
+        timeout: 15000,
+        withCredentials: false
       });
       
       console.log('✅ Contact form submitted successfully:', response.data);
@@ -93,12 +98,6 @@ const Contact = () => {
       
     } catch (error) {
       console.error('❌ Error submitting contact form:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        code: error.code
-      });
       
       if (error.response?.data?.message) {
         setSubmitError(error.response.data.message);
@@ -114,7 +113,7 @@ const Contact = () => {
     }
   };
 
-  // 🆕 FUNCTIONAL CONTACT METHODS
+  // Contact methods
   const handleEmailClick = (email) => {
     window.open(`mailto:${email}`, '_blank');
   };
@@ -124,13 +123,11 @@ const Contact = () => {
   };
 
   const handleLocationClick = () => {
-    // Open Google Maps with the address
     const address = "S-1 Skytech Matrott Market, Sector-76, Noida (U.P) 201307";
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     window.open(mapsUrl, '_blank');
   };
 
-  // 🆕 UPDATED CONTACT ITEMS with functional handlers
   const contactItems = [
     {
       icon: 'fas fa-envelope',
@@ -142,7 +139,7 @@ const Contact = () => {
       icon: 'fas fa-phone',
       title: 'Call Us',
       content: '+91-9811186086\n+91-9811186083',
-      onClick: () => handlePhoneClick('+91-9811186086') // Primary number
+      onClick: () => handlePhoneClick('+91-9811186086')
     },
     {
       icon: 'fas fa-map-marker-alt',
@@ -154,9 +151,46 @@ const Contact = () => {
       icon: 'fas fa-clock',
       title: 'Working Hours',
       content: 'Mon - Sat: 9:00 AM - 7:00 PM\nSunday: 10:00 AM - 5:00 PM',
-      onClick: null // No action for working hours
+      onClick: null
     }
   ];
+
+  // Render interest dropdown options
+  const renderInterestOptions = () => {
+    console.log('🔄 Rendering interest options:', { areasLoading, areasError, areasArray });
+    
+    if (areasLoading) {
+      return (
+        <option value="" disabled>
+          Loading areas...
+        </option>
+      );
+    }
+
+    if (areasError) {
+      return (
+        <>
+          <option value="">Select an area of interest</option>
+          {areasArray.map((area) => (
+            <option key={area.key} value={area.key}>
+              {area.displayName}
+            </option>
+          ))}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <option value="">Select an area of interest</option>
+        {areasArray.map((area) => (
+          <option key={area.key} value={area.key}>
+            {area.displayName}
+          </option>
+        ))}
+      </>
+    );
+  };
 
   return (
     <div className="contact-page">
@@ -192,7 +226,6 @@ const Contact = () => {
           <div className="contact-form">
             <h3>Send Us a Message</h3>
             
-            {/* Success Message */}
             {submitSuccess && (
               <div className="form-message success">
                 <i className="fas fa-check-circle"></i>
@@ -200,7 +233,6 @@ const Contact = () => {
               </div>
             )}
             
-            {/* Error Message */}
             {submitError && (
               <div className="form-message error">
                 <i className="fas fa-exclamation-circle"></i>
@@ -257,10 +289,14 @@ const Contact = () => {
                   onChange={handleChange}
                   disabled={submitting}
                 >
-                  <option value="">Select an area</option>
-                  <option value="noida">Noida</option>
-                  <option value="yamuna-expressway">Yamuna Expressway</option>
+                  {renderInterestOptions()}
                 </select>
+                {areasLoading && (
+                  <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                    <i className="fas fa-spinner fa-spin" style={{ marginRight: '5px' }}></i>
+                    Loading available areas...
+                  </small>
+                )}
               </div>
 
               <div className="form-group">
