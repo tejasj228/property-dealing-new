@@ -1,4 +1,4 @@
-// backend/server.js - FIXED VERSION
+// backend/server.js - FIXED: No Route Conflicts
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,42 +12,27 @@ const app = express();
 // Middleware
 app.use(morgan('combined'));
 
-// 🔧 SIMPLIFIED CORS Configuration
-const corsOptions = {
-  origin: [
-    // Production domains
-    'https://pawanbuildhome.com',
-    'https://www.pawanbuildhome.com',
-    
-    // Vercel domains (allow all vercel apps)
-    /.*\.vercel\.app$/,
-    
-    // Development
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-  ],
+// 🔧 SIMPLE CORS - Allow all origins for debugging
+app.use(cors({
+  origin: true, // Allow all origins temporarily  
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'Accept', 
-    'Origin', 
-    'X-Requested-With'
-  ],
-  optionsSuccessStatus: 200
-};
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
+}));
 
-// Apply CORS middleware
-app.use(cors(corsOptions));
-
-// Handle preflight requests explicitly
-app.options('*', cors(corsOptions));
+// Handle preflight requests
+app.options('*', cors());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Add request logging
+app.use((req, res, next) => {
+  console.log(`📝 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  console.log(`📝 Origin: ${req.headers.origin || 'No origin'}`);
+  next();
+});
 
 // Create uploads directory only in development
 if (process.env.NODE_ENV !== 'production') {
@@ -79,150 +64,215 @@ connectDB();
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  console.log('🔍 Health check requested');
   res.json({ 
     message: 'Backend is running!', 
     timestamp: new Date(),
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
     environment: process.env.NODE_ENV || 'development',
-    cors: 'enabled'
+    cors: 'enabled',
+    routes: {
+      'POST /api/contacts': 'Public contact form',
+      'GET /api/health': 'Health check',
+      'GET /api/properties': 'Public properties',
+      'GET /api/areas': 'Public areas'
+    }
   });
 });
 
-// 🔓 PUBLIC ROUTES (No authentication required)
-app.use('/api/auth', require('./routes/auth'));
+// 🔓 PUBLIC ROUTES FIRST (No authentication required)
 
-// 🔓 PUBLIC: Contact form submission - STANDALONE ROUTE
-app.post('/api/contacts', async (req, res) => {
-  try {
-    const { name, email, phone, interest, message } = req.body;
-    
-    console.log('📧 PUBLIC: Contact form submission received:', { 
-      name, 
-      email, 
-      phone,
-      interest: interest || 'Not specified',
-      origin: req.headers.origin,
-      userAgent: req.headers['user-agent'],
-      method: req.method
-    });
-    
-    // Validate required fields
-    if (!name || !email || !phone || !message) {
-      console.log('❌ Validation failed: Missing required fields');
-      return res.status(400).json({
-        success: false,
-        message: 'Name, email, phone, and message are required'
-      });
-    }
-    
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      console.log('❌ Validation failed: Invalid email format');
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a valid email address'
-      });
-    }
-    
-    const Contact = require('./models/Contact');
-    
-    const contact = new Contact({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone.trim(),
-      interest: interest?.trim() || '',
-      message: message.trim(),
-      source: 'website'
-    });
-    
-    await contact.save();
-    
-    console.log('✅ Contact inquiry saved successfully:', {
-      id: contact._id,
-      name: contact.name,
-      email: contact.email,
-      timestamp: contact.createdAt
-    });
-    
-    res.status(201).json({
-      success: true,
-      message: 'Thank you for your inquiry! We will get back to you soon.',
-      data: {
-        id: contact._id,
-        name: contact.name,
-        email: contact.email,
-        createdAt: contact.createdAt
-      }
-    });
-  } catch (error) {
-    console.error('❌ Error saving contact:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error submitting contact form. Please try again.',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
-  }
-});
+// Auth routes
+try {
+  app.use('/api/auth', require('./routes/auth'));
+  console.log('✅ Auth routes loaded');
+} catch (error) {
+  console.warn('⚠️ Auth routes not loaded:', error.message);
+}
+
+// Properties routes (PUBLIC READ)
+try {
+  const propertyRoutes = require('./routes/properties');
+  app.use('/api/properties', propertyRoutes);
+  console.log('✅ Properties routes loaded');
+} catch (error) {
+  console.warn('⚠️ Properties routes not loaded:', error.message);
+}
+
+// Areas routes (PUBLIC READ)
+try {
+  const areaRoutes = require('./routes/areas');
+  app.use('/api/areas', areaRoutes);
+  console.log('✅ Areas routes loaded');
+} catch (error) {
+  console.warn('⚠️ Areas routes not loaded:', error.message);
+}
+
+// Uploads routes (PUBLIC READ)
+try {
+  const uploadRoutes = require('./routes/uploads');
+  app.use('/api/uploads', uploadRoutes);
+  console.log('✅ Upload routes loaded');
+} catch (error) {
+  console.warn('⚠️ Upload routes not loaded:', error.message);
+}
 
 // Societies route (PUBLIC READ access)
-app.use('/api/societies', require('./routes/societies'));
+try {
+  app.use('/api/societies', require('./routes/societies'));
+  console.log('✅ Societies routes loaded');
+} catch (error) {
+  console.warn('⚠️ Societies routes not loaded:', error.message);
+}
 
-// Properties routes - GET public, POST/PUT/DELETE protected
-const propertyRoutes = require('./routes/properties');
-app.use('/api/properties', propertyRoutes);
-
-// Areas routes - GET public, POST/PUT/DELETE protected  
-const areaRoutes = require('./routes/areas');
-app.use('/api/areas', areaRoutes);
-
-// Uploads routes - GET public, POST/DELETE protected
-const uploadRoutes = require('./routes/uploads');
-app.use('/api/uploads', uploadRoutes);
-
-// 🔒 PROTECTED: Admin contact management routes
-const { authenticateToken, requireAdmin } = require('./middleware/auth');
-const contactRoutes = require('./routes/contacts');
-
-// Apply auth middleware only to non-POST contact routes
-app.use('/api/contacts', (req, res, next) => {
-  // Skip authentication for POST requests (already handled above)
-  if (req.method === 'POST') {
-    return next('route'); // Skip to next route
-  }
+// 🔧 CONTACT ROUTES - FIXED APPROACH
+// Load the contact routes but handle public vs protected separately
+try {
+  const contactRoutes = require('./routes/contacts');
   
-  // Apply authentication for all other methods
-  authenticateToken(req, res, (err) => {
-    if (err) return next(err);
-    requireAdmin(req, res, next);
+  // Mount contact routes with conditional authentication
+  app.use('/api/contacts', (req, res, next) => {
+    console.log(`📧 Contact route: ${req.method} ${req.originalUrl}`);
+    
+    // Allow POST without authentication (public contact form)
+    if (req.method === 'POST') {
+      console.log('📧 Public contact form submission - no auth required');
+      return next();
+    }
+    
+    // Require authentication for all other methods (admin features)
+    console.log('🔒 Admin contact route - authentication required');
+    try {
+      const { authenticateToken, requireAdmin } = require('./middleware/auth');
+      authenticateToken(req, res, (err) => {
+        if (err) return next(err);
+        requireAdmin(req, res, next);
+      });
+    } catch (authError) {
+      console.warn('⚠️ Auth middleware not available:', authError.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Authentication system not available'
+      });
+    }
+  }, contactRoutes);
+  
+  console.log('✅ Contact routes loaded with conditional auth');
+} catch (error) {
+  console.error('❌ Error loading contact routes:', error.message);
+  
+  // FALLBACK: If contact routes fail, create a simple standalone route
+  console.log('🔧 Creating fallback contact route...');
+  
+  app.post('/api/contacts', async (req, res) => {
+    try {
+      const { name, email, phone, interest, message } = req.body;
+      
+      console.log('📧 FALLBACK: Contact form submission:', { 
+        name, 
+        email, 
+        phone,
+        interest: interest || 'Not specified'
+      });
+
+      // Validate required fields
+      if (!name || !email || !phone || !message) {
+        return res.status(400).json({
+          success: false,
+          message: 'Name, email, phone, and message are required'
+        });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide a valid email address'
+        });
+      }
+
+      const Contact = require('./models/Contact');
+
+      const contact = new Contact({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        interest: interest?.trim() || '',
+        message: message.trim(),
+        source: 'website'
+      });
+
+      await contact.save();
+
+      console.log('✅ FALLBACK: Contact saved successfully:', {
+        id: contact._id,
+        name: contact.name,
+        email: contact.email
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Thank you for your inquiry! We will get back to you soon.',
+        data: {
+          id: contact._id,
+          name: contact.name,
+          email: contact.email,
+          createdAt: contact.createdAt
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ FALLBACK: Error saving contact:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error submitting contact form. Please try again.',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
   });
-}, contactRoutes);
+  
+  console.log('✅ Fallback contact route created');
+}
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Pawan Buildhome API Server',
     version: '1.0.0',
-    cors: 'Fixed and enabled',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date()
+    timestamp: new Date(),
+    status: 'Fixed - No Route Conflicts',
+    availableRoutes: [
+      'POST /api/contacts - Contact form submission (PUBLIC)',
+      'GET /api/health - Health check (PUBLIC)',
+      'GET /api/properties - Properties list (PUBLIC)',
+      'GET /api/areas - Areas list (PUBLIC)',
+      'GET /api/uploads/slider - Slider images (PUBLIC)'
+    ]
   });
 });
 
-// API 404 handler
+// 404 handler for API routes
 app.use('/api/*', (req, res) => {
   console.log(`❌ 404 - API endpoint not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ 
+    success: false,
     message: 'API endpoint not found',
     path: req.originalUrl,
     method: req.method,
+    availableRoutes: [
+      'POST /api/contacts',
+      'GET /api/health',
+      'GET /api/properties',
+      'GET /api/areas'
+    ],
     timestamp: new Date()
   });
 });
 
-// Error handling middleware
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Server Error:', err.stack);
+  console.error('❌ Global error handler:', err);
   
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
@@ -247,6 +297,7 @@ app.use((err, req, res, next) => {
   }
   
   res.status(500).json({ 
+    success: false,
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
   });
@@ -259,10 +310,13 @@ module.exports = app;
 if (process.env.RENDER === 'true' || process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
+    console.log('\n' + '='.repeat(50));
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 Server URL: http://localhost:${PORT}`);
-    console.log(`🔧 CORS: Fixed and enabled`);
-    console.log(`📋 API Health: http://localhost:${PORT}/api/health`);
-    console.log(`📧 Contact Form: POST /api/contacts (PUBLIC)`);
+    console.log(`🔧 CORS: Enabled for all origins (debug mode)`);
+    console.log(`📋 Health Check: GET http://localhost:${PORT}/api/health`);
+    console.log(`📧 Contact Form: POST http://localhost:${PORT}/api/contacts`);
+    console.log(`🛠️ Status: Route conflicts fixed`);
+    console.log('='.repeat(50) + '\n');
   });
 }
