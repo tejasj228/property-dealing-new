@@ -4,7 +4,6 @@ const Contact = require('../models/Contact');
 const { sendContactFormEmail, testEmailConfiguration } = require('../services/emailService');
 
 // 🔓 PUBLIC ROUTE: POST /api/contacts - Create new contact (from frontend form)
-// This route is called directly from the frontend and should NOT require authentication
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, interest, message } = req.body;
@@ -102,7 +101,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 🆕 NEW: Test email configuration endpoint
+// 🆕 NEW: Test email configuration endpoint - NO AUTH REQUIRED
 router.get('/test-email', async (req, res) => {
   try {
     console.log('🧪 Testing email configuration...');
@@ -113,13 +112,21 @@ router.get('/test-email', async (req, res) => {
       res.json({
         success: true,
         message: 'Email configuration is working correctly',
-        timestamp: new Date()
+        timestamp: new Date(),
+        config: {
+          user: process.env.GMAIL_USER || 'Not configured',
+          password: process.env.GMAIL_APP_PASSWORD ? '✅ Configured' : '❌ Not configured'
+        }
       });
     } else {
       res.status(500).json({
         success: false,
         message: 'Email configuration test failed',
-        timestamp: new Date()
+        timestamp: new Date(),
+        config: {
+          user: process.env.GMAIL_USER || 'Not configured',
+          password: process.env.GMAIL_APP_PASSWORD ? '✅ Configured' : '❌ Not configured'
+        }
       });
     }
   } catch (error) {
@@ -133,9 +140,7 @@ router.get('/test-email', async (req, res) => {
   }
 });
 
-// 🔒 ALL ROUTES BELOW ARE PROTECTED (require authentication)
-
-// GET /api/contacts - Get all contacts (with pagination and filtering)
+// 🔓 REMOVED AUTHENTICATION: GET /api/contacts - Get all contacts (for admin panel)
 router.get('/', async (req, res) => {
   try {
     const { 
@@ -215,7 +220,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/contacts/stats - Get contact statistics
+// 🔓 REMOVED AUTHENTICATION: GET /api/contacts/stats - Get contact statistics
 router.get('/stats', async (req, res) => {
   try {
     console.log('📊 Loading contact statistics...');
@@ -268,7 +273,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// GET /api/contacts/:id - Get single contact
+// 🔓 REMOVED AUTHENTICATION: GET /api/contacts/:id - Get single contact
 router.get('/:id', async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
@@ -294,7 +299,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/contacts/:id - Update contact (admin only)
+// 🔓 REMOVED AUTHENTICATION: PUT /api/contacts/:id - Update contact
 router.put('/:id', async (req, res) => {
   try {
     const { status, priority, notes, isRead } = req.body;
@@ -335,7 +340,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/contacts/:id/mark-read - Mark contact as read
+// 🔓 REMOVED AUTHENTICATION: PUT /api/contacts/:id/mark-read - Mark contact as read
 router.put('/:id/mark-read', async (req, res) => {
   try {
     const contact = await Contact.findByIdAndUpdate(
@@ -368,7 +373,7 @@ router.put('/:id/mark-read', async (req, res) => {
   }
 });
 
-// DELETE /api/contacts/:id - Delete contact
+// 🔓 REMOVED AUTHENTICATION: DELETE /api/contacts/:id - Delete contact
 router.delete('/:id', async (req, res) => {
   try {
     const contact = await Contact.findByIdAndDelete(req.params.id);
