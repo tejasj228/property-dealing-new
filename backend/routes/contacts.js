@@ -1,18 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const Contact = require('../models/Contact');
-const { sendContactFormEmail, testEmailConfiguration } = require('../services/emailService');
 
-// 🔓 PUBLIC ROUTE: POST /api/contacts - Create new contact (from frontend form)
+// Try to load email service, but don't fail if it's not available
+let sendContactFormEmail, testEmailConfiguration;
+try {
+  const emailService = require('../services/emailService');
+  sendContactFormEmail = emailService.sendContactFormEmail;
+  testEmailConfiguration = emailService.testEmailConfiguration;
+  console.log('✅ Email service loaded successfully');
+} catch (error) {
+  console.warn('⚠️ Email service not available:', error.message);
+  sendContactFormEmail = async () => ({ success: false, error: 'Email service not available' });
+  testEmailConfiguration = async () => false;
+}
+
+// 🔓 PUBLIC ROUTE: POST /api/contacts - Create new contact
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, interest, message } = req.body;
     
-    console.log('📧 Received contact form submission:', { name, email, phone, interest: interest || 'Not specified' });
+    console.log('📧 Contact form submission:', { name, email, phone, interest: interest || 'Not specified' });
     
     // Validate required fields
     if (!name || !email || !phone || !message) {
-      console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Name, email, phone, and message are required'
@@ -22,14 +33,13 @@ router.post('/', async (req, res) => {
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      console.log('❌ Validation failed: Invalid email format');
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid email address'
       });
     }
     
-    // Create new contact in database
+    // Create contact in database
     const contact = new Contact({
       name: name.trim(),
       email: email.trim().toLowerCase(),
@@ -40,19 +50,11 @@ router.post('/', async (req, res) => {
     });
     
     await contact.save();
+    console.log('✅ Contact saved to database:', contact._id);
     
-    console.log('✅ New contact inquiry saved to database:', {
-      id: contact._id,
-      name: contact.name,
-      email: contact.email
-    });
-    
-    // 🆕 NEW: Send email notification
+    // Try to send email notification
     let emailResult = { success: false, error: 'Email service not available' };
-    
     try {
-      console.log('📧 Attempting to send email notification...');
-      
       emailResult = await sendContactFormEmail({
         name: contact.name,
         email: contact.email,
@@ -62,19 +64,15 @@ router.post('/', async (req, res) => {
       });
       
       if (emailResult.success) {
-        console.log('✅ Email notification sent successfully');
+        console.log('✅ Email notification sent');
       } else {
-        console.error('❌ Email notification failed:', emailResult.error);
+        console.warn('⚠️ Email notification failed:', emailResult.error);
       }
     } catch (emailError) {
-      console.error('❌ Error sending email notification:', emailError);
-      emailResult = {
-        success: false,
-        error: emailError.message
-      };
+      console.warn('⚠️ Email send error:', emailError.message);
     }
     
-    // Return success response (don't fail if email fails)
+    // Return success (don't fail if email fails)
     res.status(201).json({
       success: true,
       message: 'Thank you for your inquiry! We will get back to you soon.',
@@ -84,7 +82,6 @@ router.post('/', async (req, res) => {
         email: contact.email,
         createdAt: contact.createdAt
       },
-      // Include email status for debugging
       emailNotification: {
         sent: emailResult.success,
         ...(emailResult.success ? { messageId: emailResult.messageId } : { error: emailResult.error })
@@ -101,46 +98,36 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 🆕 NEW: Test email configuration endpoint - NO AUTH REQUIRED
+// 🔓 PUBLIC ROUTE: GET /api/contacts/test-email - Test email config
 router.get('/test-email', async (req, res) => {
   try {
     console.log('🧪 Testing email configuration...');
     
     const configTest = await testEmailConfiguration();
     
-    if (configTest) {
-      res.json({
-        success: true,
-        message: 'Email configuration is working correctly',
-        timestamp: new Date(),
-        config: {
-          user: process.env.GMAIL_USER || 'Not configured',
-          password: process.env.GMAIL_APP_PASSWORD ? '✅ Configured' : '❌ Not configured'
-        }
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Email configuration test failed',
-        timestamp: new Date(),
-        config: {
-          user: process.env.GMAIL_USER || 'Not configured',
-          password: process.env.GMAIL_APP_PASSWORD ? '✅ Configured' : '❌ Not configured'
-        }
-      });
-    }
+    res.json({
+      success: configTest,
+      message: configTest ? 'Email configuration is working' : 'Email configuration test failed',
+      config: {
+        user: process.env.GMAIL_USER || 'Not configured',
+        password: process.env.GMAIL_APP_PASSWORD ? '✅ Configured' : '❌ Not configured',
+        nodemailer: sendContactFormEmail !== undefined ? '✅ Available' : '❌ Not available'
+      },
+      timestamp: new Date()
+    });
   } catch (error) {
-    console.error('❌ Email configuration test error:', error);
+    console.error('❌ Email test error:', error);
     res.status(500).json({
       success: false,
       message: 'Error testing email configuration',
-      error: error.message,
-      timestamp: new Date()
+      error: error.message
     });
   }
 });
 
-// 🔓 REMOVED AUTHENTICATION: GET /api/contacts - Get all contacts (for admin panel)
+// 🔒 PROTECTED ROUTES - Require authentication
+
+// GET /api/contacts - Get all contacts
 router.get('/', async (req, res) => {
   try {
     const { 
@@ -152,16 +139,14 @@ router.get('/', async (req, res) => {
       search 
     } = req.query;
 
-    console.log('📊 Loading contacts with filters:', { page, limit, status, priority, isRead, search });
+    console.log('📊 Loading contacts for admin...');
 
-    // Build filter object
+    // Build filter
     let filter = {};
-    
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
     if (isRead !== undefined) filter.isRead = isRead === 'true';
     
-    // Search in name, email, or message
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -170,20 +155,16 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    // Get contacts with pagination
     const contacts = await Contact.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
     
-    // Get total count for pagination
     const totalContacts = await Contact.countDocuments(filter);
     const totalPages = Math.ceil(totalContacts / parseInt(limit));
     
-    // Get counts by status for dashboard
     const statusCounts = await Contact.aggregate([
       { $group: { _id: '$status', count: { $sum: 1 } } }
     ]);
@@ -220,16 +201,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 🔓 REMOVED AUTHENTICATION: GET /api/contacts/stats - Get contact statistics
+// GET /api/contacts/stats - Get contact statistics
 router.get('/stats', async (req, res) => {
   try {
-    console.log('📊 Loading contact statistics...');
-    
     const totalContacts = await Contact.countDocuments();
     const unreadCount = await Contact.countDocuments({ isRead: false });
     const newCount = await Contact.countDocuments({ status: 'new' });
     
-    // Get contacts from last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentCount = await Contact.countDocuments({ 
@@ -243,8 +221,6 @@ router.get('/stats', async (req, res) => {
     const priorityCounts = await Contact.aggregate([
       { $group: { _id: '$priority', count: { $sum: 1 } } }
     ]);
-    
-    console.log('✅ Contact statistics loaded');
     
     res.json({
       success: true,
@@ -264,7 +240,7 @@ router.get('/stats', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error fetching contact stats:', error);
+    console.error('❌ Error fetching stats:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching contact statistics',
@@ -273,7 +249,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// 🔓 REMOVED AUTHENTICATION: GET /api/contacts/:id - Get single contact
+// GET /api/contacts/:id - Get single contact
 router.get('/:id', async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
@@ -299,7 +275,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// 🔓 REMOVED AUTHENTICATION: PUT /api/contacts/:id - Update contact
+// PUT /api/contacts/:id - Update contact
 router.put('/:id', async (req, res) => {
   try {
     const { status, priority, notes, isRead } = req.body;
@@ -323,8 +299,6 @@ router.put('/:id', async (req, res) => {
       });
     }
     
-    console.log('✅ Contact updated:', contact._id);
-    
     res.json({
       success: true,
       message: 'Contact updated successfully',
@@ -340,7 +314,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// 🔓 REMOVED AUTHENTICATION: PUT /api/contacts/:id/mark-read - Mark contact as read
+// PUT /api/contacts/:id/mark-read - Mark as read
 router.put('/:id/mark-read', async (req, res) => {
   try {
     const contact = await Contact.findByIdAndUpdate(
@@ -356,15 +330,13 @@ router.put('/:id/mark-read', async (req, res) => {
       });
     }
     
-    console.log('✅ Contact marked as read:', contact._id);
-    
     res.json({
       success: true,
       message: 'Contact marked as read',
       data: contact
     });
   } catch (error) {
-    console.error('❌ Error marking contact as read:', error);
+    console.error('❌ Error marking as read:', error);
     res.status(500).json({
       success: false,
       message: 'Error marking contact as read',
@@ -373,7 +345,7 @@ router.put('/:id/mark-read', async (req, res) => {
   }
 });
 
-// 🔓 REMOVED AUTHENTICATION: DELETE /api/contacts/:id - Delete contact
+// DELETE /api/contacts/:id - Delete contact
 router.delete('/:id', async (req, res) => {
   try {
     const contact = await Contact.findByIdAndDelete(req.params.id);
@@ -384,8 +356,6 @@ router.delete('/:id', async (req, res) => {
         message: 'Contact not found'
       });
     }
-    
-    console.log('✅ Contact deleted:', contact._id);
     
     res.json({
       success: true,
