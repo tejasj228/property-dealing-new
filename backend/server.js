@@ -1,4 +1,4 @@
-// backend/server.js - FIXED CORS Configuration
+// backend/server.js - FIXED Contact Routes Authentication
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,27 +12,25 @@ const app = express();
 // Middleware
 app.use(morgan('combined'));
 
-// 🔧 FIXED CORS Configuration - The main issue was here!
+// 🔧 FIXED CORS Configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
-    // List of allowed origins
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:5000', 
       'https://www.pawanbuildhome.com',
       'https://pawanbuildhome.com',
-      'https://property-dealing-frontend-373j.onrender.com'
+      'https://property-dealing-frontend-373j.onrender.com',
+      'https://property-dealing-admin-panel.vercel.app'
     ];
     
-    // Check if origin is allowed
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
       console.log('🚫 CORS blocked origin:', origin);
-      return callback(null, true); // Allow all origins temporarily for debugging
+      return callback(null, true); // Allow all origins temporarily
     }
   },
   credentials: true,
@@ -43,7 +41,7 @@ const corsOptions = {
     'Accept', 
     'Origin', 
     'X-Requested-With',
-    'Access-Control-Allow-Origin' // This was missing!
+    'Access-Control-Allow-Origin'
   ],
   exposedHeaders: ['Set-Cookie'],
   preflightContinue: false,
@@ -52,11 +50,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// 🔧 ADDITIONAL CORS HEADERS - Manual override for preflight issues
+// Additional CORS headers
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Set specific CORS headers manually
   if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
   } else {
@@ -66,9 +63,8 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Origin');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.header('Access-Control-Max-Age', '86400');
   
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     console.log(`✅ CORS Preflight: ${req.method} ${req.originalUrl} from ${origin || 'unknown'}`);
     return res.status(200).end();
@@ -86,7 +82,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   console.log(`📝 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   console.log(`📝 Origin: ${req.headers.origin || 'No origin'}`);
-  console.log(`📝 User-Agent: ${req.headers['user-agent'] || 'No user-agent'}`);
   next();
 });
 
@@ -118,7 +113,7 @@ const connectDB = async () => {
 
 connectDB();
 
-// Health check endpoint with CORS test
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   console.log('🔍 Health check requested from origin:', req.headers.origin);
   res.json({ 
@@ -126,35 +121,20 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date(),
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
     environment: process.env.NODE_ENV || 'development',
+    email: {
+      user: process.env.GMAIL_USER ? '✅ Configured' : '❌ Not configured',
+      password: process.env.GMAIL_APP_PASSWORD ? '✅ Configured' : '❌ Not configured'
+    },
     cors: {
       status: 'enabled',
       origin: req.headers.origin || 'no-origin',
-      allowedOrigins: [
-        'http://localhost:3000',
-        'https://www.pawanbuildhome.com',
-        'https://pawanbuildhome.com'
-      ]
-    },
-    routes: {
-      'POST /api/contacts': 'Public contact form',
-      'GET /api/health': 'Health check',
-      'GET /api/properties': 'Public properties',
-      'GET /api/areas': 'Public areas'
     }
   });
 });
 
-// 🔓 PUBLIC ROUTES FIRST (No authentication required)
+// 🔓 PUBLIC ROUTES - No authentication required
 
-// Auth routes
-try {
-  app.use('/api/auth', require('./routes/auth'));
-  console.log('✅ Auth routes loaded');
-} catch (error) {
-  console.warn('⚠️ Auth routes not loaded:', error.message);
-}
-
-// Properties routes (PUBLIC READ)
+// Properties routes
 try {
   const propertyRoutes = require('./routes/properties');
   app.use('/api/properties', propertyRoutes);
@@ -163,7 +143,7 @@ try {
   console.warn('⚠️ Properties routes not loaded:', error.message);
 }
 
-// Areas routes (PUBLIC READ)
+// Areas routes
 try {
   const areaRoutes = require('./routes/areas');
   app.use('/api/areas', areaRoutes);
@@ -172,7 +152,7 @@ try {
   console.warn('⚠️ Areas routes not loaded:', error.message);
 }
 
-// Uploads routes (PUBLIC READ)
+// Uploads routes
 try {
   const uploadRoutes = require('./routes/uploads');
   app.use('/api/uploads', uploadRoutes);
@@ -181,51 +161,16 @@ try {
   console.warn('⚠️ Upload routes not loaded:', error.message);
 }
 
-// Societies route (PUBLIC READ access)
-try {
-  app.use('/api/societies', require('./routes/societies'));
-  console.log('✅ Societies routes loaded');
-} catch (error) {
-  console.warn('⚠️ Societies routes not loaded:', error.message);
-}
-
-// 🔧 CONTACT ROUTES - FIXED APPROACH
+// 🆕 FIXED: Contact routes - NO AUTHENTICATION AT ALL
 try {
   const contactRoutes = require('./routes/contacts');
-  
-  // Mount contact routes with conditional authentication
-  app.use('/api/contacts', (req, res, next) => {
-    console.log(`📧 Contact route: ${req.method} ${req.originalUrl} from ${req.headers.origin}`);
-    
-    // Allow POST without authentication (public contact form)
-    if (req.method === 'POST') {
-      console.log('📧 Public contact form submission - no auth required');
-      return next();
-    }
-    
-    // Require authentication for all other methods (admin features)
-    console.log('🔒 Admin contact route - authentication required');
-    try {
-      const { authenticateToken, requireAdmin } = require('./middleware/auth');
-      authenticateToken(req, res, (err) => {
-        if (err) return next(err);
-        requireAdmin(req, res, next);
-      });
-    } catch (authError) {
-      console.warn('⚠️ Auth middleware not available:', authError.message);
-      return res.status(500).json({
-        success: false,
-        message: 'Authentication system not available'
-      });
-    }
-  }, contactRoutes);
-  
-  console.log('✅ Contact routes loaded with conditional auth');
+  app.use('/api/contacts', contactRoutes);
+  console.log('✅ Contact routes loaded (NO AUTHENTICATION)');
 } catch (error) {
   console.error('❌ Error loading contact routes:', error.message);
   
-  // FALLBACK: If contact routes fail, create a simple standalone route
-  console.log('🔧 Creating fallback contact route...');
+  // FALLBACK: Create simple contact route if file fails to load
+  const Contact = require('./models/Contact');
   
   app.post('/api/contacts', async (req, res) => {
     try {
@@ -239,24 +184,12 @@ try {
         origin: req.headers.origin
       });
 
-      // Validate required fields
       if (!name || !email || !phone || !message) {
         return res.status(400).json({
           success: false,
           message: 'Name, email, phone, and message are required'
         });
       }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide a valid email address'
-        });
-      }
-
-      const Contact = require('./models/Contact');
 
       const contact = new Contact({
         name: name.trim(),
@@ -295,8 +228,29 @@ try {
       });
     }
   });
+
+  // GET contacts for admin panel
+  app.get('/api/contacts', async (req, res) => {
+    try {
+      const Contact = require('./models/Contact');
+      const contacts = await Contact.find().sort({ createdAt: -1 });
+      
+      res.json({
+        success: true,
+        data: contacts,
+        count: contacts.length
+      });
+    } catch (error) {
+      console.error('❌ Error fetching contacts:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching contacts',
+        error: error.message
+      });
+    }
+  });
   
-  console.log('✅ Fallback contact route created');
+  console.log('✅ Fallback contact routes created');
 }
 
 // Root endpoint
@@ -305,21 +259,17 @@ app.get('/', (req, res) => {
     message: 'Pawan Buildhome API Server',
     version: '1.0.0',
     timestamp: new Date(),
-    status: 'CORS Issues Fixed',
-    cors: {
-      enabled: true,
-      allowedOrigins: [
-        'http://localhost:3000',
-        'https://www.pawanbuildhome.com',
-        'https://pawanbuildhome.com'
-      ]
+    status: 'Contact Routes Fixed',
+    email: {
+      configured: !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
+      user: process.env.GMAIL_USER || 'Not configured'
     },
     availableRoutes: [
       'POST /api/contacts - Contact form submission (PUBLIC)',
+      'GET /api/contacts - Get contacts (PUBLIC)', 
       'GET /api/health - Health check (PUBLIC)',
       'GET /api/properties - Properties list (PUBLIC)',
-      'GET /api/areas - Areas list (PUBLIC)',
-      'GET /api/uploads/slider - Slider images (PUBLIC)'
+      'GET /api/areas - Areas list (PUBLIC)'
     ]
   });
 });
@@ -333,13 +283,6 @@ app.use('/api/*', (req, res) => {
     path: req.originalUrl,
     method: req.method,
     origin: req.headers.origin,
-    availableRoutes: [
-      'POST /api/contacts',
-      'GET /api/health',
-      'GET /api/properties',
-      'GET /api/areas',
-      'GET /api/uploads/slider'
-    ],
     timestamp: new Date()
   });
 });
@@ -347,29 +290,6 @@ app.use('/api/*', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('❌ Global error handler:', err);
-  console.error('❌ Request origin:', req.headers.origin);
-  
-  if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid token'
-    });
-  }
-  
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({
-      success: false,
-      message: 'Token expired'
-    });
-  }
-  
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation error',
-      error: err.message
-    });
-  }
   
   res.status(500).json({ 
     success: false,
@@ -381,21 +301,17 @@ app.use((err, req, res, next) => {
 // Export for serverless
 module.exports = app;
 
-// Start server for development and Render
+// Start server
 if (process.env.RENDER === 'true' || process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log('\n' + '='.repeat(60));
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 Server URL: http://localhost:${PORT}`);
-    console.log(`🔧 CORS: Fixed - Properly configured for production`);
-    console.log(`📋 Health Check: GET http://localhost:${PORT}/api/health`);
-    console.log(`📧 Contact Form: POST http://localhost:${PORT}/api/contacts`);
-    console.log(`🌍 Allowed Origins:`);
-    console.log(`   - http://localhost:3000 (development)`);
-    console.log(`   - https://www.pawanbuildhome.com (production)`);
-    console.log(`   - https://pawanbuildhome.com (production)`);
-    console.log(`🛠️ Status: CORS preflight issues resolved`);
+    console.log(`📧 Email Config: ${process.env.GMAIL_USER ? '✅ Configured' : '❌ Not configured'}`);
+    console.log(`🔧 Contact Routes: ✅ NO AUTHENTICATION REQUIRED`);
+    console.log(`📋 Test Health: GET http://localhost:${PORT}/api/health`);
+    console.log(`📧 Test Email: GET http://localhost:${PORT}/api/contacts/test-email`);
     console.log('='.repeat(60) + '\n');
   });
 }

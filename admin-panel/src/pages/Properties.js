@@ -611,6 +611,15 @@ function Properties() {
 
   const handleSave = async () => {
     try {
+      // 🆕 FIXED: Clean links before saving
+      const cleanLinks = {};
+      if (formData.links.acres99 && formData.links.acres99.trim()) {
+        cleanLinks.acres99 = formData.links.acres99.trim();
+      }
+      if (formData.links.magicbricks && formData.links.magicbricks.trim()) {
+        cleanLinks.magicbricks = formData.links.magicbricks.trim();
+      }
+
       const propertyData = {
         ...formData,
         beds: parseInt(formData.beds) || 0,
@@ -619,11 +628,10 @@ function Properties() {
           ? formData.features.split(',').map(f => f.trim()).filter(f => f)
           : [],
         // 🆕 UPDATED: Only include links if they have values
-        links: {
-          ...(formData.links.acres99 && { acres99: formData.links.acres99 }),
-          ...(formData.links.magicbricks && { magicbricks: formData.links.magicbricks }),
-        }
+        ...(Object.keys(cleanLinks).length > 0 && { links: cleanLinks })
       };
+
+      console.log('💾 Saving property with clean data:', propertyData);
 
       if (editingProperty) {
         await propertyAPI.update(editingProperty._id, propertyData);
