@@ -1,4 +1,4 @@
-// backend/server.js - FIXED: No Route Conflicts
+// backend/server.js - FIXED CORS Configuration for Production
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,25 +12,71 @@ const app = express();
 // Middleware
 app.use(morgan('combined'));
 
-// 🔧 SIMPLE CORS - Allow all origins for debugging
-app.use(cors({
-  origin: true, // Allow all origins temporarily  
+// 🔧 FIXED: Proper CORS Configuration for Production
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',                              // Local development
+      'http://127.0.0.1:3000',                             // Alternative local
+      'https://www.pawanbuildhome.com',                     // Production domain
+      'https://pawanbuildhome.com',                         // Production without www
+      'https://property-dealing-frontend-373j.onrender.com' // If you have a separate frontend deploy
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      console.log(`❌ CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Accept', 
+    'Origin', 
+    'X-Requested-With',
+    'Cache-Control',
+    'Pragma'
+  ],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  maxAge: 86400 // Cache preflight for 24 hours
+};
 
-// Handle preflight requests
-app.options('*', cors());
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', (req, res) => {
+  console.log(`✈️ Preflight request from: ${req.headers.origin}`);
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With,Cache-Control,Pragma');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  res.status(200).send();
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Add request logging
+// Add request logging with CORS info
 app.use((req, res, next) => {
   console.log(`📝 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   console.log(`📝 Origin: ${req.headers.origin || 'No origin'}`);
+  console.log(`📝 User-Agent: ${req.headers['user-agent']?.substring(0, 100) || 'Unknown'}`);
+  
+  // Add CORS headers to all responses
+  if (req.headers.origin) {
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
   next();
 });
 
@@ -62,7 +108,7 @@ const connectDB = async () => {
 
 connectDB();
 
-// Health check endpoint
+// Health check endpoint with CORS info
 app.get('/api/health', (req, res) => {
   console.log('🔍 Health check requested');
   res.json({ 
@@ -70,12 +116,21 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date(),
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
     environment: process.env.NODE_ENV || 'development',
-    cors: 'enabled',
+    cors: {
+      enabled: true,
+      origin: req.headers.origin || 'No origin',
+      allowedOrigins: [
+        'http://localhost:3000',
+        'https://www.pawanbuildhome.com',
+        'https://pawanbuildhome.com'
+      ]
+    },
     routes: {
       'POST /api/contacts': 'Public contact form',
       'GET /api/health': 'Health check',
       'GET /api/properties': 'Public properties',
-      'GET /api/areas': 'Public areas'
+      'GET /api/areas': 'Public areas',
+      'GET /api/uploads/slider': 'Slider images'
     }
   });
 });
@@ -241,13 +296,18 @@ app.get('/', (req, res) => {
     message: 'Pawan Buildhome API Server',
     version: '1.0.0',
     timestamp: new Date(),
-    status: 'Fixed - No Route Conflicts',
+    status: 'CORS Fixed for Production',
+    cors: {
+      origin: req.headers.origin,
+      allowed: true
+    },
     availableRoutes: [
       'POST /api/contacts - Contact form submission (PUBLIC)',
       'GET /api/health - Health check (PUBLIC)',
       'GET /api/properties - Properties list (PUBLIC)',
       'GET /api/areas - Areas list (PUBLIC)',
-      'GET /api/uploads/slider - Slider images (PUBLIC)'
+      'GET /api/uploads/slider - Slider images (PUBLIC)',
+      'GET /api/societies/:area/:subarea - Societies (PUBLIC)'
     ]
   });
 });
@@ -260,11 +320,13 @@ app.use('/api/*', (req, res) => {
     message: 'API endpoint not found',
     path: req.originalUrl,
     method: req.method,
+    origin: req.headers.origin,
     availableRoutes: [
       'POST /api/contacts',
       'GET /api/health',
       'GET /api/properties',
-      'GET /api/areas'
+      'GET /api/areas',
+      'GET /api/uploads/slider'
     ],
     timestamp: new Date()
   });
@@ -296,6 +358,15 @@ app.use((err, req, res, next) => {
     });
   }
   
+  // Handle CORS errors
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({
+      success: false,
+      message: 'CORS policy violation',
+      error: 'Origin not allowed'
+    });
+  }
+  
   res.status(500).json({ 
     success: false,
     message: 'Something went wrong!',
@@ -310,13 +381,15 @@ module.exports = app;
 if (process.env.RENDER === 'true' || process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log('\n' + '='.repeat(50));
+    console.log('\n' + '='.repeat(60));
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 Server URL: http://localhost:${PORT}`);
-    console.log(`🔧 CORS: Enabled for all origins (debug mode)`);
-    console.log(`📋 Health Check: GET http://localhost:${PORT}/api/health`);
-    console.log(`📧 Contact Form: POST http://localhost:${PORT}/api/contacts`);
-    console.log(`🛠️ Status: Route conflicts fixed`);
-    console.log('='.repeat(50) + '\n');
+    console.log(`🔧 CORS: Fixed for production domain`);
+    console.log(`🌍 Production URL: https://property-dealing-qle8.onrender.com`);
+    console.log(`🏠 Frontend URL: https://www.pawanbuildhome.com`);
+    console.log(`📋 Health Check: GET /api/health`);
+    console.log(`📧 Contact Form: POST /api/contacts`);
+    console.log(`🛠️ Status: CORS issues resolved`);
+    console.log('='.repeat(60) + '\n');
   });
 }
