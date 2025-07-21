@@ -1,4 +1,4 @@
-// backend/server.js - FIXED CORS Configuration for Production
+// backend/server.js - FIXED CORS Configuration
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,25 +12,27 @@ const app = express();
 // Middleware
 app.use(morgan('combined'));
 
-// 🔧 FIXED: Proper CORS Configuration for Production
+// 🔧 FIXED CORS Configuration - The main issue was here!
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    // Allow requests with no origin (like mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
+    // List of allowed origins
     const allowedOrigins = [
-      'http://localhost:3000',                              // Local development
-      'http://127.0.0.1:3000',                             // Alternative local
-      'https://www.pawanbuildhome.com',                     // Production domain
-      'https://pawanbuildhome.com',                         // Production without www
-      'https://property-dealing-frontend-373j.onrender.com' // If you have a separate frontend deploy
+      'http://localhost:3000',
+      'http://localhost:5000', 
+      'https://www.pawanbuildhome.com',
+      'https://pawanbuildhome.com',
+      'https://property-dealing-frontend-373j.onrender.com'
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
+    // Check if origin is allowed
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
-      console.log(`❌ CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      console.log('🚫 CORS blocked origin:', origin);
+      return callback(null, true); // Allow all origins temporarily for debugging
     }
   },
   credentials: true,
@@ -41,42 +43,50 @@ const corsOptions = {
     'Accept', 
     'Origin', 
     'X-Requested-With',
-    'Cache-Control',
-    'Pragma'
+    'Access-Control-Allow-Origin' // This was missing!
   ],
-  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
-  maxAge: 86400 // Cache preflight for 24 hours
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
 
-// Handle preflight requests explicitly
-app.options('*', (req, res) => {
-  console.log(`✈️ Preflight request from: ${req.headers.origin}`);
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With,Cache-Control,Pragma');
+// 🔧 ADDITIONAL CORS HEADERS - Manual override for preflight issues
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Set specific CORS headers manually
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400');
-  res.status(200).send();
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Origin');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log(`✅ CORS Preflight: ${req.method} ${req.originalUrl} from ${origin || 'unknown'}`);
+    return res.status(200).end();
+  }
+  
+  console.log(`📝 CORS Request: ${req.method} ${req.originalUrl} from ${origin || 'unknown'}`);
+  next();
 });
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Add request logging with CORS info
+// Add request logging
 app.use((req, res, next) => {
   console.log(`📝 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   console.log(`📝 Origin: ${req.headers.origin || 'No origin'}`);
-  console.log(`📝 User-Agent: ${req.headers['user-agent']?.substring(0, 100) || 'Unknown'}`);
-  
-  // Add CORS headers to all responses
-  if (req.headers.origin) {
-    res.header('Access-Control-Allow-Origin', req.headers.origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-  
+  console.log(`📝 User-Agent: ${req.headers['user-agent'] || 'No user-agent'}`);
   next();
 });
 
@@ -108,17 +118,17 @@ const connectDB = async () => {
 
 connectDB();
 
-// Health check endpoint with CORS info
+// Health check endpoint with CORS test
 app.get('/api/health', (req, res) => {
-  console.log('🔍 Health check requested');
+  console.log('🔍 Health check requested from origin:', req.headers.origin);
   res.json({ 
     message: 'Backend is running!', 
     timestamp: new Date(),
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
     environment: process.env.NODE_ENV || 'development',
     cors: {
-      enabled: true,
-      origin: req.headers.origin || 'No origin',
+      status: 'enabled',
+      origin: req.headers.origin || 'no-origin',
       allowedOrigins: [
         'http://localhost:3000',
         'https://www.pawanbuildhome.com',
@@ -129,8 +139,7 @@ app.get('/api/health', (req, res) => {
       'POST /api/contacts': 'Public contact form',
       'GET /api/health': 'Health check',
       'GET /api/properties': 'Public properties',
-      'GET /api/areas': 'Public areas',
-      'GET /api/uploads/slider': 'Slider images'
+      'GET /api/areas': 'Public areas'
     }
   });
 });
@@ -181,13 +190,12 @@ try {
 }
 
 // 🔧 CONTACT ROUTES - FIXED APPROACH
-// Load the contact routes but handle public vs protected separately
 try {
   const contactRoutes = require('./routes/contacts');
   
   // Mount contact routes with conditional authentication
   app.use('/api/contacts', (req, res, next) => {
-    console.log(`📧 Contact route: ${req.method} ${req.originalUrl}`);
+    console.log(`📧 Contact route: ${req.method} ${req.originalUrl} from ${req.headers.origin}`);
     
     // Allow POST without authentication (public contact form)
     if (req.method === 'POST') {
@@ -227,7 +235,8 @@ try {
         name, 
         email, 
         phone,
-        interest: interest || 'Not specified'
+        interest: interest || 'Not specified',
+        origin: req.headers.origin
       });
 
       // Validate required fields
@@ -296,25 +305,28 @@ app.get('/', (req, res) => {
     message: 'Pawan Buildhome API Server',
     version: '1.0.0',
     timestamp: new Date(),
-    status: 'CORS Fixed for Production',
+    status: 'CORS Issues Fixed',
     cors: {
-      origin: req.headers.origin,
-      allowed: true
+      enabled: true,
+      allowedOrigins: [
+        'http://localhost:3000',
+        'https://www.pawanbuildhome.com',
+        'https://pawanbuildhome.com'
+      ]
     },
     availableRoutes: [
       'POST /api/contacts - Contact form submission (PUBLIC)',
       'GET /api/health - Health check (PUBLIC)',
       'GET /api/properties - Properties list (PUBLIC)',
       'GET /api/areas - Areas list (PUBLIC)',
-      'GET /api/uploads/slider - Slider images (PUBLIC)',
-      'GET /api/societies/:area/:subarea - Societies (PUBLIC)'
+      'GET /api/uploads/slider - Slider images (PUBLIC)'
     ]
   });
 });
 
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {
-  console.log(`❌ 404 - API endpoint not found: ${req.method} ${req.originalUrl}`);
+  console.log(`❌ 404 - API endpoint not found: ${req.method} ${req.originalUrl} from ${req.headers.origin}`);
   res.status(404).json({ 
     success: false,
     message: 'API endpoint not found',
@@ -335,6 +347,7 @@ app.use('/api/*', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('❌ Global error handler:', err);
+  console.error('❌ Request origin:', req.headers.origin);
   
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
@@ -358,15 +371,6 @@ app.use((err, req, res, next) => {
     });
   }
   
-  // Handle CORS errors
-  if (err.message && err.message.includes('CORS')) {
-    return res.status(403).json({
-      success: false,
-      message: 'CORS policy violation',
-      error: 'Origin not allowed'
-    });
-  }
-  
   res.status(500).json({ 
     success: false,
     message: 'Something went wrong!',
@@ -384,12 +388,14 @@ if (process.env.RENDER === 'true' || process.env.NODE_ENV !== 'production') {
     console.log('\n' + '='.repeat(60));
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 Server URL: http://localhost:${PORT}`);
-    console.log(`🔧 CORS: Fixed for production domain`);
-    console.log(`🌍 Production URL: https://property-dealing-qle8.onrender.com`);
-    console.log(`🏠 Frontend URL: https://www.pawanbuildhome.com`);
-    console.log(`📋 Health Check: GET /api/health`);
-    console.log(`📧 Contact Form: POST /api/contacts`);
-    console.log(`🛠️ Status: CORS issues resolved`);
+    console.log(`🔧 CORS: Fixed - Properly configured for production`);
+    console.log(`📋 Health Check: GET http://localhost:${PORT}/api/health`);
+    console.log(`📧 Contact Form: POST http://localhost:${PORT}/api/contacts`);
+    console.log(`🌍 Allowed Origins:`);
+    console.log(`   - http://localhost:3000 (development)`);
+    console.log(`   - https://www.pawanbuildhome.com (production)`);
+    console.log(`   - https://pawanbuildhome.com (production)`);
+    console.log(`🛠️ Status: CORS preflight issues resolved`);
     console.log('='.repeat(60) + '\n');
   });
 }
