@@ -49,16 +49,17 @@ const propertySchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  // 🆕 UPDATED: Links are now optional - removed required: true
   links: {
     acres99: {
       type: String,
-      trim: true,
-      required: true
+      trim: true
+      // removed required: true
     },
     magicbricks: {
       type: String,
-      trim: true,
-      required: true
+      trim: true
+      // removed required: true
     }
   },
   features: [{
@@ -93,7 +94,41 @@ propertySchema.pre('save', function(next) {
     this.propertyType = 'residential';
   }
   
+  // 🆕 NEW: Clean up empty links
+  if (this.links) {
+    // Remove empty link fields
+    if (!this.links.acres99 || this.links.acres99.trim() === '') {
+      this.links.acres99 = undefined;
+    }
+    if (!this.links.magicbricks || this.links.magicbricks.trim() === '') {
+      this.links.magicbricks = undefined;
+    }
+    
+    // If both links are empty, remove the links object
+    if (!this.links.acres99 && !this.links.magicbricks) {
+      this.links = undefined;
+    }
+  }
+  
   next();
 });
+
+// 🆕 NEW: Virtual field to check if property has external links
+propertySchema.virtual('hasExternalLinks').get(function() {
+  return this.links && (this.links.acres99 || this.links.magicbricks);
+});
+
+// 🆕 NEW: Virtual field to get external links count
+propertySchema.virtual('externalLinksCount').get(function() {
+  if (!this.links) return 0;
+  let count = 0;
+  if (this.links.acres99) count++;
+  if (this.links.magicbricks) count++;
+  return count;
+});
+
+// Ensure virtual fields are included in JSON output
+propertySchema.set('toJSON', { virtuals: true });
+propertySchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('Property', propertySchema);

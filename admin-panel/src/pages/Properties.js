@@ -62,14 +62,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { propertyAPI } from '../services/api';
+import { propertyAPI, areaAPI } from '../services/api';
 import ImageUpload from '../components/ImageUpload/ImageUpload';
 
-const areaOptions = [
-  { value: 'central-noida', label: 'Central Noida' },
-  { value: 'noida-expressway', label: 'Noida Expressway' },
-  { value: 'yamuna-expressway', label: 'Yamuna Expressway' },
-];
+// 🆕 REMOVED: Hardcoded area options - now loaded dynamically from API
 
 // 🆕 NEW: Property Type Options
 const propertyTypeOptions = [
@@ -216,7 +212,7 @@ const getPropertyTypeInfo = (propertyType) => {
 };
 
 // Sortable Property Card Component using @dnd-kit
-const SortablePropertyCard = ({ property, onEdit, onDelete, index }) => {
+const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel }) => {
   const {
     attributes,
     listeners,
@@ -370,21 +366,27 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index }) => {
             </Box>
           </Box>
 
-          {/* Property Links Status */}
-          <Box display="flex" gap={1} mb={1}>
-            <Chip 
-              label="99acres" 
-              size="small" 
-              color={property.links?.acres99 ? "success" : "default"}
-              variant={property.links?.acres99 ? "filled" : "outlined"}
-            />
-            <Chip 
-              label="MagicBricks" 
-              size="small" 
-              color={property.links?.magicbricks ? "success" : "default"}
-              variant={property.links?.magicbricks ? "filled" : "outlined"}
-            />
-          </Box>
+          {/* Property Links Status - 🆕 UPDATED: Only show if links exist */}
+          {(property.links?.acres99 || property.links?.magicbricks) && (
+            <Box display="flex" gap={1} mb={1}>
+              {property.links?.acres99 && (
+                <Chip 
+                  label="99acres" 
+                  size="small" 
+                  color="success"
+                  variant="filled"
+                />
+              )}
+              {property.links?.magicbricks && (
+                <Chip 
+                  label="MagicBricks" 
+                  size="small" 
+                  color="success"
+                  variant="filled"
+                />
+              )}
+            </Box>
+          )}
 
           {property.description && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -400,13 +402,9 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index }) => {
   );
 };
 
-const getAreaLabel = (areaKey) => {
-  const area = areaOptions.find(option => option.value === areaKey);
-  return area ? area.label : areaKey;
-};
-
 function Properties() {
   const [properties, setProperties] = useState([]);
+  const [areas, setAreas] = useState({}); // 🆕 NEW: State for areas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -439,8 +437,39 @@ function Properties() {
   );
 
   useEffect(() => {
-    loadProperties();
+    loadData();
   }, []);
+
+  // 🆕 NEW: Load both properties and areas
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load areas and properties in parallel
+      const [areasResponse, propertiesResponse] = await Promise.all([
+        areaAPI.getAll().catch(err => {
+          console.warn('⚠️ Error loading areas:', err);
+          return { data: {} }; // Return empty object if areas fail to load
+        }),
+        propertyAPI.getAll().catch(err => {
+          console.error('❌ Error loading properties:', err);
+          return { data: [] }; // Return empty array if properties fail to load
+        })
+      ]);
+
+      console.log('🏢 Areas loaded:', areasResponse.data);
+      console.log('🏠 Properties loaded:', propertiesResponse.data);
+
+      setAreas(areasResponse.data || {});
+      setProperties(propertiesResponse.data || []);
+      
+    } catch (error) {
+      console.error('❌ Error loading data:', error);
+      setError(`Failed to load data: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadProperties = async () => {
     try {
@@ -589,6 +618,11 @@ function Properties() {
         features: formData.features 
           ? formData.features.split(',').map(f => f.trim()).filter(f => f)
           : [],
+        // 🆕 UPDATED: Only include links if they have values
+        links: {
+          ...(formData.links.acres99 && { acres99: formData.links.acres99 }),
+          ...(formData.links.magicbricks && { magicbricks: formData.links.magicbricks }),
+        }
       };
 
       if (editingProperty) {
@@ -615,6 +649,20 @@ function Properties() {
         setError('Failed to delete property');
       }
     }
+  };
+
+  // 🆕 NEW: Helper function to get area label dynamically
+  const getAreaLabel = (areaKey) => {
+    const area = areas[areaKey];
+    return area ? area.name : areaKey;
+  };
+
+  // 🆕 NEW: Generate area options from loaded areas
+  const getAreaOptions = () => {
+    return Object.entries(areas).map(([key, area]) => ({
+      value: key,
+      label: area.name
+    }));
   };
 
   if (loading) {
@@ -681,6 +729,7 @@ function Properties() {
                   index={index}
                   onEdit={handleOpenDialog}
                   onDelete={handleDelete}
+                  getAreaLabel={getAreaLabel}
                 />
               ))}
             </Grid>
@@ -764,7 +813,8 @@ function Properties() {
                   onChange={handleInputChange('areaKey')}
                   label="Area"
                 >
-                  {areaOptions.map((option) => (
+                  {/* 🆕 UPDATED: Dynamic area options */}
+                  {getAreaOptions().map((option) => (
                     <MenuItem key={option.value} value={option.value}>
                       {option.label}
                     </MenuItem>
@@ -813,27 +863,25 @@ function Properties() {
               />
             </Grid>
 
-            {/* Mandatory Property Links */}
+            {/* 🆕 UPDATED: Optional Property Links */}
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="99acres Link"
+                label="99acres Link (Optional)"
                 value={formData.links.acres99}
                 onChange={handleInputChange('links.acres99')}
                 placeholder="https://99acres.com/property-link"
-                required
-                helperText="Required: Link to 99acres listing"
+                helperText="Optional: Link to 99acres listing"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="MagicBricks Link"
+                label="MagicBricks Link (Optional)"
                 value={formData.links.magicbricks}
                 onChange={handleInputChange('links.magicbricks')}
                 placeholder="https://magicbricks.com/property-link"
-                required
-                helperText="Required: Link to MagicBricks listing"
+                helperText="Optional: Link to MagicBricks listing"
               />
             </Grid>
 
@@ -878,9 +926,8 @@ function Properties() {
               !formData.price || 
               !formData.location || 
               !formData.areaKey ||
-              !formData.propertyType || // 🆕 NEW: Required field
-              !formData.links.acres99 ||
-              !formData.links.magicbricks
+              !formData.propertyType
+              // 🆕 REMOVED: Links are no longer required
             }
           >
             {editingProperty ? 'Update' : 'Add'} Property

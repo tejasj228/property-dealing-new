@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Contact = require('../models/Contact');
+const { sendContactFormEmail, testEmailConfiguration } = require('../services/emailService');
 
 // 🔓 PUBLIC ROUTE: POST /api/contacts - Create new contact (from frontend form)
 // This route is called directly from the frontend and should NOT require authentication
@@ -19,7 +20,17 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Create new contact
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      console.log('❌ Validation failed: Invalid email format');
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+    }
+    
+    // Create new contact in database
     const contact = new Contact({
       name: name.trim(),
       email: email.trim().toLowerCase(),
@@ -31,12 +42,40 @@ router.post('/', async (req, res) => {
     
     await contact.save();
     
-    console.log('✅ New contact inquiry saved:', {
+    console.log('✅ New contact inquiry saved to database:', {
       id: contact._id,
       name: contact.name,
       email: contact.email
     });
     
+    // 🆕 NEW: Send email notification
+    let emailResult = { success: false, error: 'Email service not available' };
+    
+    try {
+      console.log('📧 Attempting to send email notification...');
+      
+      emailResult = await sendContactFormEmail({
+        name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
+        interest: contact.interest,
+        message: contact.message
+      });
+      
+      if (emailResult.success) {
+        console.log('✅ Email notification sent successfully');
+      } else {
+        console.error('❌ Email notification failed:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending email notification:', emailError);
+      emailResult = {
+        success: false,
+        error: emailError.message
+      };
+    }
+    
+    // Return success response (don't fail if email fails)
     res.status(201).json({
       success: true,
       message: 'Thank you for your inquiry! We will get back to you soon.',
@@ -45,14 +84,51 @@ router.post('/', async (req, res) => {
         name: contact.name,
         email: contact.email,
         createdAt: contact.createdAt
+      },
+      // Include email status for debugging
+      emailNotification: {
+        sent: emailResult.success,
+        ...(emailResult.success ? { messageId: emailResult.messageId } : { error: emailResult.error })
       }
     });
+    
   } catch (error) {
     console.error('❌ Error creating contact:', error);
     res.status(500).json({
       success: false,
       message: 'Error submitting contact form. Please try again.',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// 🆕 NEW: Test email configuration endpoint
+router.get('/test-email', async (req, res) => {
+  try {
+    console.log('🧪 Testing email configuration...');
+    
+    const configTest = await testEmailConfiguration();
+    
+    if (configTest) {
+      res.json({
+        success: true,
+        message: 'Email configuration is working correctly',
+        timestamp: new Date()
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Email configuration test failed',
+        timestamp: new Date()
+      });
+    }
+  } catch (error) {
+    console.error('❌ Email configuration test error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error testing email configuration',
+      error: error.message,
+      timestamp: new Date()
     });
   }
 });
