@@ -66,6 +66,14 @@ const PropertyDetail = () => {
     setCurrentImageIndex(index);
   };
 
+  // 🆕 NEW: Open current image in new tab
+  const openImageInNewTab = () => {
+    if (property?.images && property.images.length > 0) {
+      const imageUrl = getImageUrl(property.images[currentImageIndex]);
+      window.open(imageUrl, '_blank');
+    }
+  };
+
   // 🆕 FUNCTIONAL CONTACT METHODS
   const handlePhoneCall = (phoneNumber) => {
     window.open(`tel:${phoneNumber}`, '_self');
@@ -113,6 +121,20 @@ const PropertyDetail = () => {
   const currentImageUrl = property.images && property.images.length > 0 
     ? getImageUrl(property.images[currentImageIndex]) 
     : null;
+
+  // 🆕 NEW: Check if property has any external links - more thorough check
+  const hasExternalLinks = (property.links?.acres99 && property.links.acres99.trim() !== '') || 
+                           (property.links?.magicbricks && property.links.magicbricks.trim() !== '');
+
+  // 🆕 Debug logging for development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔗 External links check:', {
+      hasLinks: hasExternalLinks,
+      acres99: property.links?.acres99,
+      magicbricks: property.links?.magicbricks,
+      linksObject: property.links
+    });
+  }
 
   return (
     <PageTransition>
@@ -165,6 +187,15 @@ const PropertyDetail = () => {
                       console.log('✅ Property detail image loaded:', currentImageUrl);
                     }}
                   />
+                  
+                  {/* 🆕 NEW: Open in New Tab Button */}
+                  <button 
+                    className="open-image-btn"
+                    onClick={openImageInNewTab}
+                    title="Open image in new tab"
+                  >
+                    <i className="fas fa-external-link-alt"></i>
+                  </button>
                   
                   {/* Navigation Arrows */}
                   {property.images.length > 1 && (
@@ -241,22 +272,44 @@ const PropertyDetail = () => {
               <div className="detail-section">
                 <h3>Property Features</h3>
                 <div className="features-grid">
-                  <div className="feature-item">
-                    <i className="fas fa-bed"></i>
-                    <span>{property.beds} Bedrooms</span>
-                  </div>
-                  <div className="feature-item">
-                    <i className="fas fa-bath"></i>
-                    <span>{property.baths} Bathrooms</span>
-                  </div>
-                  <div className="feature-item">
-                    <i className="fas fa-expand-arrows-alt"></i>
-                    <span>{property.area}</span>
-                  </div>
+                  {/* 🆕 UPDATED: Only show beds/baths if they exist and are greater than 0 */}
+                  {property.beds && property.beds > 0 && (
+                    <div className="feature-item">
+                      <i className="fas fa-bed"></i>
+                      <span>{property.beds} Bedrooms</span>
+                    </div>
+                  )}
+                  {property.baths && property.baths > 0 && (
+                    <div className="feature-item">
+                      <i className="fas fa-bath"></i>
+                      <span>{property.baths} Bathrooms</span>
+                    </div>
+                  )}
+                  {/* Always show area if available */}
+                  {property.area && (
+                    <div className="feature-item">
+                      <i className="fas fa-expand-arrows-alt"></i>
+                      <span>{property.area}</span>
+                    </div>
+                  )}
+                  {/* Always show ready to move */}
                   <div className="feature-item">
                     <i className="fas fa-home"></i>
                     <span>Ready to Move</span>
                   </div>
+                  {/* 🆕 NEW: Show property type specific info */}
+                  {property.propertyType === 'commercial' && (
+                    <div className="feature-item">
+                      <i className="fas fa-building"></i>
+                      <span>Commercial Property</span>
+                    </div>
+                  )}
+                  {property.propertyType === 'residential' && (
+                    <div className="feature-item">
+                      <i className="fas fa-users"></i>
+                      <span>Residential Property</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -321,8 +374,8 @@ const PropertyDetail = () => {
                 </div>
               </div>
 
-              {/* External Links */}
-              {(property.links?.acres99 || property.links?.magicbricks) && (
+              {/* 🆕 UPDATED: External Links - Only show if links exist */}
+              {hasExternalLinks && (
                 <div className="external-links-card">
                   <h3>View on Other Platforms</h3>
                   <div className="external-links">
@@ -358,7 +411,9 @@ const PropertyDetail = () => {
                 <div className="info-grid">
                   <div className="info-item">
                     <span className="label">Property Type:</span>
-                    <span className="value">Residential</span>
+                    <span className="value">
+                      {property.propertyType === 'commercial' ? 'Commercial' : 'Residential'}
+                    </span>
                   </div>
                   <div className="info-item">
                     <span className="label">Area:</span>

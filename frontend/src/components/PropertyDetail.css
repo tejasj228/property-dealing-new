@@ -109,6 +109,32 @@
   display: block;
 }
 
+/* Open in New Tab Button */
+.open-image-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 15;
+  font-size: 1rem;
+}
+
+.open-image-btn:hover {
+  background: rgba(0, 0, 0, 0.95);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 .gallery-nav {
   position: absolute;
   top: 50%;
@@ -637,6 +663,15 @@
   .property-info-card {
     padding: 20px;
   }
+
+  /* Mobile adjustments for open image button */
+  .open-image-btn {
+    width: 40px;
+    height: 40px;
+    top: 15px;
+    left: 15px;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -678,5 +713,14 @@
 
   .feature-item {
     padding: 12px;
+  }
+
+  /* Smaller mobile adjustments for open image button */
+  .open-image-btn {
+    width: 35px;
+    height: 35px;
+    top: 10px;
+    left: 10px;
+    font-size: 0.8rem;
   }
 }

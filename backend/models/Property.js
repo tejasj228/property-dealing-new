@@ -16,13 +16,18 @@ const propertySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  // 🆕 UPDATED: Made beds and baths optional for commercial properties
   beds: {
     type: Number,
-    required: true
+    required: false, // Changed from required: true to optional
+    min: 0,
+    default: null // Allow null values
   },
   baths: {
     type: Number,
-    required: true
+    required: false, // Changed from required: true to optional
+    min: 0,
+    default: null // Allow null values
   },
   area: {
     type: String,
@@ -94,6 +99,25 @@ propertySchema.pre('save', function(next) {
     this.propertyType = 'residential';
   }
   
+  // 🆕 NEW: Clean up empty beds/baths for commercial properties
+  if (this.propertyType === 'commercial') {
+    // For commercial properties, beds/baths can be null or undefined
+    if (this.beds === 0 || this.beds === '') {
+      this.beds = null;
+    }
+    if (this.baths === 0 || this.baths === '') {
+      this.baths = null;
+    }
+  } else {
+    // For residential properties, ensure beds/baths have default values if not provided
+    if (this.beds === null || this.beds === undefined || this.beds === '') {
+      this.beds = 1; // Default to 1 bedroom for residential
+    }
+    if (this.baths === null || this.baths === undefined || this.baths === '') {
+      this.baths = 1; // Default to 1 bathroom for residential
+    }
+  }
+  
   // 🆕 NEW: Clean up empty links
   if (this.links) {
     // Remove empty link fields
@@ -113,6 +137,11 @@ propertySchema.pre('save', function(next) {
   next();
 });
 
+// 🆕 NEW: Virtual field to check if property has bedrooms/bathrooms info
+propertySchema.virtual('hasBedsAndBaths').get(function() {
+  return this.beds && this.beds > 0 && this.baths && this.baths > 0;
+});
+
 // 🆕 NEW: Virtual field to check if property has external links
 propertySchema.virtual('hasExternalLinks').get(function() {
   return this.links && (this.links.acres99 || this.links.magicbricks);
@@ -125,6 +154,11 @@ propertySchema.virtual('externalLinksCount').get(function() {
   if (this.links.acres99) count++;
   if (this.links.magicbricks) count++;
   return count;
+});
+
+// 🆕 NEW: Virtual field to check if property is suitable for families (has beds/baths)
+propertySchema.virtual('isFamilySuitable').get(function() {
+  return this.propertyType === 'residential' && this.hasBedsAndBaths;
 });
 
 // Ensure virtual fields are included in JSON output

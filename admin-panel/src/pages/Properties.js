@@ -65,8 +65,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { propertyAPI, areaAPI } from '../services/api';
 import ImageUpload from '../components/ImageUpload/ImageUpload';
 
-// 🆕 REMOVED: Hardcoded area options - now loaded dynamically from API
-
 // 🆕 NEW: Property Type Options
 const propertyTypeOptions = [
   { value: 'residential', label: 'Residential', icon: <ResidentialIcon /> },
@@ -231,6 +229,11 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
   // 🆕 Get property type info
   const propertyTypeInfo = getPropertyTypeInfo(property.propertyType);
 
+  // 🆕 UPDATED: Helper function to check if beds/baths should be shown
+  const shouldShowBedsAndBaths = (property) => {
+    return property.beds && property.beds > 0 && property.baths && property.baths > 0;
+  };
+
   return (
     <Grid item xs={12} md={6} lg={4}>
       <Card
@@ -351,19 +354,26 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
             />
           </Box>
 
-          <Box display="flex" gap={2} mb={1}>
-            <Box display="flex" alignItems="center">
-              <BedIcon fontSize="small" sx={{ mr: 0.5 }} />
-              <Typography variant="body2">{property.beds} beds</Typography>
-            </Box>
-            <Box display="flex" alignItems="center">
-              <BathtubIcon fontSize="small" sx={{ mr: 0.5 }} />
-              <Typography variant="body2">{property.baths} baths</Typography>
-            </Box>
-            <Box display="flex" alignItems="center">
-              <AreaIcon fontSize="small" sx={{ mr: 0.5 }} />
-              <Typography variant="body2">{property.area}</Typography>
-            </Box>
+          {/* 🆕 UPDATED: Conditional display of beds/baths */}
+          <Box display="flex" gap={2} mb={1} flexWrap="wrap">
+            {shouldShowBedsAndBaths(property) && (
+              <>
+                <Box display="flex" alignItems="center">
+                  <BedIcon fontSize="small" sx={{ mr: 0.5 }} />
+                  <Typography variant="body2">{property.beds} beds</Typography>
+                </Box>
+                <Box display="flex" alignItems="center">
+                  <BathtubIcon fontSize="small" sx={{ mr: 0.5 }} />
+                  <Typography variant="body2">{property.baths} baths</Typography>
+                </Box>
+              </>
+            )}
+            {property.area && (
+              <Box display="flex" alignItems="center">
+                <AreaIcon fontSize="small" sx={{ mr: 0.5 }} />
+                <Typography variant="body2">{property.area}</Typography>
+              </Box>
+            )}
           </Box>
 
           {/* Property Links Status - 🆕 UPDATED: Only show if links exist */}
@@ -414,8 +424,8 @@ function Properties() {
     title: '',
     price: '',
     location: '',
-    beds: '',
-    baths: '',
+    beds: '', // 🆕 UPDATED: Made optional (empty string by default)
+    baths: '', // 🆕 UPDATED: Made optional (empty string by default)
     area: '',
     areaKey: '',
     propertyType: 'residential', // 🆕 NEW: Default to residential
@@ -526,8 +536,8 @@ function Properties() {
         title: property.title || '',
         price: property.price || '',
         location: property.location || '',
-        beds: property.beds?.toString() || '',
-        baths: property.baths?.toString() || '',
+        beds: property.beds?.toString() || '', // 🆕 UPDATED: Optional - can be empty
+        baths: property.baths?.toString() || '', // 🆕 UPDATED: Optional - can be empty
         area: property.area || '',
         areaKey: property.areaKey || '',
         propertyType: property.propertyType || 'residential', // 🆕 NEW
@@ -545,8 +555,8 @@ function Properties() {
         title: '',
         price: '',
         location: '',
-        beds: '',
-        baths: '',
+        beds: '', // 🆕 UPDATED: Optional - empty by default
+        baths: '', // 🆕 UPDATED: Optional - empty by default
         area: '',
         areaKey: '',
         propertyType: 'residential', // 🆕 NEW: Default to residential
@@ -569,8 +579,8 @@ function Properties() {
       title: '',
       price: '',
       location: '',
-      beds: '',
-      baths: '',
+      beds: '', // 🆕 UPDATED: Optional
+      baths: '', // 🆕 UPDATED: Optional
       area: '',
       areaKey: '',
       propertyType: 'residential', // 🆕 NEW
@@ -620,10 +630,12 @@ function Properties() {
         cleanLinks.magicbricks = formData.links.magicbricks.trim();
       }
 
+      // 🆕 UPDATED: Handle optional beds/baths
       const propertyData = {
         ...formData,
-        beds: parseInt(formData.beds) || 0,
-        baths: parseInt(formData.baths) || 0,
+        // Only include beds/baths if they have values
+        ...(formData.beds && { beds: parseInt(formData.beds) || 0 }),
+        ...(formData.baths && { baths: parseInt(formData.baths) || 0 }),
         features: formData.features 
           ? formData.features.split(',').map(f => f.trim()).filter(f => f)
           : [],
@@ -840,24 +852,27 @@ function Properties() {
                 required
               />
             </Grid>
+            {/* 🆕 UPDATED: Optional Bedrooms and Bathrooms */}
             <Grid item xs={4}>
               <TextField
                 fullWidth
-                label="Bedrooms"
+                label="Bedrooms (Optional)"
                 type="number"
                 value={formData.beds}
                 onChange={handleInputChange('beds')}
-                required
+                helperText="Leave empty for commercial properties"
+                inputProps={{ min: 0 }}
               />
             </Grid>
             <Grid item xs={4}>
               <TextField
                 fullWidth
-                label="Bathrooms"
+                label="Bathrooms (Optional)"
                 type="number"
                 value={formData.baths}
                 onChange={handleInputChange('baths')}
-                required
+                helperText="Leave empty for commercial properties"
+                inputProps={{ min: 0 }}
               />
             </Grid>
             <Grid item xs={4}>
@@ -918,7 +933,7 @@ function Properties() {
               <ImageUpload
                 images={formData.images}
                 onImagesChange={handleImagesChange}
-                maxImages={5}
+                maxImages={10}
                 label="Property Images"
               />
             </Grid>
@@ -935,6 +950,7 @@ function Properties() {
               !formData.location || 
               !formData.areaKey ||
               !formData.propertyType
+              // 🆕 REMOVED: beds and baths are no longer required
               // 🆕 REMOVED: Links are no longer required
             }
           >

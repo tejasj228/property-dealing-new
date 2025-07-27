@@ -1,14 +1,12 @@
-// src/services/api.js - UPDATED Frontend API Configuration with Property Type Support
+// src/services/api.js - FIXED API Configuration
 import axios from 'axios';
 
-// API Configuration
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://property-dealing-qle8.onrender.com/api'
-  : 'http://localhost:5000/api';
-
+// 🔧 FIXED: Base URLs should NOT include /api
 const BACKEND_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://property-dealing-qle8.onrender.com'
+  ? 'https://property-dealing-qle8.onrender.com'  // ← Removed /api
   : 'http://localhost:5000';
+
+const API_BASE_URL = `${BACKEND_BASE_URL}/api`;  // ← Add /api here once
 
 console.log('🌐 Frontend API Base URL:', API_BASE_URL);
 console.log('🌐 Backend Base URL:', BACKEND_BASE_URL);
@@ -26,9 +24,11 @@ export const getImageUrl = (imagePath) => {
   return fullUrl;
 };
 
-// Helper function to get API URLs
+// 🔧 FIXED: Helper function to get API URLs
 export const getApiUrl = (endpoint) => {
-  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  // Remove leading slash if present to avoid double slashes
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const fullUrl = `${API_BASE_URL}/${cleanEndpoint}`;
   return fullUrl;
 };
 
@@ -285,10 +285,11 @@ export const fetchPropertyTypeStats = async () => {
   }
 };
 
-// Fetch slider images
+// 🔧 FIXED: Fetch slider images
 export const fetchSliderImages = async () => {
   try {
     console.log('🖼️ Fetching slider images from backend...');
+    // Use direct API call instead of getApiUrl to avoid confusion
     const response = await api.get('/uploads/slider');
     console.log('🖼️ Slider images fetched successfully');
     return response.data.data || [];
@@ -319,7 +320,7 @@ export const fetchSliderImages = async () => {
   }
 };
 
-// Fetch societies for a specific area/sub-area
+// 🔧 FIXED: Fetch societies for a specific area/sub-area
 export const fetchSocieties = async (areaKey, subAreaId) => {
   try {
     console.log(`🏘️ Fetching societies for area: ${areaKey}, sub-area: ${subAreaId}`);

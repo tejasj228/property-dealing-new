@@ -1,4 +1,4 @@
-// frontend/src/components/Societies.jsx - Enhanced with responsive modal
+// frontend/src/components/Societies.jsx - Fixed button positioning
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTransition from './PageTransition';
@@ -144,9 +144,11 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
     }
   };
 
-  // Get all available images
+  // Get all available images (gallery images + map image)
   const getAllImages = () => {
     const images = [];
+    
+    // First add all gallery images
     if (society.images && society.images.length > 0) {
       society.images.forEach(img => {
         images.push({
@@ -156,6 +158,8 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
         });
       });
     }
+    
+    // Then add map image
     if (society.mapImage) {
       images.push({
         url: getImageUrl(society.mapImage),
@@ -163,6 +167,8 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
         alt: `${society.name} map`
       });
     }
+    
+    // Default fallback if no images at all
     if (images.length === 0) {
       images.push({
         url: '/assets/map.webp',
@@ -170,6 +176,7 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
         alt: 'Default map'
       });
     }
+    
     return images;
   };
 
@@ -310,17 +317,6 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
           <h2 id="modal-title">{society.name}</h2>
           <p className="modal-description">{society.description}</p>
           
-          {/* Gallery Information */}
-          {society.images && society.images.length > 0 && (
-            <div className="modal-gallery-info">
-              <h4>
-                <i className="fas fa-images" style={{ marginRight: '8px' }}></i>
-                Photo Gallery
-              </h4>
-              <p>{society.images.length} image{society.images.length !== 1 ? 's' : ''} available</p>
-            </div>
-          )}
-          
           {/* Amenities Section */}
           {society.amenities && society.amenities.length > 0 && (
             <div className="modal-amenities">
@@ -364,31 +360,34 @@ const SocietyModal = ({ isOpen, onClose, society, cardPosition }) => {
   );
 };
 
-// Enhanced Image Slider Component
-const SocietiesImageSlider = ({ societies = [] }) => {
+// 🔧 FIXED: Map-Only Image Slider Component with Properly Positioned Buttons
+const SocietiesMapSlider = ({ societies = [] }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Create slides array from all society images
+  // 🔧 FIXED: Create slides array from only MAP images
   const slides = [];
   societies.forEach(society => {
-    if (society.images && society.images.length > 0) {
-      society.images.forEach(image => {
-        slides.push({
-          image: getImageUrl(image),
-          societyName: society.name,
-          societyId: society.id
-        });
-      });
-    } else if (society.mapImage) {
+    if (society.mapImage) {
       slides.push({
         image: getImageUrl(society.mapImage),
         societyName: society.name,
-        societyId: society.id
+        societyId: society.id,
+        type: 'map'
       });
     }
   });
+
+  // If no map images, show a placeholder
+  if (slides.length === 0) {
+    slides.push({
+      image: '/assets/map.webp',
+      societyName: 'Default Area Map',
+      societyId: 'default',
+      type: 'default'
+    });
+  }
 
   // Auto-slide functionality
   useEffect(() => {
@@ -423,17 +422,11 @@ const SocietiesImageSlider = ({ societies = [] }) => {
     e.target.src = '/assets/map.webp';
   };
 
-  if (slides.length === 0) {
-    return (
-      <div className="societies-slider no-images">
-        <div className="no-images-content">
-          <i className="fas fa-images"></i>
-          <h3>No Society Images Available</h3>
-          <p>Images will appear here once societies are added with gallery photos.</p>
-        </div>
-      </div>
-    );
-  }
+  const openCurrentMapInNewTab = () => {
+    if (slides[currentSlide] && slides[currentSlide].image) {
+      window.open(slides[currentSlide].image, '_blank');
+    }
+  };
 
   return (
     <div className="societies-slider">
@@ -448,13 +441,13 @@ const SocietiesImageSlider = ({ societies = [] }) => {
               color: 'white',
               fontSize: '1.2rem'
             }}>
-              Loading...
+              Loading maps...
             </div>
           )}
           
           <img
             src={slides[currentSlide].image}
-            alt={slides[currentSlide].societyName}
+            alt={`${slides[currentSlide].societyName} map`}
             className="slider-image"
             onError={handleSlideImageError}
             onLoad={() => setIsLoading(false)}
@@ -463,42 +456,56 @@ const SocietiesImageSlider = ({ societies = [] }) => {
           <div className="slider-overlay">
             <div className="slider-content">
               <h2 className="society-name">{slides[currentSlide].societyName}</h2>
+              <p className="slider-description">
+                {slides[currentSlide].type === 'map' ? 'Society Location Map' : 'Area Map'}
+              </p>
               <div className="slide-counter">
                 {currentSlide + 1} / {slides.length}
               </div>
             </div>
           </div>
 
-          {slides.length > 1 && (
-            <>
-              <button 
-                className="slider-nav prev" 
-                onClick={prevSlide}
-                aria-label="Previous image"
-                title="Previous image"
-              >
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <button 
-                className="slider-nav next" 
-                onClick={nextSlide}
-                aria-label="Next image"
-                title="Next image"
-              >
-                <i className="fas fa-chevron-right"></i>
-              </button>
-            </>
-          )}
-
+          {/* 🔧 NEW: Individual buttons positioned separately */}
+          <button 
+            className="slider-open-map-btn"
+            onClick={openCurrentMapInNewTab}
+            aria-label="Open current map in new tab"
+            title="Open current map in new tab"
+          >
+            <i className="fas fa-external-link-alt"></i>
+          </button>
+          
           {slides.length > 1 && (
             <button 
-              className="slider-play-pause"
+              className="slider-play-pause-btn"
               onClick={() => setIsPlaying(!isPlaying)}
               aria-label={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
               title={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
             >
               <i className={`fas fa-${isPlaying ? 'pause' : 'play'}`}></i>
             </button>
+          )}
+
+          {/* Navigation arrows */}
+          {slides.length > 1 && (
+            <>
+              <button 
+                className="slider-nav prev" 
+                onClick={prevSlide}
+                aria-label="Previous map"
+                title="Previous map"
+              >
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              <button 
+                className="slider-nav next" 
+                onClick={nextSlide}
+                aria-label="Next map"
+                title="Next map"
+              >
+                <i className="fas fa-chevron-right"></i>
+              </button>
+            </>
           )}
         </div>
 
@@ -514,8 +521,8 @@ const SocietiesImageSlider = ({ societies = [] }) => {
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
-                aria-label={`Go to ${slide.societyName} image`}
-                title={slide.societyName}
+                aria-label={`Go to ${slide.societyName} map`}
+                title={`${slide.societyName} - Location Map`}
               >
                 <span className="thumbnail-label">{slide.societyName}</span>
               </button>
@@ -638,6 +645,8 @@ const Societies = () => {
           });
         }
         console.log('✅ Societies loaded successfully:', data.data.societies.length);
+        console.log('🗺️ Societies with maps:', data.data.societies.filter(s => s.mapImage).length);
+        console.log('🖼️ Societies with gallery images:', data.data.societies.filter(s => s.images?.length > 0).length);
       } else {
         throw new Error(data.message || 'Failed to load societies');
       }
@@ -663,14 +672,14 @@ const Societies = () => {
   };
 
   const loadFallbackData = () => {
-    // Enhanced fallback society data
+    // Enhanced fallback society data with separate map and gallery images
     const fallbackSocieties = [
       {
         id: 1,
         name: 'Green Valley Apartments',
         description: 'Premium residential complex with modern amenities and excellent connectivity.',
-        mapImage: null,
-        images: [
+        mapImage: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800', // Map image
+        images: [ // Gallery images
           'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800',
           'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800'
         ],
@@ -684,8 +693,8 @@ const Societies = () => {
         id: 2,
         name: 'Royal Heights Society',
         description: 'Luxury housing society offering world-class facilities and premium lifestyle.',
-        mapImage: null,
-        images: [
+        mapImage: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800', // Map image
+        images: [ // Gallery images
           'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800',
           'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=800'
         ],
@@ -737,12 +746,17 @@ const Societies = () => {
     }, 300);
   };
 
+  // 🔧 FIXED: Get primary gallery image for society cards (not map)
   const getSocietyImage = (society) => {
+    // Prioritize gallery images for society cards
     if (society.images && society.images.length > 0) {
-      return getImageUrl(society.images[0]);
-    } else if (society.mapImage) {
+      return getImageUrl(society.images[0]); // First gallery image
+    } 
+    // Fallback to map image if no gallery images
+    else if (society.mapImage) {
       return getImageUrl(society.mapImage);
     }
+    // Final fallback
     return '/assets/map.webp';
   };
 
@@ -851,10 +865,10 @@ const Societies = () => {
             </div>
           )}
 
-          {/* Enhanced Image Slider */}
-          <SocietiesImageSlider societies={societies} />
+          {/* 🔧 FIXED: Map-Only Slider */}
+          <SocietiesMapSlider societies={societies} />
 
-          {/* Societies Grid */}
+          {/* Societies Grid with Gallery Images */}
           {societies.length > 0 ? (
             <div className="societies-grid">
               {societies.map((society, index) => (
@@ -882,12 +896,21 @@ const Societies = () => {
                       onError={handleImageError}
                       loading="lazy"
                     />
-                    {society.images && society.images.length > 0 && (
-                      <div className="image-count-badge">
-                        <i className="fas fa-images"></i>
-                        {society.images.length}
-                      </div>
-                    )}
+                    {/* 🔧 FIXED: Show correct image count badges */}
+                    <div className="society-image-badges">
+                      {society.images && society.images.length > 0 && (
+                        <div className="image-count-badge gallery">
+                          <i className="fas fa-images"></i>
+                          {society.images.length}
+                        </div>
+                      )}
+                      {society.mapImage && (
+                        <div className="image-count-badge map">
+                          <i className="fas fa-map"></i>
+                          Map
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="society-content">
@@ -959,11 +982,236 @@ const Societies = () => {
         />
       </div>
 
-      {/* Add CSS for loading spinner animation */}
+      {/* 🔧 FIXED: NEW CSS with separate button positioning */}
       <style jsx>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        
+        /* 🔧 FIXED: Open Map button - positioned towards center-left */
+        .societies-slider .slider-open-map-btn {
+          position: absolute !important;
+          top: 15px !important;
+          left: 80px !important; /* Much further from left edge */
+          background: rgba(0, 0, 0, 0.8) !important;
+          border: none !important;
+          border-radius: 50% !important;
+          width: 44px !important;
+          height: 44px !important;
+          min-width: 44px !important;
+          min-height: 44px !important;
+          color: white !important;
+          cursor: pointer !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 16px !important;
+          transition: all 0.3s ease !important;
+          backdrop-filter: blur(6px) !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+          z-index: 15 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        /* 🔧 FIXED: Play/Pause button - positioned towards center-right */
+        .societies-slider .slider-play-pause-btn {
+          position: absolute !important;
+          top: 15px !important; /* Same vertical position */
+          right: 80px !important; /* Much further from right edge */
+          background: rgba(0, 0, 0, 0.8) !important;
+          border: none !important;
+          border-radius: 50% !important;
+          width: 44px !important;
+          height: 44px !important;
+          min-width: 44px !important;
+          min-height: 44px !important;
+          color: white !important;
+          cursor: pointer !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 16px !important;
+          transition: all 0.3s ease !important;
+          backdrop-filter: blur(6px) !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+          z-index: 15 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        .societies-slider .slider-open-map-btn:hover,
+        .societies-slider .slider-play-pause-btn:hover {
+          background: rgba(184, 134, 11, 0.9) !important;
+          transform: scale(1.05) !important;
+          box-shadow: 0 4px 12px rgba(184, 134, 11, 0.4) !important;
+        }
+        
+        .societies-slider .slider-open-map-btn:active,
+        .societies-slider .slider-play-pause-btn:active {
+          transform: scale(0.95) !important;
+        }
+        
+        .society-image-badges {
+          position: absolute !important;
+          top: 8px !important;
+          right: 8px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 4px !important;
+          z-index: 5 !important;
+        }
+        
+        .image-count-badge {
+          padding: 4px 8px !important;
+          border-radius: 12px !important;
+          font-size: 0.8rem !important;
+          font-weight: 500 !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 4px !important;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        .image-count-badge.gallery {
+          background: rgba(76, 175, 80, 0.9) !important;
+          color: white !important;
+        }
+        
+        .image-count-badge.map {
+          background: rgba(255, 152, 0, 0.9) !important;
+          color: white !important;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .societies-slider .slider-open-map-btn {
+            top: 12px !important;
+            left: 60px !important; /* Closer to center on tablets */
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            font-size: 14px !important;
+          }
+          
+          .societies-slider .slider-play-pause-btn {
+            top: 12px !important;
+            right: 60px !important; /* Closer to center on tablets */
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            font-size: 14px !important;
+          }
+          
+          /* 🔧 FIXED: Thumbnail responsiveness for tablets */
+          .societies-slider .slider-thumbnails {
+            padding: 8px 10px !important;
+            gap: 6px !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          
+          .societies-slider .thumbnail {
+            min-width: 60px !important;
+            height: 45px !important;
+            border-radius: 6px !important;
+            flex-shrink: 0 !important;
+          }
+          
+          .societies-slider .thumbnail-label {
+            font-size: 0.65rem !important;
+            padding: 2px 4px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .societies-slider .slider-open-map-btn {
+            top: 10px !important;
+            left: 40px !important; /* Even closer to center on mobile */
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            font-size: 12px !important;
+          }
+          
+          .societies-slider .slider-play-pause-btn {
+            top: 10px !important;
+            right: 40px !important; /* Even closer to center on mobile */
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            font-size: 12px !important;
+          }
+          
+          /* 🔧 FIXED: Thumbnail responsiveness for mobile */
+          .societies-slider .slider-thumbnails {
+            padding: 6px 8px !important;
+            gap: 4px !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          
+          .societies-slider .slider-thumbnails::-webkit-scrollbar {
+            display: none !important;
+          }
+          
+          .societies-slider .thumbnail {
+            min-width: 50px !important;
+            height: 38px !important;
+            border-radius: 4px !important;
+            flex-shrink: 0 !important;
+            border: 2px solid transparent !important;
+          }
+          
+          .societies-slider .thumbnail.active {
+            border-color: #b8860b !important;
+          }
+          
+          .societies-slider .thumbnail-label {
+            font-size: 0.6rem !important;
+            padding: 1px 3px !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 100% !important;
+          }
+          
+          .society-image-badges {
+            top: 6px !important;
+            right: 6px !important;
+            gap: 3px !important;
+          }
+          
+          .image-count-badge {
+            padding: 3px 6px !important;
+            font-size: 0.7rem !important;
+          }
+        }
+        
+        /* 🔧 NEW: Extra small screens (very small phones) */
+        @media (max-width: 360px) {
+          .societies-slider .slider-thumbnails {
+            padding: 4px 6px !important;
+            gap: 3px !important;
+          }
+          
+          .societies-slider .thumbnail {
+            min-width: 45px !important;
+            height: 34px !important;
+          }
+          
+          .societies-slider .thumbnail-label {
+            font-size: 0.55rem !important;
+            padding: 1px 2px !important;
+          }
         }
       `}</style>
     </PageTransition>

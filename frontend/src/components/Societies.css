@@ -2038,3 +2038,234 @@ body.modal-open .nav-container {
         padding: 2px 5px;
     }
 }
+/* Additional CSS for Societies.css - Image Separation Styling */
+
+/* Society Image Badges */
+.society-image-badges {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 2;
+}
+
+.image-count-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+}
+
+.image-count-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.image-count-badge.gallery {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.image-count-badge.map {
+    background: linear-gradient(135deg, #FF9800, #f57c00);
+    color: white;
+}
+
+.image-count-badge i {
+    font-size: 0.7rem;
+}
+
+/* Society Media Info */
+.society-media-info {
+    margin: 8px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-light, #eee);
+}
+
+.media-info-item {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #666);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: var(--background-light, #f8f9fa);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.media-info-item:hover {
+    background: var(--accent-color-light, #f0f8ff);
+    color: var(--accent-color, #b8860b);
+}
+
+.media-info-item i {
+    color: var(--accent-color, #b8860b);
+    font-size: 0.75rem;
+}
+
+/* Enhanced Slider Styling for Maps */
+.societies-slider .slider-overlay .slider-content {
+    text-align: center;
+    color: white;
+}
+
+.societies-slider .slider-description {
+    font-size: 0.9rem;
+    margin: 4px 0 8px 0;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+.societies-slider .slider-content h2.society-name {
+    margin-bottom: 4px;
+}
+
+/* Thumbnail labels for map slider */
+.societies-slider .thumbnail-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.societies-slider .thumbnail:hover .thumbnail-label,
+.societies-slider .thumbnail.active .thumbnail-label {
+    opacity: 1;
+}
+
+/* Modal enhancements for separated images */
+.society-modal .gallery-counter {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-weight: 500;
+}
+
+.society-modal .modal-gallery-info {
+    background: var(--background-light, #f8f9fa);
+    padding: 12px;
+    border-radius: 8px;
+    margin: 12px 0;
+    border-left: 4px solid var(--accent-color, #b8860b);
+}
+
+.society-modal .modal-gallery-info h4 {
+    margin: 0 0 4px 0;
+    color: var(--text-primary, #333);
+    font-size: 0.9rem;
+}
+
+.society-modal .modal-gallery-info p {
+    margin: 0;
+    color: var(--text-secondary, #666);
+    font-size: 0.8rem;
+}
+
+/* Loading state for map slider */
+.societies-slider.loading {
+    opacity: 0.7;
+}
+
+.societies-slider .slider-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.societies-slider.loading .slider-main::before {
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .society-image-badges {
+        top: 6px;
+        right: 6px;
+        gap: 3px;
+    }
+
+    .image-count-badge {
+        padding: 3px 6px;
+        font-size: 0.7rem;
+    }
+
+    .image-count-badge i {
+        font-size: 0.65rem;
+    }
+
+    .media-info-item {
+        font-size: 0.75rem;
+        padding: 1px 4px;
+    }
+
+    .societies-slider .slider-description {
+        font-size: 0.8rem;
+    }
+
+    .societies-slider .thumbnail-label {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .society-media-info {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .media-info-item {
+        width: fit-content;
+    }
+
+    .society-image-badges {
+        flex-direction: row;
+        top: 4px;
+        right: 4px;
+    }
+
+    .image-count-badge {
+        padding: 2px 4px;
+        font-size: 0.65rem;
+    }
+}

@@ -77,6 +77,14 @@ const Footer = () => {
               </div>
               <div 
                 className="footer-contact-item clickable"
+                onClick={() => handlePhoneClick('0120-3244364')}
+                style={{ cursor: 'pointer' }}
+              >
+                <i className="fas fa-phone"></i>
+                <span>0120-3244364</span>
+              </div>
+              <div 
+                className="footer-contact-item clickable"
                 onClick={() => handleLocationClick('S-1 Skytech Matrott Market, Sector-76, Noida (U.P) 201307')}
                 style={{ cursor: 'pointer' }}
               >

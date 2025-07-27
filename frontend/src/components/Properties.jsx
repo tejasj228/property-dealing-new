@@ -226,6 +226,11 @@ const PropertyTypeBadge = ({ propertyType }) => {
   );
 };
 
+// 🆕 NEW: Helper function to check if property has beds/baths info
+const hasBedsAndBaths = (property) => {
+  return property.beds && property.beds > 0 && property.baths && property.baths > 0;
+};
+
 const Properties = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedArea, setSelectedArea] = useState(searchParams.get('area') || 'all');
@@ -552,19 +557,35 @@ const Properties = () => {
                         {/* Property Type Badge */}
                         <PropertyTypeBadge propertyType={property.propertyType} />
                       </div>
+                      {/* 🆕 UPDATED: Conditional rendering of property features */}
                       <div className="property-features">
-                        <div className="feature">
-                          <i className="fas fa-bed"></i>
-                          {property.beds} Beds
-                        </div>
-                        <div className="feature">
-                          <i className="fas fa-bath"></i>
-                          {property.baths} Baths
-                        </div>
-                        <div className="feature">
-                          <i className="fas fa-expand-arrows-alt"></i>
-                          {property.area}
-                        </div>
+                        {/* Only show beds/baths if they exist and are greater than 0 */}
+                        {hasBedsAndBaths(property) && (
+                          <>
+                            <div className="feature">
+                              <i className="fas fa-bed"></i>
+                              {property.beds} Beds
+                            </div>
+                            <div className="feature">
+                              <i className="fas fa-bath"></i>
+                              {property.baths} Baths
+                            </div>
+                          </>
+                        )}
+                        {/* Always show area if available */}
+                        {property.area && (
+                          <div className="feature">
+                            <i className="fas fa-expand-arrows-alt"></i>
+                            {property.area}
+                          </div>
+                        )}
+                        {/* For commercial properties without beds/baths, show property type */}
+                        {!hasBedsAndBaths(property) && property.propertyType === 'commercial' && (
+                          <div className="feature">
+                            <i className="fas fa-building"></i>
+                            Commercial Space
+                          </div>
+                        )}
                       </div>
                     </div>
                     

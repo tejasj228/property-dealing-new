@@ -1,256 +1,225 @@
-// src/hooks/useAreas.js - Debug version with better error handling
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+// src/hooks/useAreas.js - Enhanced hook for areas with better error handling
+import { useState, useEffect } from 'react';
+import { fetchAreas } from '../services/api';
+import { areasObjectToArray, sortAreasByOrder, getDefaultAreas } from '../utils/areaUtils';
 
-// Default areas fallback - matching what I see in your filter
-const DEFAULT_AREAS = {
-  'noida': {
-    key: 'noida',
-    name: 'Noida',
-    description: 'Properties in Noida region',
-    order: 0,
-    subAreas: []
-  },
-  'yamuna-expressway': {
-    key: 'yamuna-expressway',
-    name: 'Yamuna Expressway',
-    description: 'Properties along Yamuna Expressway',
-    order: 1,
-    subAreas: []
-  },
-  'indirapuram': {
-    key: 'indirapuram',
-    name: 'Indirapuram',
-    description: 'Properties in Indirapuram',
-    order: 2,
-    subAreas: []
-  }
-};
-
-// Utility functions
-const formatAreaKey = (key) => {
-  if (!key) return '';
-  return key
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-const getAreaDisplayName = (area) => {
-  if (!area) return '';
-  if (area.displayName) return area.displayName;
-  if (area.name) return area.name.replace(/\b\w/g, l => l.toUpperCase());
-  if (area.key) return formatAreaKey(area.key);
-  return '';
-};
-
-const areasObjectToArray = (areasObject) => {
-  if (!areasObject || typeof areasObject !== 'object') return [];
-  
-  return Object.entries(areasObject).map(([key, area]) => ({
-    key,
-    name: area.name || key,
-    displayName: getAreaDisplayName(area),
-    description: area.description || '',
-    order: area.order || 0,
-    subAreas: area.subAreas || [],
-    ...area
-  }));
-};
-
-const sortAreasByOrder = (areas) => {
-  return [...areas].sort((a, b) => {
-    if (a.order !== undefined && b.order !== undefined) {
-      return a.order - b.order;
-    }
-    if (a.order !== undefined) return -1;
-    if (b.order !== undefined) return 1;
-    
-    const nameA = getAreaDisplayName(a).toLowerCase();
-    const nameB = getAreaDisplayName(b).toLowerCase();
-    return nameA.localeCompare(nameB);
-  });
-};
-
-const findAreaByKey = (areas, key) => {
-  if (!areas || !key) return null;
-  
-  if (Array.isArray(areas)) {
-    return areas.find(area => area.key === key) || null;
-  }
-  
-  return areas[key] || null;
-};
-
-const areaExists = (areas, key) => {
-  return findAreaByKey(areas, key) !== null;
-};
-
+/**
+ * Custom hook for managing areas data
+ * @param {Object} options - Configuration options
+ * @param {boolean} options.autoLoad - Auto load areas on mount (default: true)
+ * @param {boolean} options.fallbackToDefault - Use default areas if API fails (default: true)
+ * @param {boolean} options.enableCache - Enable client-side caching (default: true)
+ * @param {number} options.cacheTimeout - Cache timeout in minutes (default: 5)
+ * @returns {Object} - Areas data and methods
+ */
 const useAreas = (options = {}) => {
-  const { 
-    autoLoad = true, 
-    sortBy = 'order',
-    enableCache = false, // Disable cache for debugging
-    fallbackToDefault = true
+  const {
+    autoLoad = true,
+    fallbackToDefault = true,
+    enableCache = true,
+    cacheTimeout = 5
   } = options;
 
-  const [areas, setAreas] = useState(fallbackToDefault ? DEFAULT_AREAS : {});
-  const [areasLoading, setAreasLoading] = useState(autoLoad);
+  const [areasObject, setAreasObject] = useState({});
+  const [areasArray, setAreasArray] = useState([]);
+  const [areasLoading, setAreasLoading] = useState(false);
   const [areasError, setAreasError] = useState(null);
-  const [lastFetch, setLastFetch] = useState(null);
+  const [lastFetched, setLastFetched] = useState(null);
 
-  // Load areas from API
-  const loadAreas = useCallback(async (force = false) => {
+  // Cache keys
+  const CACHE_KEY = 'pawan_buildhome_areas';
+  const CACHE_TIMESTAMP_KEY = 'pawan_buildhome_areas_timestamp';
+
+  /**
+   * Check if cached data is still valid
+   */
+  const isCacheValid = () => {
+    if (!enableCache) return false;
+    
+    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    if (!timestamp) return false;
+    
+    const cacheAge = Date.now() - parseInt(timestamp);
+    const maxAge = cacheTimeout * 60 * 1000; // Convert minutes to milliseconds
+    
+    return cacheAge < maxAge;
+  };
+
+  /**
+   * Load areas from cache
+   */
+  const loadFromCache = () => {
     try {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData && isCacheValid()) {
+        console.log('📦 Loading areas from cache');
+        const parsedData = JSON.parse(cachedData);
+        setAreasObject(parsedData);
+        setAreasArray(sortAreasByOrder(areasObjectToArray(parsedData)));
+        return true;
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to load areas from cache:', error);
+    }
+    return false;
+  };
+
+  /**
+   * Save areas to cache
+   */
+  const saveToCache = (data) => {
+    if (!enableCache) return;
+    
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+      console.log('💾 Areas saved to cache');
+    } catch (error) {
+      console.warn('⚠️ Failed to save areas to cache:', error);
+    }
+  };
+
+  /**
+   * Load areas from API
+   */
+  const loadAreas = async (forceRefresh = false) => {
+    try {
+      // Check cache first (unless forcing refresh)
+      if (!forceRefresh && loadFromCache()) {
+        return;
+      }
+
+      console.log('🏢 Loading areas from API...');
       setAreasLoading(true);
       setAreasError(null);
+
+      const areasData = await fetchAreas();
       
-      console.log('🔄 Loading areas from API...');
-      
-      // Try multiple API URLs
-      const API_URLS = [
-        process.env.REACT_APP_API_URL,
-        'https://property-dealing-qle8.onrender.com',
-        'https://pawanbuildhome.com/api', // If you have this
-        window.location.origin + '/api' // Same origin
-      ].filter(Boolean);
-      
-      console.log('🔗 Trying API URLs:', API_URLS);
-      
-      let lastError = null;
-      
-      for (const API_URL of API_URLS) {
-        try {
-          console.log(`🔄 Trying: ${API_URL}/api/areas`);
-          
-          const response = await axios.get(`${API_URL}/api/areas`, {
-            timeout: 8000,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
-          
-          console.log('✅ API Response:', response.data);
-          
-          if (response.data && response.data.success && response.data.data) {
-            const areasData = response.data.data;
-            setAreas(areasData);
-            setLastFetch(Date.now());
-            console.log('✅ Areas loaded successfully:', Object.keys(areasData));
-            return areasData;
-          }
-        } catch (error) {
-          console.warn(`❌ Failed to load from ${API_URL}:`, error.message);
-          lastError = error;
-          continue;
-        }
+      if (areasData && Object.keys(areasData).length > 0) {
+        console.log('✅ Areas loaded from API:', Object.keys(areasData));
+        
+        setAreasObject(areasData);
+        const areasArrayData = sortAreasByOrder(areasObjectToArray(areasData));
+        setAreasArray(areasArrayData);
+        setLastFetched(new Date());
+        
+        // Save to cache
+        saveToCache(areasData);
+        
+      } else if (fallbackToDefault) {
+        console.warn('⚠️ API returned empty data, using default areas');
+        const defaultAreas = getDefaultAreas();
+        setAreasArray(defaultAreas);
+        setAreasObject(defaultAreas.reduce((acc, area) => {
+          acc[area.key] = area;
+          return acc;
+        }, {}));
+      } else {
+        setAreasError('No areas found');
       }
-      
-      // If all APIs failed, throw the last error
-      throw lastError || new Error('All API endpoints failed');
       
     } catch (error) {
       console.error('❌ Error loading areas:', error);
       setAreasError(error.message);
       
-      // Use default areas as fallback
-      if (fallbackToDefault) {
-        console.log('🔄 Using default areas as fallback');
-        setAreas(DEFAULT_AREAS);
-        return DEFAULT_AREAS;
+      // Try to use cached data or fallback
+      if (!loadFromCache() && fallbackToDefault) {
+        console.warn('⚠️ Using default areas as fallback');
+        const defaultAreas = getDefaultAreas();
+        setAreasArray(defaultAreas);
+        setAreasObject(defaultAreas.reduce((acc, area) => {
+          acc[area.key] = area;
+          return acc;
+        }, {}));
       }
-      
-      return {};
     } finally {
       setAreasLoading(false);
     }
-  }, [fallbackToDefault]);
+  };
 
-  // Auto-load on mount
+  /**
+   * Refresh areas data
+   */
+  const refreshAreas = () => {
+    return loadAreas(true);
+  };
+
+  /**
+   * Clear areas cache
+   */
+  const clearCache = () => {
+    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+    console.log('🧹 Areas cache cleared');
+  };
+
+  /**
+   * Get area by key
+   */
+  const getAreaByKey = (key) => {
+    return areasObject[key] || null;
+  };
+
+  /**
+   * Check if area exists
+   */
+  const areaExists = (key) => {
+    return key in areasObject;
+  };
+
+  /**
+   * Get areas for dropdown/select components
+   */
+  const getAreaOptions = () => {
+    return areasArray.map(area => ({
+      value: area.key,
+      label: area.displayName || area.name,
+      ...area
+    }));
+  };
+
+  // Auto-load areas on mount
   useEffect(() => {
     if (autoLoad) {
       loadAreas();
     }
-  }, [autoLoad, loadAreas]);
+  }, [autoLoad]);
 
-  // Convert areas object to array with proper sorting
-  const areasArray = useMemo(() => {
-    console.log('🔄 Processing areas:', areas);
-    
-    let processedAreas = areasObjectToArray(areas);
-    
-    console.log('🔄 Processed areas array:', processedAreas);
-    
-    // Apply sorting
-    if (sortBy === 'order') {
-      processedAreas = sortAreasByOrder(processedAreas);
-    } else if (sortBy === 'name') {
-      processedAreas = processedAreas.sort((a, b) => {
-        const nameA = getAreaDisplayName(a).toLowerCase();
-        const nameB = getAreaDisplayName(b).toLowerCase();
-        return nameA.localeCompare(nameB);
+  // Debug logging in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🏢 Areas Hook State:', {
+        areasCount: areasArray.length,
+        loading: areasLoading,
+        error: areasError,
+        lastFetched,
+        cacheValid: isCacheValid()
       });
     }
-    
-    console.log('🔄 Final sorted areas:', processedAreas);
-    
-    return processedAreas;
-  }, [areas, sortBy]);
-
-  // Helper functions
-  const getAreaByKey = useCallback((key) => {
-    return findAreaByKey(areas, key);
-  }, [areas]);
-
-  const getAreaName = useCallback((key) => {
-    const area = getAreaByKey(key);
-    return area ? getAreaDisplayName(area) : key;
-  }, [getAreaByKey]);
-
-  const checkAreaExists = useCallback((key) => {
-    return areaExists(areas, key);
-  }, [areas]);
-
-  // Refetch areas (force reload)
-  const refetchAreas = useCallback(async () => {
-    return await loadAreas(true);
-  }, [loadAreas]);
-
-  // Get areas count
-  const areasCount = Object.keys(areas).length;
-
-  // Debug info
-  console.log('🔍 useAreas Debug Info:', {
-    areasCount,
-    areasLoading,
-    areasError,
-    areasKeys: Object.keys(areas),
-    areasArrayLength: areasArray.length
-  });
+  }, [areasArray.length, areasLoading, areasError, lastFetched]);
 
   return {
-    // Main data
-    areas,
+    // Data
+    areasObject,
     areasArray,
+    
+    // State
     areasLoading,
     areasError,
+    lastFetched,
     
-    // Meta information
-    areasCount,
-    lastFetch,
-    
-    // Helper functions
-    getAreaByKey,
-    getAreaName,
-    checkAreaExists,
-    
-    // Actions
+    // Methods
     loadAreas,
-    refetchAreas,
+    refreshAreas,
+    clearCache,
+    getAreaByKey,
+    areaExists,
+    getAreaOptions,
     
-    // Utilities
-    formatAreaName: getAreaDisplayName
+    // Computed values
+    hasAreas: areasArray.length > 0,
+    isEmpty: areasArray.length === 0,
+    cacheValid: isCacheValid()
   };
 };
 

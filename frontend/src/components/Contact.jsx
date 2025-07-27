@@ -20,7 +20,7 @@ const Contact = () => {
   const { areasArray, areasLoading, areasError } = useAreas({
     autoLoad: true,
     fallbackToDefault: true,
-    enableCache: false // Disable cache for debugging
+    enableCache: false
   });
 
   const handleChange = (e) => {
@@ -57,27 +57,33 @@ const Contact = () => {
       
       console.log('📤 Submitting contact form:', formData);
       
-      const API_URL = process.env.REACT_APP_API_URL || 'https://property-dealing-qle8.onrender.com';
+      // 🔧 FIXED: Use the working API URL directly
+      const API_URL = 'https://property-dealing-qle8.onrender.com';
       
-      // Debug logs
-      console.log('🔗 Using API URL:', API_URL);
+      console.log(`🔗 Using API URL: ${API_URL}/api/contacts`);
       
-      // Submit to backend API
-      const response = await axios.post(`${API_URL}/api/contacts`, {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        interest: formData.interest.trim(),
-        message: formData.message.trim()
-      }, {
+      // Submit to backend API using fetch (more reliable than axios for this)
+      const response = await fetch(`${API_URL}/api/contacts`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        timeout: 15000,
-        withCredentials: false
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          interest: formData.interest.trim(),
+          message: formData.message.trim()
+        })
       });
       
-      console.log('✅ Contact form submitted successfully:', response.data);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('✅ Contact form submitted successfully:', responseData);
       
       // Show success message
       setSubmitSuccess(true);
@@ -99,14 +105,17 @@ const Contact = () => {
     } catch (error) {
       console.error('❌ Error submitting contact form:', error);
       
-      if (error.response?.data?.message) {
-        setSubmitError(error.response.data.message);
-      } else if (error.code === 'ERR_NETWORK') {
-        setSubmitError('Network error. Please check your connection and try again.');
-      } else if (error.code === 'ECONNREFUSED') {
-        setSubmitError('Unable to connect to server. Please try again later.');
+      // Handle different types of errors
+      if (error.message.includes('404')) {
+        setSubmitError('Contact service is temporarily unavailable. Please try again later.');
+      } else if (error.message.includes('400')) {
+        setSubmitError('Please check your information and try again.');
+      } else if (error.message.includes('500')) {
+        setSubmitError('Server error occurred. Please try again later.');
+      } else if (error.message.includes('Failed to fetch')) {
+        setSubmitError('Unable to connect to our servers. Please check your internet connection and try again.');
       } else {
-        setSubmitError('Failed to send message. Please try again or contact us directly.');
+        setSubmitError('Failed to send message. Please try again or contact us directly at pawan127jitendra@gmail.com');
       }
     } finally {
       setSubmitting(false);
@@ -138,7 +147,7 @@ const Contact = () => {
     {
       icon: 'fas fa-phone',
       title: 'Call Us',
-      content: '+91-9811186086\n+91-9811186083',
+      content: '+91-9811186086\n+91-9811186083\n0120-3244364',
       onClick: () => handlePhoneClick('+91-9811186086')
     },
     {
@@ -150,7 +159,7 @@ const Contact = () => {
     {
       icon: 'fas fa-clock',
       title: 'Working Hours',
-      content: 'Mon - Sat: 9:00 AM - 7:00 PM\nSunday: 10:00 AM - 5:00 PM',
+      content: 'Tuesday to Sunday\n10:00 AM - 7:00 PM',
       onClick: null
     }
   ];
@@ -167,16 +176,9 @@ const Contact = () => {
       );
     }
 
-    if (areasError) {
+    if (areasError && areasArray.length === 0) {
       return (
-        <>
-          <option value="">Select an area of interest</option>
-          {areasArray.map((area) => (
-            <option key={area.key} value={area.key}>
-              {area.displayName}
-            </option>
-          ))}
-        </>
+        <option value="">Areas not available</option>
       );
     }
 
@@ -251,6 +253,7 @@ const Contact = () => {
                   onChange={handleChange}
                   disabled={submitting}
                   placeholder="Enter your full name"
+                  required
                 />
               </div>
 
@@ -264,6 +267,7 @@ const Contact = () => {
                   onChange={handleChange}
                   disabled={submitting}
                   placeholder="Enter your email address"
+                  required
                 />
               </div>
 
@@ -277,6 +281,7 @@ const Contact = () => {
                   onChange={handleChange}
                   disabled={submitting}
                   placeholder="Enter your phone number"
+                  required
                 />
               </div>
 
@@ -309,6 +314,7 @@ const Contact = () => {
                   onChange={handleChange}
                   placeholder="Tell us about your requirements..."
                   disabled={submitting}
+                  required
                 ></textarea>
               </div>
 
@@ -320,7 +326,7 @@ const Contact = () => {
                 {submitting ? (
                   <>
                     <i className="fas fa-spinner fa-spin"></i>
-                    Sending...
+                    Sending Message...
                   </>
                 ) : (
                   <>

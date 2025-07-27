@@ -22,7 +22,7 @@ import { getImageUrl, handleImageError, getPlaceholderImage } from '../../utils/
 function ImageUpload({ 
   images = [], 
   onImagesChange, 
-  maxImages = 5,
+  maxImages = 10, // 🆕 UPDATED: Increased from 5 to 10
   label = "Property Images" 
 }) {
   const [uploading, setUploading] = useState(false);
