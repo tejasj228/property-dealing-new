@@ -4,7 +4,7 @@
   "installCommand": "npm ci",
   "devCommand": "npx react-scripts start",
   "env": {
-    "REACT_APP_API_URL": "https://property-dealing-qle8.onrender.com/api",
+    "REACT_APP_API_URL": "https://property-dealing-kuw8.onrender.com/api",
     "REACT_APP_BASE_URL": "https://property-dealing-frontend.vercel.app"
   },
 
