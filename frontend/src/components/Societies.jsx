@@ -22,7 +22,7 @@ const getImageUrl = (imagePath) => {
 // Helper function to get API URL
 const getApiUrl = (endpoint) => {
   const baseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://property-dealing-kuw8.onrender.com/api'
+    ? 'https://property-dealing-kbyb.onrender.com/api'
     : 'http://localhost:5000/api';
   
   return `${baseUrl}${endpoint}`;

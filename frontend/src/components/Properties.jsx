@@ -5,7 +5,7 @@ import './Properties.css';
 
 // 🔧 FIXED: Simplified API calls
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://property-dealing-kuw8.onrender.com/api'
+  ? 'https://property-dealing-kbyb.onrender.com/api'
   : 'http://localhost:5000/api';
 
 // Image Carousel Component for Frontend Property Cards
