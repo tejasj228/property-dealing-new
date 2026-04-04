@@ -5,7 +5,7 @@ import './Properties.css';
 
 // 🔧 FIXED: Simplified API calls
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://property-dealing-kbyb.onrender.com/api'
+  ? 'https://property-dealing-4a4n.onrender.com/api'
   : 'http://localhost:5000/api';
 
 // Image Carousel Component for Frontend Property Cards
@@ -226,9 +226,10 @@ const PropertyTypeBadge = ({ propertyType }) => {
   );
 };
 
-// 🆕 NEW: Helper function to check if property has beds/baths info
+// 🆕 FIXED: Helper function to check if property has beds/baths info
 const hasBedsAndBaths = (property) => {
-  return property.beds && property.beds > 0 && property.baths && property.baths > 0;
+  return property.beds && property.beds !== null && property.beds > 0 && 
+         property.baths && property.baths !== null && property.baths > 0;
 };
 
 const Properties = () => {

@@ -272,14 +272,14 @@ const PropertyDetail = () => {
               <div className="detail-section">
                 <h3>Property Features</h3>
                 <div className="features-grid">
-                  {/* 🆕 UPDATED: Only show beds/baths if they exist and are greater than 0 */}
-                  {property.beds && property.beds > 0 && (
+                  {/* 🆕 FIXED: Only show beds/baths if they exist, are not null, and are greater than 0 */}
+                  {property.beds && property.beds !== null && property.beds > 0 && (
                     <div className="feature-item">
                       <i className="fas fa-bed"></i>
                       <span>{property.beds} Bedrooms</span>
                     </div>
                   )}
-                  {property.baths && property.baths > 0 && (
+                  {property.baths && property.baths !== null && property.baths > 0 && (
                     <div className="feature-item">
                       <i className="fas fa-bath"></i>
                       <span>{property.baths} Bathrooms</span>
@@ -297,17 +297,17 @@ const PropertyDetail = () => {
                     <i className="fas fa-home"></i>
                     <span>Ready to Move</span>
                   </div>
-                  {/* 🆕 NEW: Show property type specific info */}
+                  {/* 🆕 IMPROVED: Show property type specific info */}
                   {property.propertyType === 'commercial' && (
                     <div className="feature-item">
                       <i className="fas fa-building"></i>
-                      <span>Commercial Property</span>
+                      <span>Commercial Space</span>
                     </div>
                   )}
                   {property.propertyType === 'residential' && (
                     <div className="feature-item">
                       <i className="fas fa-users"></i>
-                      <span>Residential Property</span>
+                      <span>Family Friendly</span>
                     </div>
                   )}
                 </div>

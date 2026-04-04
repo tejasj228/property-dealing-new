@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 🔧 FIXED: Base URLs should NOT include /api
 const BACKEND_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://property-dealing-kuw8.onrender.com'  // ← Removed /api
+  ? 'https://property-dealing-4a4n.onrender.com'  // ← Removed /api
   : 'http://localhost:5000';
 
 const API_BASE_URL = `${BACKEND_BASE_URL}/api`;  // ← Add /api here once

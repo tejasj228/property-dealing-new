@@ -1,19 +1,13 @@
 {
-  "buildCommand": "npx react-scripts build",
+  "buildCommand": "CI=false npm run build",
   "outputDirectory": "build",
   "installCommand": "npm ci",
-  "devCommand": "npx react-scripts start",
+  "devCommand": "npm start",
   "env": {
-    "REACT_APP_API_URL": "https://property-dealing-kbyb.onrender.com/api",
+    "REACT_APP_API_URL": "https://property-dealing-4a4n.onrender.com/api",
     "REACT_APP_BASE_URL": "https://property-dealing-frontend.vercel.app"
   },
-
-  
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
-
 }
-
-  
-

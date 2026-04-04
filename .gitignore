@@ -1,24 +1,32 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Node modules (all levels)
+node_modules/
+**/node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# production
+# Build outputs
 /build
+/.next
+**/build
+**/.next
 
-# misc
-.DS_Store
+# Environment files - NEVER commit these
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
 
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.env.production
+
+# Misc
+.DS_Store
+.pnp
+.pnp.js
+/coverage
+
+# Cache
+.cache/
+**/.cache/

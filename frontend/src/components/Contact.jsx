@@ -58,7 +58,7 @@ const Contact = () => {
       console.log('📤 Submitting contact form:', formData);
       
       // 🔧 FIXED: Use the working API URL directly
-      const API_URL = 'https://property-dealing-kuw8.onrender.com';
+      const API_URL = 'https://property-dealing-4a4n.onrender.com';
       
       console.log(`🔗 Using API URL: ${API_URL}/api/contacts`);
       
