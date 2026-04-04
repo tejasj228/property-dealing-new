@@ -92,27 +92,24 @@ const ImageSlider = () => {
   }
 
   return (
-    <div className="scrolling-slider">
-      <div className="scrolling-track">
-        {duplicatedImages.map((image, index) => (
-          <div key={index} className="scrolling-item">
-            <img 
-              src={image} 
-              alt={`Property ${index % images.length + 1}`}
-              onError={(e) => {
-                // If image fails to load, replace with a fallback
-                console.warn('❌ Image failed to load:', image);
-                const fallbackIndex = index % fallbackImages.length;
-                if (e.target.src !== fallbackImages[fallbackIndex]) {
-                  e.target.src = fallbackImages[fallbackIndex];
-                }
-              }}
-              onLoad={() => {
-                console.log('✅ Image loaded successfully:', image);
-              }}
-            />
-          </div>
-        ))}
+    <div className="scrolling-slider-wrapper">
+      <div className="scrolling-slider">
+        <div className="scrolling-track">
+          {duplicatedImages.map((image, index) => (
+            <div key={index} className="scrolling-item">
+              <img 
+                src={image} 
+                alt={`Property ${index % images.length + 1}`}
+                onError={(e) => {
+                  const fallbackIndex = index % fallbackImages.length;
+                  if (e.target.src !== fallbackImages[fallbackIndex]) {
+                    e.target.src = fallbackImages[fallbackIndex];
+                  }
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
