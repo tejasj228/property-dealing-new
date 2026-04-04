@@ -6,7 +6,8 @@ import { cloudinary } from '@/lib/cloudinary';
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
-    const sliderImage = await SliderImage.findById(params.id);
+    const { id } = await params;
+    const sliderImage = await SliderImage.findById(id);
     if (!sliderImage) return NextResponse.json({ success: false, message: 'Slider image not found' }, { status: 404 });
 
     if (sliderImage.imageUrl.includes('cloudinary.com')) {
@@ -20,7 +21,7 @@ export async function DELETE(request, { params }) {
       }
     }
 
-    await SliderImage.findByIdAndDelete(params.id);
+    await SliderImage.findByIdAndDelete(id);
     return NextResponse.json({ success: true, message: 'Slider image deleted successfully' });
   } catch (error) {
     return NextResponse.json({ success: false, message: 'Error deleting slider image', error: error.message }, { status: 500 });

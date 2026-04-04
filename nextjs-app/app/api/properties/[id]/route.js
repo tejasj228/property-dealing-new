@@ -5,7 +5,8 @@ import Property from '@/lib/models/Property';
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    const property = await Property.findById(params.id);
+    const { id } = await params;
+    const property = await Property.findById(id);
     if (!property) return NextResponse.json({ success: false, message: 'Property not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: property });
   } catch (error) {
@@ -16,13 +17,14 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await connectDB();
+    const { id } = await params;
     const body = await request.json();
 
     if (body.propertyType && !['residential', 'commercial'].includes(body.propertyType)) {
       return NextResponse.json({ success: false, message: 'Property type must be "residential" or "commercial"' }, { status: 400 });
     }
 
-    const property = await Property.findByIdAndUpdate(params.id, body, { new: true, runValidators: true });
+    const property = await Property.findByIdAndUpdate(id, body, { new: true, runValidators: true });
     if (!property) return NextResponse.json({ success: false, message: 'Property not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Property updated successfully', data: property });
   } catch (error) {
@@ -33,7 +35,8 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
-    const property = await Property.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const property = await Property.findByIdAndDelete(id);
     if (!property) return NextResponse.json({ success: false, message: 'Property not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Property deleted successfully' });
   } catch (error) {

@@ -192,9 +192,10 @@
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
     gap: 30px;
     margin-top: 50px;
+    width: 100%;
 }
 
 .feature-card {
@@ -206,6 +207,8 @@
     border: 2px solid var(--border-light);
     transition: all 0.5s ease;
     position: relative;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Enhanced light mode styling for better contrast */
@@ -319,6 +322,9 @@ body.dark-mode .feature-card:hover {
     box-shadow: 0 15px 35px var(--shadow-light);
     border: 2px solid var(--border-light);
     transition: all 0.5s ease;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* Enhanced light mode styling for better contrast */
@@ -369,9 +375,10 @@ body.dark-mode .main-area-card:hover {
 
 .sub-areas-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
     gap: 25px;
     margin-bottom: 40px;
+    width: 100%;
 }
 
 .sub-area-card {
@@ -383,6 +390,8 @@ body.dark-mode .main-area-card:hover {
     cursor: pointer;
     position: relative;
     transform-origin: center;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Enhanced light mode styling for better contrast */

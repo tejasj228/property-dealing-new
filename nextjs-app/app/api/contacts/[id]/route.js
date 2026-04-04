@@ -9,7 +9,8 @@ export async function GET(request, { params }) {
 
   try {
     await connectDB();
-    const contact = await Contact.findById(params.id);
+    const { id } = await params;
+    const contact = await Contact.findById(id);
     if (!contact) return NextResponse.json({ success: false, message: 'Contact not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: contact });
   } catch (error) {
@@ -23,6 +24,7 @@ export async function PUT(request, { params }) {
 
   try {
     await connectDB();
+    const { id } = await params;
     const body = await request.json();
     const { status: contactStatus, priority, notes, isRead } = body;
 
@@ -32,7 +34,7 @@ export async function PUT(request, { params }) {
     if (notes !== undefined) updateData.notes = notes;
     if (isRead !== undefined) updateData.isRead = isRead;
 
-    const contact = await Contact.findByIdAndUpdate(params.id, updateData, { new: true, runValidators: true });
+    const contact = await Contact.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
     if (!contact) return NextResponse.json({ success: false, message: 'Contact not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Contact updated successfully', data: contact });
   } catch (error) {
@@ -46,7 +48,8 @@ export async function DELETE(request, { params }) {
 
   try {
     await connectDB();
-    const contact = await Contact.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const contact = await Contact.findByIdAndDelete(id);
     if (!contact) return NextResponse.json({ success: false, message: 'Contact not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Contact deleted successfully' });
   } catch (error) {

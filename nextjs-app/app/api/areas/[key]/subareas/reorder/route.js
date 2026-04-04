@@ -5,9 +5,10 @@ import Area from '@/lib/models/Area';
 export async function PUT(request, { params }) {
   try {
     await connectDB();
+    const { key } = await params;
     const { subAreas } = await request.json();
 
-    const area = await Area.findOne({ key: params.key });
+    const area = await Area.findOne({ key });
     if (!area) return NextResponse.json({ success: false, message: 'Area not found' }, { status: 404 });
 
     area.subAreas = subAreas.map((sa, index) => ({ ...sa, order: index }));

@@ -2,14 +2,18 @@
 import { useState, useEffect } from 'react';
 
 export const useTheme = () => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme) return savedTheme === 'dark';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  // Always start as false to match SSR — read real value in useEffect
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Read actual theme from localStorage/system after client mounts
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+    setIsDarkMode(initialDark);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const updateTheme = () => {

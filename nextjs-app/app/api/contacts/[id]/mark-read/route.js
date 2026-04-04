@@ -9,7 +9,8 @@ export async function PUT(request, { params }) {
 
   try {
     await connectDB();
-    const contact = await Contact.findByIdAndUpdate(params.id, { isRead: true }, { new: true });
+    const { id } = await params;
+    const contact = await Contact.findByIdAndUpdate(id, { isRead: true }, { new: true });
     if (!contact) return NextResponse.json({ success: false, message: 'Contact not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Contact marked as read', data: contact });
   } catch (error) {

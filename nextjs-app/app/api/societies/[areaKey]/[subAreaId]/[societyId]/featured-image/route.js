@@ -5,7 +5,7 @@ import Area from '@/lib/models/Area';
 export async function PUT(request, { params }) {
   try {
     await connectDB();
-    const { areaKey, subAreaId, societyId } = params;
+    const { areaKey, subAreaId, societyId } = await params;
     const { imageIndex } = await request.json();
 
     const area = await Area.findOne({ key: areaKey });

@@ -5,7 +5,8 @@ import Area from '@/lib/models/Area';
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    const area = await Area.findOne({ key: params.key });
+    const { key } = await params;
+    const area = await Area.findOne({ key });
     if (!area) return NextResponse.json({ success: false, message: 'Area not found' }, { status: 404 });
 
     return NextResponse.json({
@@ -25,8 +26,9 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await connectDB();
+    const { key } = await params;
     const body = await request.json();
-    const area = await Area.findOneAndUpdate({ key: params.key }, body, { new: true, runValidators: true });
+    const area = await Area.findOneAndUpdate({ key }, body, { new: true, runValidators: true });
     if (!area) return NextResponse.json({ success: false, message: 'Area not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Area updated successfully', data: area });
   } catch (error) {
@@ -37,7 +39,8 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
-    const area = await Area.findOneAndDelete({ key: params.key });
+    const { key } = await params;
+    const area = await Area.findOneAndDelete({ key });
     if (!area) return NextResponse.json({ success: false, message: 'Area not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'Area deleted successfully' });
   } catch (error) {

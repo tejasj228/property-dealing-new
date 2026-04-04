@@ -5,7 +5,7 @@ import Property from '@/lib/models/Property';
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    const { areaKey } = params;
+    const { areaKey } = await params;
     const { searchParams } = new URL(request.url);
     const propertyType = searchParams.get('propertyType');
 

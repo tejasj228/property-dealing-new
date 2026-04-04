@@ -5,7 +5,7 @@ import Area from '@/lib/models/Area';
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    const { areaKey, subAreaId, societyId } = params;
+    const { areaKey, subAreaId, societyId } = await params;
     const area = await Area.findOne({ key: areaKey });
     if (!area) return NextResponse.json({ success: false, message: 'Area not found' }, { status: 404 });
 
