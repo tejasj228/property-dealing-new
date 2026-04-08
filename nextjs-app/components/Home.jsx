@@ -268,9 +268,7 @@ const Home = () => {
 
       {/* Image Slider Section */}
       <section className="slider-section scroll-reveal">
-        <div className="container">
-          <ImageSlider />
-        </div>
+        <ImageSlider />
       </section>
 
       {/* Areas Section - Now renders immediately with fallback data */}

@@ -122,7 +122,7 @@ const Header = () => {
           </button>
           <Link href="/" className="mobile-logo">Pawan Buildhome</Link>
           <button className="mobile-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-            <i className={isDarkMode ? 'fas fa-sun' : 'fas fa-moon'}></i>
+            <i className={isDarkMode ? 'fas fa-moon' : 'fas fa-sun'}></i>
           </button>
         </div>
 
@@ -187,8 +187,8 @@ const Header = () => {
 
         <div className="theme-container">
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-            <i className={isDarkMode ? 'fas fa-sun' : 'fas fa-moon'}></i>
-            <span>{isDarkMode ? 'Light' : 'Dark'}</span>
+            <i className={isDarkMode ? 'fas fa-moon' : 'fas fa-sun'}></i>
+            <span>{isDarkMode ? 'Dark' : 'Light'}</span>
           </button>
         </div>
       </nav>
