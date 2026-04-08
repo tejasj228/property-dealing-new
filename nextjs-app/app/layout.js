@@ -3,6 +3,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
   title: 'Pawan Buildhome - Premium Real Estate in NCR',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
           </main>
           <Footer />
           <ScrollToTop />
+          <Analytics />
         </div>
       </body>
     </html>
