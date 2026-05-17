@@ -31,7 +31,7 @@ export async function sendContactFormEmail({ name, email, phone, interest, messa
     `;
 
     const info = await transporter.sendMail({
-      from: email,
+      from: `"Pawan Buildhome Website" <${process.env.GMAIL_USER}>`,
       to: 'tejasjaiswal5@gmail.com',
       replyTo: email,
       subject,
