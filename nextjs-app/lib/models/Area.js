@@ -39,9 +39,8 @@ const areaSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-areaSchema.pre('save', function (next) {
+areaSchema.pre('save', async function () {
   this.updatedAt = Date.now();
-  next();
 });
 
 const Area = mongoose.models.Area || mongoose.model('Area', areaSchema);

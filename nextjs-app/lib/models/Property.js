@@ -27,7 +27,7 @@ const propertySchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-propertySchema.pre('save', function (next) {
+propertySchema.pre('save', async function () {
   this.updatedAt = Date.now();
   if (!this.propertyType) this.propertyType = 'residential';
 
@@ -44,7 +44,6 @@ propertySchema.pre('save', function (next) {
     if (!this.links.magicbricks || this.links.magicbricks.trim() === '') this.links.magicbricks = undefined;
     if (!this.links.acres99 && !this.links.magicbricks) this.links = undefined;
   }
-  next();
 });
 
 propertySchema.virtual('hasBedsAndBaths').get(function () {
