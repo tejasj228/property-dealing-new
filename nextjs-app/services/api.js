@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { publicContentUrl } from '@/lib/public-content-path.mjs';
 
 // In Next.js, API routes are same-origin. Use relative URLs.
 const API_BASE_URL = '/api';
@@ -60,7 +61,7 @@ export const submitContactForm = async (formData) => {
 
 export const fetchAreas = async () => {
   try {
-    const response = await api.get('/areas');
+    const response = await axios.get(publicContentUrl('/areas'), { timeout: 12000 });
     return response.data.data || {};
   } catch (error) {
     if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') return {};

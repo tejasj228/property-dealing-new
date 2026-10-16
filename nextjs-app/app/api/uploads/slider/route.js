@@ -1,3 +1,4 @@
+import { authorizeAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import SliderImage from '@/lib/models/SliderImage';
@@ -14,6 +15,8 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const denied = authorizeAdmin(request);
+  if (denied) return denied;
   try {
     await connectDB();
     const formData = await request.formData();

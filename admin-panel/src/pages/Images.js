@@ -9,7 +9,7 @@ import {
   CardMedia,
   CardContent,
   CardActions,
-  Grid,
+  GridLegacy as Grid,
   IconButton,
   Dialog,
   DialogTitle,
@@ -27,7 +27,6 @@ import {
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
-  Image as ImageIcon,
   Slideshow as SlideshowIcon,
   Folder as FolderIcon,
   CloudUpload as UploadIcon,
@@ -71,14 +70,10 @@ function Images() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [sliderResponse, filesResponse] = await Promise.all([
-        uploadAPI.getSliderImages().catch(() => ({ data: [] })),
-        uploadAPI.getFiles().catch(() => ({ data: [] }))
-      ]);
-      
-      console.log('🖼️ Slider images loaded:', sliderResponse.data);
-      setSliderImages(sliderResponse.data || []);
-      setAllFiles(filesResponse.data || []);
+      const results = await Promise.allSettled([uploadAPI.getSliderImages(), uploadAPI.getFiles()]);
+      setSliderImages(results[0].status === 'fulfilled' ? results[0].value.data || [] : []);
+      setAllFiles(results[1].status === 'fulfilled' ? results[1].value.data || [] : []);
+      setError(results.some(result => result.status === 'rejected') ? 'Some media could not be loaded. Check the connection and refresh to try again.' : null);
     } catch (error) {
       console.error('Error loading images:', error);
       setError('Failed to load images');
@@ -197,8 +192,8 @@ function Images() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
-          <Typography variant="h4" gutterBottom>
-            Images Management
+          <Typography variant="h4" component="h1" gutterBottom>
+            Media library
           </Typography>
           <Typography variant="body1" color="textSecondary">
             Manage slider images and uploaded files
@@ -246,7 +241,7 @@ function Images() {
               <Grid item xs={12} sm={6} md={4} key={image._id}>
                 <Card>
                   <CardMedia
-                    component="img"
+                    component="img" loading="lazy" decoding="async"
                     height="200"
                     image={getImageUrl(image.imageUrl)}
                     alt={image.altText}
@@ -314,7 +309,7 @@ function Images() {
               <Grid item xs={12} sm={6} md={3} key={index}>
                 <Card>
                   <CardMedia
-                    component="img"
+                    component="img" loading="lazy" decoding="async"
                     height="150"
                     image={getImageUrl(file.imageUrl)}
                     alt={file.filename}

@@ -18,6 +18,8 @@ export async function connectDB() {
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
+      autoIndex: process.env.MONGODB_AUTO_INDEX !== 'false',
+      autoCreate: process.env.MONGODB_AUTO_CREATE !== 'false',
     }).then((m) => m);
   }
 

@@ -16,11 +16,11 @@ function ProtectedRoute({ children }) {
           justifyContent: 'center',
           alignItems: 'center',
           minHeight: '100vh',
-          background: 'linear-gradient(135deg, #B8860B 0%, #DAA520 100%)',
+          background: '#f4f7f5',
         }}
       >
-        <CircularProgress size={60} sx={{ color: 'white', mb: 2 }} />
-        <Typography variant="h6" sx={{ color: 'white' }}>
+        <CircularProgress size={60} sx={{ color: 'primary.main', mb: 2 }} />
+        <Typography variant="h6" sx={{ color: 'text.secondary' }}>
           Verifying credentials...
         </Typography>
       </Box>

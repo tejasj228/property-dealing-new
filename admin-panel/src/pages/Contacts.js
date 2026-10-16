@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
   Card,
   CardContent,
-  Grid,
+  GridLegacy as Grid,
   Chip,
   IconButton,
   Dialog,
@@ -29,7 +29,6 @@ import {
   Avatar,
   Tooltip,
   Link,
-  Collapse,
   CardActions,
 } from '@mui/material';
 import {
@@ -44,27 +43,12 @@ import {
   FilterList as FilterIcon,
   Person as PersonIcon,
   Message as MessageIcon,
-  Priority as PriorityIcon,
   Schedule as TimeIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Circle as CircleIcon,
 } from '@mui/icons-material';
 import { contactAPI } from '../services/api';
-
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`contacts-tabpanel-${index}`}
-      aria-labelledby={`contacts-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 // Enhanced Contact Card Component
 const ContactCard = ({ contact, onView, onEdit, onMarkAsRead, onDelete }) => {
@@ -103,13 +87,13 @@ const ContactCard = ({ contact, onView, onEdit, onMarkAsRead, onDelete }) => {
     <Card 
       sx={{ 
         mb: 2, 
-        border: !contact.isRead ? '2px solid #1976d2' : '1px solid #e0e0e0',
-        backgroundColor: !contact.isRead ? '#f3f8ff' : 'white',
+        border: !contact.isRead ? '2px solid #729d80' : '1px solid #e0e0e0',
+        backgroundColor: !contact.isRead ? '#f0f6f1' : 'white',
         '&:hover': {
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          transform: 'translateY(-1px)',
+          transform: 'none',
         },
-        transition: 'all 0.2s ease',
+        transition: 'border-color 0.15s ease',
       }}
     >
       <CardContent>
@@ -348,47 +332,29 @@ function Contacts() {
     notes: ''
   });
 
-  useEffect(() => {
-    loadContacts();
-    loadStats();
-  }, [page, rowsPerPage, filters, tabValue]);
-
-  const loadContacts = async () => {
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const request = useRef(null);
+  useEffect(() => { const timer = setTimeout(() => setDebouncedSearch(filters.search), 300); return () => clearTimeout(timer); }, [filters.search]);
+  const loadContacts = useCallback(async () => {
+    request.current?.abort();
+    const controller = new AbortController(); request.current = controller;
+    setLoading(true); setError(null);
     try {
-      setLoading(true);
-      
-      // Build query parameters
-      const params = {
-        page: page + 1,
-        limit: rowsPerPage,
-        ...filters
-      };
-      
-      // Add tab-specific filters
-      if (tabValue === 1) params.isRead = 'false'; // Unread
-      if (tabValue === 2) params.status = 'new'; // New
-      if (tabValue === 3) params.status = 'in-progress'; // In Progress
-      
-      const response = await contactAPI.getAll(params);
-      setContacts(response.data || []);
-      setTotalContacts(response.pagination?.totalContacts || 0);
-      
-    } catch (error) {
-      console.error('Error loading contacts:', error);
-      setError('Failed to load contacts');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadStats = async () => {
-    try {
-      const response = await contactAPI.getStats();
-      setStats(response.data || {});
-    } catch (error) {
-      console.error('Error loading contact stats:', error);
-    }
-  };
+      const params = { page: page + 1, limit: rowsPerPage, status: filters.status, priority: filters.priority, isRead: filters.isRead, search: debouncedSearch };
+      if (tabValue === 1) params.isRead = 'false';
+      if (tabValue === 2) params.status = 'new';
+      if (tabValue === 3) params.status = 'in-progress';
+      const response = await contactAPI.getAll(params, { signal: controller.signal });
+      if (!controller.signal.aborted) { setContacts(response.data || []); setTotalContacts(response.pagination?.totalContacts || 0); }
+    } catch (error) { if (!controller.signal.aborted) setError('Couldn’t load enquiries. Check the connection and try again.'); }
+    finally { if (!controller.signal.aborted) setLoading(false); }
+  }, [page, rowsPerPage, filters.status, filters.priority, filters.isRead, debouncedSearch, tabValue]);
+  const loadStats = useCallback(async () => {
+    try { const response = await contactAPI.getStats(); setStats(response.data || {}); }
+    catch { /* The enquiry list remains usable when statistics are unavailable. */ }
+  }, []);
+  useEffect(() => { loadContacts(); return () => request.current?.abort(); }, [loadContacts]);
+  useEffect(() => { loadStats(); }, [loadStats]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -472,8 +438,8 @@ function Contacts() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
-          <Typography variant="h4" gutterBottom>
-            Contact Management
+          <Typography variant="h4" component="h1" gutterBottom>
+            Enquiries
           </Typography>
           <Typography variant="body1" color="textSecondary">
             Manage customer inquiries and leads

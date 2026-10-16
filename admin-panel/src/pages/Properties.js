@@ -1,12 +1,12 @@
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import {
   Box,
   Typography,
   Button,
   Card,
   CardContent,
-  Grid,
+  GridLegacy as Grid,
   Chip,
   IconButton,
   Dialog,
@@ -23,7 +23,6 @@ import {
   Paper,
   Fab,
   CardMedia,
-  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -105,7 +104,7 @@ const PropertyImageCarousel = ({ images, title }) => {
   return (
     <Box sx={{ position: 'relative', height: 200 }}>
       <CardMedia
-        component="img"
+        component="img" loading="lazy" decoding="async"
         height="200"
         image={getImageUrl(images[currentImageIndex])}
         alt={`${title} - Image ${currentImageIndex + 1}`}
@@ -118,7 +117,7 @@ const PropertyImageCarousel = ({ images, title }) => {
           {/* Navigation Arrows */}
           <IconButton
             size="small"
-            onClick={prevImage}
+            aria-label="Previous property image" onClick={prevImage}
             sx={{
               position: 'absolute',
               left: 8,
@@ -136,7 +135,7 @@ const PropertyImageCarousel = ({ images, title }) => {
           
           <IconButton
             size="small"
-            onClick={nextImage}
+            aria-label="Next property image" onClick={nextImage}
             sx={{
               position: 'absolute',
               right: 8,
@@ -210,7 +209,7 @@ const getPropertyTypeInfo = (propertyType) => {
 };
 
 // Sortable Property Card Component using @dnd-kit
-const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel }) => {
+const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel, sortingDisabled = false }) => {
   const {
     attributes,
     listeners,
@@ -218,7 +217,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: property._id });
+  } = useSortable({ id: property._id, disabled: sortingDisabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -243,8 +242,8 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          border: isDragging ? '2px dashed #B8860B' : '1px solid #e0e0e0',
-          boxShadow: isDragging ? '0 8px 20px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
+          border: isDragging ? '2px dashed #285c4d' : '1px solid #e0e0e0',
+          boxShadow: isDragging ? '0 8px 20px #203e3426' : 'none',
           position: 'relative',
         }}
       >
@@ -289,7 +288,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
             height: 40,
             backgroundColor: 'primary.main',
             color: 'white',
-            cursor: isDragging ? 'grabbing' : 'grab',
+            cursor: sortingDisabled ? 'default' : isDragging ? 'grabbing' : 'grab',
             '&:hover': {
               backgroundColor: 'primary.dark',
             },
@@ -297,7 +296,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
         >
           <DragIcon fontSize="small" />
           <Typography variant="caption" sx={{ ml: 1 }}>
-            Drag to reorder
+            {sortingDisabled ? 'Clear filters to reorder' : 'Drag to reorder'}
           </Typography>
         </Box>
 
@@ -311,14 +310,14 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
             </Typography>
             <Box>
               <IconButton
-                size="small"
+                size="small" aria-label={`Edit ${property.title}`}
                 onClick={() => onEdit(property)}
                 color="primary"
               >
                 <EditIcon />
               </IconButton>
               <IconButton
-                size="small"
+                size="small" aria-label={`Delete ${property.title}`}
                 onClick={() => onDelete(property._id)}
                 color="error"
               >
@@ -414,6 +413,13 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel 
 
 function Properties() {
   const [properties, setProperties] = useState([]);
+  const [search, setSearch] = useState(''), [type, setType] = useState('all'), [areaFilter, setAreaFilter] = useState('all');
+  const deferredSearch = useDeferredValue(search);
+  const filtered = Boolean(search.trim() || type !== 'all' || areaFilter !== 'all');
+  const visibleProperties = useMemo(() => properties.filter(property => {
+    const query = deferredSearch.trim().toLowerCase();
+    return (!query || [property.title, property.location, property.price].some(value => String(value || '').toLowerCase().includes(query))) && (type === 'all' || property.propertyType === type) && (areaFilter === 'all' || property.areaKey === areaFilter);
+  }), [properties, deferredSearch, type, areaFilter]);
   const [areas, setAreas] = useState({}); // 🆕 NEW: State for areas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -440,7 +446,7 @@ function Properties() {
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -456,22 +462,10 @@ function Properties() {
       setLoading(true);
       
       // Load areas and properties in parallel
-      const [areasResponse, propertiesResponse] = await Promise.all([
-        areaAPI.getAll().catch(err => {
-          console.warn('⚠️ Error loading areas:', err);
-          return { data: {} }; // Return empty object if areas fail to load
-        }),
-        propertyAPI.getAll().catch(err => {
-          console.error('❌ Error loading properties:', err);
-          return { data: [] }; // Return empty array if properties fail to load
-        })
-      ]);
-
-      console.log('🏢 Areas loaded:', areasResponse.data);
-      console.log('🏠 Properties loaded:', propertiesResponse.data);
-
-      setAreas(areasResponse.data || {});
-      setProperties(propertiesResponse.data || []);
+      const results = await Promise.allSettled([areaAPI.getAll(), propertyAPI.getAll()]);
+      setAreas(results[0].status === 'fulfilled' ? results[0].value.data || {} : {});
+      setProperties(results[1].status === 'fulfilled' ? results[1].value.data || [] : []);
+      setError(results.some(result => result.status === 'rejected') ? 'Some data could not be loaded. Check the connection and refresh to try again.' : null);
       
     } catch (error) {
       console.error('❌ Error loading data:', error);
@@ -498,6 +492,7 @@ function Properties() {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
 
+    if (!over || filtered || savingOrder) return;
     if (active.id !== over.id) {
       setSavingOrder(true);
       
@@ -700,8 +695,8 @@ function Properties() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
-          <Typography variant="h4" gutterBottom>
-            Properties Management
+          <Typography variant="h4" component="h1" gutterBottom>
+            Properties
           </Typography>
           <Typography variant="body1" color="textSecondary">
             Manage your property listings • Drag properties to reorder
@@ -730,6 +725,13 @@ function Properties() {
         </Alert>
       )}
 
+      <div className="admin-property-filters">
+        <TextField label="Search properties" placeholder="Title, location or price" value={search} onChange={event => setSearch(event.target.value)} />
+        <TextField select label="Property type" value={type} onChange={event => setType(event.target.value)}><MenuItem value="all">All types</MenuItem><MenuItem value="residential">Residential</MenuItem><MenuItem value="commercial">Commercial</MenuItem></TextField>
+        <TextField select label="Location" value={areaFilter} onChange={event => setAreaFilter(event.target.value)}><MenuItem value="all">All locations</MenuItem>{Object.entries(areas).map(([key, value]) => <MenuItem key={key} value={key}>{value.name}</MenuItem>)}</TextField>
+        <Button variant="text" onClick={() => { setSearch(''); setType('all'); setAreaFilter('all'); }} disabled={!filtered}>Clear filters</Button>
+      </div><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} role="status">{visibleProperties.length} of {properties.length} properties</Typography>
+      {properties.length > 0 && !visibleProperties.length && <Paper variant="outlined" sx={{ p: 4, mb: 3 }}><Typography>No properties match these filters.</Typography></Paper>}
       {/* Properties Grid with Drag & Drop */}
       {properties.length > 0 ? (
         <DndContext
@@ -738,17 +740,18 @@ function Properties() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={properties.map(p => p._id)}
+            items={visibleProperties.map(p => p._id)}
             strategy={verticalListSortingStrategy}
           >
             <Grid container spacing={3}>
-              {properties.map((property, index) => (
+              {visibleProperties.map((property, index) => (
                 <SortablePropertyCard
                   key={property._id}
                   property={property}
                   index={index}
                   onEdit={handleOpenDialog}
                   onDelete={handleDelete}
+                  sortingDisabled={filtered || savingOrder}
                   getAreaLabel={getAreaLabel}
                 />
               ))}

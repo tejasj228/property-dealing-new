@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
 /**
@@ -29,4 +30,13 @@ export function requireAdmin(admin) {
     return { error: 'Access denied. Admin privileges required.', status: 403 };
   }
   return { ok: true };
+}
+
+/** Deny management mutations before touching the database or media service. */
+export function authorizeAdmin(request) {
+  const result = authenticateToken(request);
+  if (result.error) return NextResponse.json({ success: false, message: result.error }, { status: result.status });
+  const permission = requireAdmin(result.admin);
+  if (permission.error) return NextResponse.json({ success: false, message: permission.error }, { status: permission.status });
+  return null;
 }

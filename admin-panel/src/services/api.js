@@ -16,7 +16,6 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -28,7 +27,6 @@ api.interceptors.request.use(
 // Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response: ${response.config.url} - ${response.status}`);
     return response;
   },
   (error) => {
@@ -232,8 +230,8 @@ export const uploadAPI = {
 // Contact API functions
 export const contactAPI = {
   // Get all contacts with pagination and filtering
-  getAll: async (params = {}) => {
-    const response = await api.get('/contacts', { params });
+  getAll: async (params = {}, options = {}) => {
+    const response = await api.get('/contacts', { ...options, params });
     return response.data;
   },
 

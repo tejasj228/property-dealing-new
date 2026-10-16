@@ -7,7 +7,7 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
+  GridLegacy as Grid,
   IconButton,
   Dialog,
   DialogTitle,
@@ -53,7 +53,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -136,7 +135,7 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
         {mapImage ? (
           <Card sx={{ mb: 2, maxWidth: 300 }}>
             <CardMedia
-              component="img"
+              component="img" loading="lazy" decoding="async"
               height="150"
               image={getImageUrl(mapImage)}
               alt="Society map"
@@ -220,7 +219,7 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
               <Grid item xs={6} sm={4} md={3} key={index}>
                 <Card sx={{ position: 'relative' }}>
                   <CardMedia
-                    component="img"
+                    component="img" loading="lazy" decoding="async"
                     height="100"
                     image={getImageUrl(imageUrl)}
                     alt={`Gallery image ${index + 1}`}
@@ -314,7 +313,7 @@ const MapUpload = ({ mapImage, onMapChange, label = "Sub-Area Map" }) => {
         <Box>
           <Card sx={{ mb: 2, maxWidth: 300 }}>
             <CardMedia
-              component="img"
+              component="img" loading="lazy" decoding="async"
               height="200"
               image={getImageUrl(mapImage)}
               alt="Map preview"
@@ -396,7 +395,7 @@ const SortableSociety = ({ society, areaKey, subAreaId, onEdit, onDelete }) => {
       style={style}
       divider
       sx={{
-        border: isDragging ? '2px dashed #B8860B' : 'none',
+        border: isDragging ? '2px dashed #285c4d' : 'none',
         borderRadius: isDragging ? 2 : 0,
         backgroundColor: isDragging ? '#f5f5f5' : 'transparent',
         cursor: isDragging ? 'grabbing' : 'default',
@@ -528,7 +527,7 @@ const SortableSubArea = ({
       style={style}
       sx={{
         mb: 2,
-        border: isDragging ? '2px dashed #B8860B' : '1px solid #e0e0e0',
+        border: isDragging ? '2px dashed #285c4d' : '1px solid #e0e0e0',
         borderRadius: 2,
       }}
     >
@@ -708,7 +707,7 @@ const SortableArea = ({
       onChange={() => setExpanded(!expanded)}
       sx={{ 
         mb: 2,
-        border: isDragging ? '2px dashed #B8860B' : '1px solid #e0e0e0',
+        border: isDragging ? '2px dashed #285c4d' : '1px solid #e0e0e0',
         borderRadius: 2,
         '&:before': {
           display: 'none',
@@ -847,7 +846,7 @@ function Areas() {
   const [editingSociety, setEditingSociety] = useState(null);
   const [parentAreaKey, setParentAreaKey] = useState(null);
   const [parentSubAreaId, setParentSubAreaId] = useState(null);
-  const [activeId, setActiveId] = useState(null);
+  const [, setActiveId] = useState(null);
   
   // Enhanced form data for societies
   const [formData, setFormData] = useState({
@@ -882,17 +881,10 @@ function Areas() {
     try {
       setLoading(true);
       
-      const [areasResponse, propertiesResponse] = await Promise.all([
-        areaAPI.getAll().catch(err => {
-          console.error('❌ Error loading areas:', err);
-          return { data: {} };
-        }),
-        propertyAPI.getAll().catch(err => {
-          console.error('❌ Error loading properties:', err);
-          return { data: [] };
-        })
-      ]);
-
+      const results = await Promise.allSettled([areaAPI.getAll(), propertyAPI.getAll()]);
+      const areasResponse = results[0].status === 'fulfilled' ? results[0].value : { data: {} };
+      const propertiesResponse = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
+      setError(results.some(result => result.status === 'rejected') ? 'Some area data could not be loaded. Check the connection and refresh to try again.' : null);
       setAreas(areasResponse.data || {});
 
       // Count properties by area
@@ -1380,8 +1372,8 @@ function Areas() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
-          <Typography variant="h4" gutterBottom>
-            Areas Management
+          <Typography variant="h4" component="h1" gutterBottom>
+            Areas & societies
           </Typography>
           <Typography variant="body1" color="textSecondary">
             Manage your service areas, sub-areas, and societies/pockets • Drag to reorder

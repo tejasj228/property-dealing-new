@@ -336,3 +336,12 @@ body.theme-override:not(.dark-mode) {
   --shadow-medium: rgba(44, 62, 80, 0.15);
   --shadow-dark: rgba(44, 62, 80, 0.25);
 }
+
+/* The scrollbar belongs to the document, outside the themed page wrapper. */
+html { --scroll-track:#f4f7f5; --scroll-thumb:#789b87; --scroll-hover:#285c4d; scrollbar-color:var(--scroll-thumb) var(--scroll-track); scrollbar-width:thin; }
+html:has([data-theme='dark']) { --scroll-track:#15251f; --scroll-thumb:#64826e; --scroll-hover:#b2d4b8; }
+@media(prefers-color-scheme:dark) { html:has([data-theme='system']) { --scroll-track:#15251f; --scroll-thumb:#64826e; --scroll-hover:#b2d4b8; } }
+html::-webkit-scrollbar, body::-webkit-scrollbar { width:9px; height:9px; }
+html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background:var(--scroll-track); }
+html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border:2px solid var(--scroll-track); border-radius:8px; }
+html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover { background:var(--scroll-hover); }

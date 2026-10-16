@@ -1,311 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Paper,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Home as HomeIcon,
-  Map as MapIcon,
-  Image as ImageIcon,
-  TrendingUp as TrendingUpIcon,
-  Email as EmailIcon,
-  MarkEmailUnread as UnreadIcon,
-} from '@mui/icons-material';
-import { propertyAPI, areaAPI, uploadAPI, contactAPI, healthCheck } from '../services/api';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Alert, Button } from '@mui/material';
+import HomeWorkOutlined from '@mui/icons-material/HomeWorkOutlined';
+import MapOutlined from '@mui/icons-material/MapOutlined';
+import MailOutline from '@mui/icons-material/MailOutline';
+import MarkEmailUnreadOutlined from '@mui/icons-material/MarkEmailUnreadOutlined';
+import AddOutlined from '@mui/icons-material/AddOutlined';
+import RefreshOutlined from '@mui/icons-material/RefreshOutlined';
+import { propertyAPI, areaAPI, contactAPI } from '../services/api';
+import { getImageUrl } from '../utils/imageUtils';
 
-const StatCard = ({ title, value, icon, color = 'primary' }) => (
-  <Card sx={{ height: '100%' }}>
-    <CardContent>
-      <Box display="flex" alignItems="center" justifyContent="space-between">
-        <Box>
-          <Typography color="textSecondary" gutterBottom variant="body2">
-            {title}
-          </Typography>
-          <Typography variant="h4" component="h2">
-            {value}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            backgroundColor: `${color}.main`,
-            borderRadius: '50%',
-            p: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-);
-
-function Dashboard() {
-  const [stats, setStats] = useState({
-    totalProperties: 0,
-    totalAreas: 0,
-    totalImages: 0,
-    totalContacts: 0,
-    unreadContacts: 0,
-    recentProperties: [],
-    recentContacts: [],
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [backendStatus, setBackendStatus] = useState('checking');
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Check backend health
-      await healthCheck();
-      setBackendStatus('connected');
-
-      // Fetch all data in parallel
-      const [propertiesData, areasData, imagesData, contactsData, contactStatsData] = await Promise.all([
-        propertyAPI.getAll(),
-        areaAPI.getAll(),
-        uploadAPI.getFiles().catch(() => ({ data: [] })),
-        contactAPI.getAll({ limit: 5 }).catch(() => ({ data: [] })),
-        contactAPI.getStats().catch(() => ({ data: {} })),
-      ]);
-
-      setStats({
-        totalProperties: propertiesData.count || 0,
-        totalAreas: Object.keys(areasData.data || {}).length,
-        totalImages: imagesData.count || 0,
-        totalContacts: contactStatsData.data?.totalContacts || 0,
-        unreadContacts: contactStatsData.data?.unreadCount || 0,
-        recentProperties: propertiesData.data?.slice(0, 5) || [],
-        recentContacts: contactsData.data || [],
-      });
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      setError(error.message || 'Failed to load dashboard data');
-      setBackendStatus('disconnected');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-        <Typography variant="h6" sx={{ ml: 2 }}>
-          Loading Dashboard...
-        </Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 1 }}>
-        Dashboard
-      </Typography>
-      <Typography variant="body1" color="textSecondary" gutterBottom sx={{ mb: 3 }}>
-        Welcome to Pawan Buildhome Admin Panel
-      </Typography>
-
-      {/* Backend Status */}
-      <Box mb={3}>
-        {backendStatus === 'connected' && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            ✅ Backend connected successfully - All systems operational
-          </Alert>
-        )}
-        {backendStatus === 'disconnected' && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            ❌ Backend disconnected - {error}
-          </Alert>
-        )}
-        {backendStatus === 'checking' && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            🔄 Checking backend connection...
-          </Alert>
-        )}
-      </Box>
-
-      {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Properties"
-            value={stats.totalProperties}
-            icon={<HomeIcon />}
-            color="primary"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Areas"
-            value={stats.totalAreas}
-            icon={<MapIcon />}
-            color="secondary"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Images"
-            value={stats.totalImages}
-            icon={<ImageIcon />}
-            color="success"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Contacts"
-            value={stats.totalContacts}
-            icon={<EmailIcon />}
-            color="info"
-          />
-        </Grid>
-      </Grid>
-
-      {/* Second row of statistics */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Unread Contacts"
-            value={stats.unreadContacts}
-            icon={<UnreadIcon />}
-            color="warning"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Active Listings"
-            value={stats.totalProperties}
-            icon={<TrendingUpIcon />}
-            color="success"
-          />
-        </Grid>
-      </Grid>
-
-      {/* Recent Content */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: 'fit-content' }}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-              📋 Recent Properties
-            </Typography>
-            {stats.recentProperties.length > 0 ? (
-              <Box>
-                {stats.recentProperties.map((property, index) => (
-                  <Box
-                    key={property._id}
-                    sx={{
-                      p: 2,
-                      mb: index < stats.recentProperties.length - 1 ? 2 : 0,
-                      border: '1px solid #e0e0e0',
-                      borderRadius: 2,
-                      backgroundColor: '#fafafa',
-                      '&:hover': {
-                        backgroundColor: '#f0f0f0',
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      },
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      🏠 {property.title}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
-                      📍 {property.location} • 💰 {property.price}
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      🛏️ {property.beds} beds • 🚿 {property.baths} baths • 📐 {property.area}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="textSecondary" sx={{ mb: 2 }}>
-                  No properties found. Add some properties to get started.
-                </Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Recent Contacts Section */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: 'fit-content' }}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-              📧 Recent Contacts
-            </Typography>
-            {stats.recentContacts.length > 0 ? (
-              <Box>
-                {stats.recentContacts.map((contact, index) => (
-                  <Box
-                    key={contact._id}
-                    sx={{
-                      p: 2,
-                      mb: index < stats.recentContacts.length - 1 ? 2 : 0,
-                      border: '1px solid #e0e0e0',
-                      borderRadius: 2,
-                      backgroundColor: contact.isRead ? '#fafafa' : '#e3f2fd',
-                      '&:hover': {
-                        backgroundColor: contact.isRead ? '#f0f0f0' : '#bbdefb',
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      },
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
-                      👤 {contact.name}
-                      {!contact.isRead && (
-                        <Box component="span" sx={{ ml: 1, color: 'primary.main', fontWeight: 'normal' }}>
-                          (New)
-                        </Box>
-                      )}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
-                      📧 {contact.email} • 📱 {contact.phone}
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                      💬 {contact.message.length > 60 
-                        ? `${contact.message.substring(0, 60)}...` 
-                        : contact.message
-                      }
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                      🕐 {new Date(contact.createdAt).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="textSecondary" sx={{ mb: 2 }}>
-                  No contact inquiries yet.
-                </Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
-  );
+function Stat({ title, value, note, icon: Icon }) {
+  return <article className="admin-stat"><div>{title}<Icon /></div><strong>{value ?? '—'}</strong><small>{note}</small></article>;
 }
-
-export default Dashboard;
+export default function Dashboard() {
+  const [data, setData] = useState({}), [loading, setLoading] = useState(true), [failed, setFailed] = useState([]), [revision, setRevision] = useState(0);
+  useEffect(() => {
+    let disposed = false; setLoading(true);
+    Promise.allSettled([propertyAPI.getAll(), areaAPI.getAll(), contactAPI.getAll({ limit: 5 }), contactAPI.getStats()]).then(results => {
+      if (disposed) return;
+      const names = ['properties', 'areas', 'enquiries', 'enquiry statistics'];
+      setFailed(results.flatMap((result, i) => result.status === 'rejected' ? [names[i]] : []));
+      const read = i => results[i].status === 'fulfilled' ? results[i].value : null;
+      setData({ properties: read(0)?.data, areas: read(1)?.data, contacts: read(2)?.data, stats: read(3)?.data }); setLoading(false);
+    });
+    return () => { disposed = true; };
+  }, [revision]);
+  const recentProperties = [...(data.properties || [])].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 5);
+  return <div><div className="admin-page-heading"><div><h1>A clear view of your business.</h1><p>Keep your listings up to date and follow up on the conversations that matter.</p></div><Button variant="outlined" startIcon={<RefreshOutlined />} disabled={loading} onClick={() => setRevision(value => value + 1)}>Refresh</Button></div>
+    {failed.length > 0 && <Alert severity="warning" sx={{ mb: 3 }} action={<Button color="inherit" size="small" onClick={() => setRevision(value => value + 1)}>Retry</Button>}>Couldn’t load {failed.join(', ')}. These figures are unavailable until the connection is restored.</Alert>}
+    <div className="admin-stats" aria-busy={loading}><Stat title="Published properties" value={loading ? null : data.properties?.length} note="Active listings on your website" icon={HomeWorkOutlined} /><Stat title="Service areas" value={loading || !data.areas ? null : Object.keys(data.areas).length} note="Locations in your collection" icon={MapOutlined} /><Stat title="Total enquiries" value={loading ? null : data.stats?.totalContacts} note="People who have contacted you" icon={MailOutline} /><Stat title="Unread enquiries" value={loading ? null : data.stats?.unreadCount} note="Ready for your attention" icon={MarkEmailUnreadOutlined} /></div>
+    <div className="admin-overview-grid"><section className="admin-panel"><div className="admin-panel-heading"><h2>Latest properties</h2><Link to="/properties">Manage properties</Link></div>{loading ? <div className="admin-empty" role="status">Loading properties…</div> : !data.properties ? <div className="admin-empty">Property data is unavailable. Check the connection and try again.</div> : recentProperties.length ? recentProperties.map(property => <Link to="/properties" className="admin-overview-row" key={property._id}>{property.images?.[0] ? <img className="admin-property-thumb" src={getImageUrl(property.images[0])} alt="" loading="lazy" decoding="async" /> : <div className="admin-property-thumb" />}<div><strong>{property.title}</strong><p>{property.location}</p><p>{property.price}{property.area ? ` · ${property.area}` : ''}</p></div></Link>) : <div className="admin-empty">Your first listing starts here. Add a property to begin.</div>}</section>
+    <section className="admin-panel"><div className="admin-panel-heading"><h2>Recent enquiries</h2><Link to="/contacts">Open enquiries</Link></div>{loading ? <div className="admin-empty" role="status">Loading enquiries…</div> : !data.contacts ? <div className="admin-empty">Enquiries are unavailable. Check the connection and try again.</div> : data.contacts.length ? data.contacts.map(contact => <Link to="/contacts" className="admin-overview-row" key={contact._id}>{!contact.isRead && <span className="admin-dot" aria-label="Unread" />}<div><strong>{contact.name}</strong><p>{contact.interest || contact.email}</p><p>{(contact.message || '').slice(0, 95)}</p></div>{contact.createdAt && <time dateTime={contact.createdAt}>{new Date(contact.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</time>}</Link>) : <div className="admin-empty">New website enquiries will appear here.</div>}</section></div>
+    <div className="admin-shortcuts"><Button component={Link} to="/properties" variant="contained" startIcon={<AddOutlined />}>Manage properties</Button><Button component={Link} to="/areas" variant="outlined">Organise areas & societies</Button><Button component={Link} to="/images" variant="outlined">Open media library</Button></div>
+  </div>;
+}

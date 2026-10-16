@@ -1,0 +1,45 @@
+.propertyMap { margin-top: 36px; border: 1px solid var(--line); border-radius: 24px; overflow: hidden; background: var(--surface-soft); }
+.mapBar { padding: 23px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: 22px; font-size: 12px; color: var(--ink); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i, .markerType > i:first-child { width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: #44886a; flex-shrink: 0; }
+.legend i[data-type='commercial'] { background: #c58a51; border-radius: 2px; }
+.count { color: var(--muted); font-size: 12px; }
+.mapScroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+.mapViewport { position: relative; min-width: 840px; height: var(--map-height); isolation: isolate; cursor: grab; }
+.mapViewport:active { cursor: grabbing; }
+.canvas { position: absolute; inset: 0; }
+.canvas canvas { width: 100%; height: 100%; display: block; }
+.mapBackdrop { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 24px 24px; opacity: .55; }
+.mapBackdrop > span { position: absolute; left: 30px; top: 24px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.compass { position: absolute; right: 35px; top: 26px; font-size: 10px; color: var(--muted); display: grid; justify-items: center; gap: 7px; }
+.compass span { font-size: 28px; }
+.markers { position: relative; z-index: 2; display: flex; gap: 20px; padding: 140px 40px; flex-wrap: wrap; justify-content: center; pointer-events: none; }
+.propertyMap .marker { --type: #44886a; --type-ink: #28583f; position: relative; display: flex; flex-direction: column; gap: 8px; width: 188px; min-height: 140px; background: #f6f7ed; color: #203e34; border: 1px solid #cbd5c1; border-top: 3px solid var(--type); border-radius: 10px; padding: 12px 14px; box-shadow: 0 9px 0 -5px #bdc9b4, 0 16px 32px #18352424; pointer-events: auto; text-decoration: none; cursor: pointer; }
+.marker[data-type='commercial'] { --type: #c58a51; --type-ink: #7b4c23; }
+.markerType { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--type-ink); }
+.markerType > i:first-child { background: var(--type); width: 7px; height: 7px; }
+.marker[data-type='commercial'] .markerType > i:first-child { border-radius: 1px; }
+.markerType > i:last-child { margin-left: auto; font-size: 10px; }
+.marker strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 38px; font-size: 13px; font-weight: 600; line-height: 1.45; }
+.markerDetails { display: flex; flex-wrap: nowrap; gap: 4px 12px; justify-content: space-between; font-size: 11px; }
+.markerDetails > * { min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.markerDetails b { font-weight: 600; }.markerLocation { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; color: #5c6e65; }
+.pin { position: absolute; left: calc(50% - 5px); bottom: -22px; height: 18px; width: 10px; border-radius: 0 0 6px 6px; background: var(--type); }
+.pin::after { content: ''; position: absolute; left: -5px; bottom: -5px; width: 20px; height: 9px; border: 2px solid var(--type); border-radius: 50%; background: #e9eedc; }
+.mapViewport[data-ready='true'] .markers { position: absolute; inset: 0; display: block; padding: 0; }
+.mapViewport[data-ready='true'] .marker { position: absolute; transform: translate(-50%, calc(-100% - 18px)); }
+.marker:hover, .marker:focus-visible { z-index: 5; background: #fffef5; box-shadow: 0 12px 0 -7px #bdc9b4, 0 20px 38px #18352433; outline: 2px solid var(--type); outline-offset: 4px; }
+.mapBottom { padding: 22px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); }
+.mapBottom p { font-size: 12px; line-height: 1.7; color: var(--ink); margin: 0; }
+.mapBottom small { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+.controls { display: flex; gap: 5px; flex-shrink: 0; }
+.controls button { display: grid; place-items: center; min-width: 44px; height: 44px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 50%; font-size: 17px; cursor: pointer; }
+.controls button i { font-size: 12px; }.controls button:hover { background: var(--scene-tint); }
+@media (max-width: 767px) {
+  .propertyMap { margin-top: 26px; border-radius: 16px; }
+  .mapBar { padding: 20px; align-items: start; flex-direction: column; gap: 12px; }
+  .mapBottom { padding: 20px; align-items: start; flex-direction: column; gap: 18px; }
+  .legend { gap: 18px; }.mapViewport { min-width: 840px; }
+  .controls { width: 100%; justify-content: space-between; gap: 3px; }
+}

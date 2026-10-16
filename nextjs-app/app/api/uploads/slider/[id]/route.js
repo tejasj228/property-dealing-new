@@ -1,9 +1,12 @@
+import { authorizeAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import SliderImage from '@/lib/models/SliderImage';
 import { cloudinary } from '@/lib/cloudinary';
 
 export async function DELETE(request, { params }) {
+  const denied = authorizeAdmin(request);
+  if (denied) return denied;
   try {
     await connectDB();
     const { id } = await params;

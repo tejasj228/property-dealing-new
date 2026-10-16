@@ -8,8 +8,7 @@ import {
   IconButton,
   Card,
   CardMedia,
-  Grid,
-  Chip,
+  GridLegacy as Grid,
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -17,7 +16,7 @@ import {
   Image as ImageIcon,
 } from '@mui/icons-material';
 import { uploadAPI } from '../../services/api';
-import { getImageUrl, handleImageError, getPlaceholderImage } from '../../utils/imageUtils';
+import { getImageUrl, handleImageError } from '../../utils/imageUtils';
 
 function ImageUpload({ 
   images = [], 
@@ -137,7 +136,7 @@ function ImageUpload({
             <Grid item xs={6} sm={4} md={3} key={index}>
               <Card sx={{ position: 'relative' }}>
                 <CardMedia
-                  component="img"
+                  component="img" loading="lazy" decoding="async"
                   height="120"
                   image={getImageUrl(imageUrl)}
                   alt={`Property image ${index + 1}`}

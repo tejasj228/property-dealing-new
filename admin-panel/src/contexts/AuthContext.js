@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
@@ -44,39 +44,41 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is authenticated on app load
-  useEffect(() => {
-    checkAuthStatus();
+  const logout = useCallback(async () => {
+    try {
+      // Notify backend about logout (optional)
+      if (localStorage.getItem('adminToken')) {
+        await api.post('/auth/logout').catch(() => {
+          // Ignore errors for logout
+        });
+      }
+    } finally {
+      // Clear local storage and state
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      setIsAuthenticated(false);
+      setUser(null);
+      setError(null);
+      console.log('🚪 Admin logged out');
+    }
   }, []);
 
-  const checkAuthStatus = async () => {
-    const token = localStorage.getItem('adminToken');
-    const savedUser = localStorage.getItem('adminUser');
-
-    if (!token || !savedUser) {
-      setLoading(false);
-      return;
+  useEffect(() => {
+    let disposed = false;
+    async function restoreSession() {
+      const token = localStorage.getItem('adminToken'), savedUser = localStorage.getItem('adminUser');
+      if (!token || !savedUser) { setLoading(false); return; }
+      try {
+        const response = await api.post('/auth/verify');
+        if (disposed) return;
+        if (response.data.success) { setIsAuthenticated(true); setUser(JSON.parse(savedUser)); }
+        else await logout();
+      } catch { if (!disposed) await logout(); }
+      finally { if (!disposed) setLoading(false); }
     }
-
-    try {
-      // Verify token with backend
-      const response = await api.post('/auth/verify');
-      
-      if (response.data.success) {
-        setIsAuthenticated(true);
-        setUser(JSON.parse(savedUser));
-        console.log('✅ Admin session restored');
-      } else {
-        // Invalid token
-        logout();
-      }
-    } catch (error) {
-      console.error('❌ Token verification failed:', error);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
+    restoreSession();
+    return () => { disposed = true; };
+  }, [logout]);
 
   const login = async (username, password) => {
     try {
@@ -111,24 +113,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      // Notify backend about logout (optional)
-      if (localStorage.getItem('adminToken')) {
-        await api.post('/auth/logout').catch(() => {
-          // Ignore errors for logout
-        });
-      }
-    } finally {
-      // Clear local storage and state
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
-      setIsAuthenticated(false);
-      setUser(null);
-      setError(null);
-      console.log('🚪 Admin logged out');
-    }
-  };
 
   const value = {
     isAuthenticated,

@@ -7,7 +7,7 @@ let passwordHash = null;
 
 async function getPasswordHash() {
   if (!passwordHash) {
-    const plainPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const plainPassword = process.env.ADMIN_PASSWORD;
     passwordHash = await bcrypt.hash(plainPassword, 12);
   }
   return passwordHash;
@@ -15,13 +15,16 @@ async function getPasswordHash() {
 
 export async function POST(request) {
   try {
+    if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD || !process.env.JWT_SECRET) {
+      return NextResponse.json({ success: false, message: 'Admin access is not configured.' }, { status: 503 });
+    }
     const { username, password } = await request.json();
 
     if (!username || !password) {
       return NextResponse.json({ success: false, message: 'Username and password are required' }, { status: 400 });
     }
 
-    const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+    const adminUsername = process.env.ADMIN_USERNAME;
     if (username !== adminUsername) {
       return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
     }

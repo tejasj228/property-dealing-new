@@ -1,7 +1,10 @@
+import { authorizeAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
 export async function POST(request) {
+  const denied = authorizeAdmin(request);
+  if (denied) return denied;
   try {
     const formData = await request.formData();
     const file = formData.get('image');

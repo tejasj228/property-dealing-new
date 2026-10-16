@@ -1,8 +1,11 @@
+import { authorizeAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Area from '@/lib/models/Area';
 
 export async function PUT(request, { params }) {
+  const denied = authorizeAdmin(request);
+  if (denied) return denied;
   try {
     await connectDB();
     const { areaKey, subAreaId } = await params;

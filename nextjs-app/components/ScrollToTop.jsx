@@ -1,38 +1,8 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './ScrollToTop.css';
-
-const ScrollToTop = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    const toggleVisibility = () => setIsVisible(window.pageYOffset > 300);
-    const checkModalState = () => setIsModalOpen(document.body.classList.contains('modal-open'));
-
-    window.addEventListener('scroll', toggleVisibility);
-    const modalChecker = setInterval(checkModalState, 100);
-
-    toggleVisibility();
-    checkModalState();
-
-    return () => {
-      window.removeEventListener('scroll', toggleVisibility);
-      clearInterval(modalChecker);
-    };
-  }, []);
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  return (
-    <button
-      className={`scroll-to-top ${isVisible && !isModalOpen ? 'visible' : ''}`}
-      onClick={scrollToTop}
-      aria-label="Scroll to top"
-    >
-      <i className="fas fa-chevron-up"></i>
-    </button>
-  );
-};
-
-export default ScrollToTop;
+export default function ScrollToTop() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const update = () => setVisible(window.scrollY > 500); window.addEventListener('scroll', update, { passive: true }); update(); return () => window.removeEventListener('scroll', update); }, []);
+  return <button className={`scroll-to-top ${visible ? 'visible' : ''}`} onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })} aria-label="Scroll to top"><i className="fas fa-chevron-up" aria-hidden="true" /></button>;
+}

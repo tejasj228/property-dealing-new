@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import axios from 'axios';
 import useAreas from '@/hooks/useAreas';
 import './Contact.css';
 
@@ -17,10 +16,10 @@ const Contact = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   
-  // Use areas hook with fallback enabled
+  // Use published areas only
   const { areasArray, areasLoading, areasError } = useAreas({
     autoLoad: true,
-    fallbackToDefault: true,
+    fallbackToDefault: false,
     enableCache: false
   });
 
@@ -56,7 +55,6 @@ const Contact = () => {
       setSubmitting(true);
       setSubmitError(null);
       
-      console.log('📤 Submitting contact form:', formData);
       
       // Submit to backend API (same-origin Next.js API routes)
       const response = await fetch('/api/contacts', {
@@ -79,7 +77,6 @@ const Contact = () => {
       }
       
       const responseData = await response.json();
-      console.log('✅ Contact form submitted successfully:', responseData);
       
       // Show success message
       setSubmitSuccess(true);
@@ -166,7 +163,6 @@ const Contact = () => {
 
   // Render interest dropdown options
   const renderInterestOptions = () => {
-    console.log('🔄 Rendering interest options:', { areasLoading, areasError, areasArray });
     
     if (areasLoading) {
       return (
@@ -198,19 +194,22 @@ const Contact = () => {
     <div className="contact-page">
       <div className="container">
         <div className="section-title">
-          <h2>Contact Us</h2>
-          <p>Get in touch with our expert team for personalized real estate solutions</p>
+          <span className="page-kicker">Contact</span><h1>Let’s talk about your next move.</h1>
+          <p>A home, a plot, a space for your business. Tell us what you have in mind, or visit either of our offices.</p>
         </div>
         
         <div className="contact-grid">
           <div className="contact-info">
-            <h3>Get In Touch</h3>
+            <h3>Come say hello.</h3>
             <div className="contact-items-wrapper">
               {contactItems.map((item, index) => (
                 <div 
                   key={index} 
                   className={`contact-item ${item.onClick ? 'contact-item-clickable' : ''}`}
                   onClick={item.onClick}
+                  role={item.onClick ? 'link' : undefined}
+                  tabIndex={item.onClick ? 0 : undefined}
+                  onKeyDown={e => { if (item.onClick && e.key === 'Enter') item.onClick(); }}
                   style={item.onClick ? { cursor: 'pointer' } : { cursor: 'default' }}
                 >
                   <div className="contact-item-icon">
@@ -226,17 +225,17 @@ const Contact = () => {
           </div>
 
           <div className="contact-form">
-            <h3>Send Us a Message</h3>
+            <h3>What are you looking for?</h3>
             
             {submitSuccess && (
-              <div className="form-message success">
+              <div className="form-message success" role="status">
                 <i className="fas fa-check-circle"></i>
                 <p>Thank you for your message! We will get back to you soon.</p>
               </div>
             )}
             
             {submitError && (
-              <div className="form-message error">
+              <div className="form-message error" role="alert">
                 <i className="fas fa-exclamation-circle"></i>
                 <p>{submitError}</p>
               </div>
@@ -248,6 +247,7 @@ const Contact = () => {
                 <input
                   type="text"
                   id="name"
+                  autoComplete="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
@@ -262,6 +262,7 @@ const Contact = () => {
                 <input
                   type="email"
                   id="email"
+                  autoComplete="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
@@ -276,6 +277,7 @@ const Contact = () => {
                 <input
                   type="tel"
                   id="phone"
+                  autoComplete="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}

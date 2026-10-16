@@ -1,8 +1,8 @@
 import './globals.css';
+import localFont from 'next/font/local';
+const manrope = localFont({ src: '../public/fonts/manrope/Manrope-Variable.ttf', display: 'swap', variable: '--font-manrope' });
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import ScrollToTop from '@/components/ScrollToTop';
+import SiteChrome from '@/components/SiteChrome';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
@@ -14,19 +14,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body>
-        <div className="App">
-          <Header />
-          <main>
-            {children}
-          </main>
-          <Footer />
-          <ScrollToTop />
-          <Analytics />
-        </div>
+      <body className={manrope.variable}>
+        <SiteChrome>{children}</SiteChrome>
+        <Analytics />
       </body>
     </html>
   );

@@ -1,4 +1,7 @@
 # 🏠 Property Dealing Website
+
+> **Main application:** `nextjs-app/` includes the website and API. See [LOCAL_SETUP.md](LOCAL_SETUP.md) for the prepared local configuration, startup commands, project map, and verification status. Start the prepared production build with `npm.cmd --prefix nextjs-app run start:local`, then visit `http://localhost:3100`. The older three-app instructions below are retained for reference; their seed step must not be run against the existing live database.
+
 #🌐 **Deployed Link: [pawanbuildhome.vercel.app](https://pawanbuildhome.vercel.app/)** 🌐
 ---
 <div align="center">
@@ -636,3 +639,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <h3>⭐ Star this repository if you found it helpful!</h3>
 
 <div align="center">
+
+## Current website and admin release
+
+The production website and API are in `nextjs-app/`; the redesigned admin is in `admin-panel/`. Both deploy from this repository to their existing Vercel projects. See [DEPLOYMENT.md](DEPLOYMENT.md) for production environment variables, free MongoDB/Cloudinary setup, data management, plan limits and verification.
