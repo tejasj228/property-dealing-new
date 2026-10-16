@@ -193,3 +193,14 @@
 .public-pages :is(.gallery-nav, .open-image-btn) { color: #fff; }
 .public-pages .contact-form :is(input,textarea,select):focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent) !important; }
 .public-pages .contact-form :is(input,textarea,select):disabled { background: var(--surface-soft); color: var(--muted); }
+/* Resolve legacy important button rules against the current shared palette. */
+.public-pages :is(.btn-primary,.contact-btn,.view-property-btn,.society-open-btn) { background:var(--accent)!important; border-color:var(--accent)!important; color:var(--accent-ink)!important; }
+.public-pages :is(.btn-primary,.contact-btn,.view-property-btn,.society-open-btn):hover { background:var(--ink)!important; border-color:var(--ink)!important; color:var(--surface)!important; filter:none; }
+.public-pages :is(.btn-primary,.contact-btn,.view-property-btn,.society-open-btn):hover i { color:inherit!important; }
+.public-pages :is(a,button,[role='button']):hover { --accent-color:var(--link-hover); }
+.public-pages :is(a,button,[role='button']):hover :is(.contact-item-text h4,.contact-item-text p) { color:var(--link-hover)!important; }
+.public-pages .contact-item-button:hover :is(i,span) { color:var(--accent-ink)!important; }
+.public-pages a:hover :is(.catalogue-copy h3,.external-link-title) { color:var(--link-hover); }
+
+.public-pages .contact-page .contact-item-clickable:hover .contact-item-content :is(h4,p) { color:var(--link-hover)!important; }
+.public-pages .scroll-to-top:hover { background:var(--ink); color:var(--surface); }

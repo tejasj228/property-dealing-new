@@ -1,0 +1,16 @@
+/* White difference blending inverts the pixels below the cursor, including photos. */
+.brand-cursor { position:fixed; inset:0; z-index:10000; pointer-events:none; color:#fff; mix-blend-mode:difference; }
+.brand-cursor[hidden] { display:none; }
+.brand-cursor,.brand-cursor * { pointer-events:none!important; transition:none!important; }
+.brand-cursor>span { position:absolute; top:0; left:0; width:0; height:0; }
+.brand-cursor>span::after { content:''; position:absolute; left:0; top:0; translate:-50% -50%; border-radius:50%; }
+.brand-cursor-dot::after { width:8px; height:8px; background:currentColor; }
+.brand-cursor-ring::after { width:34px; height:34px; border:1.5px solid currentColor; opacity:1; transition:width .15s,height .15s,opacity .15s; }
+.brand-cursor-trace::after { width:4px; height:4px; background:currentColor; opacity:.45; }.brand-cursor-trace:last-child::after { width:3px; height:3px; opacity:.25; }
+.brand-cursor[data-mode='link'] .brand-cursor-ring::after { width:44px; height:44px; opacity:1; }
+.brand-cursor[data-pressed='true'] .brand-cursor-ring::after { width:26px; height:26px; }
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  html[data-brand-cursor='on'],html[data-brand-cursor='on'] * { cursor:none!important; }
+  html[data-brand-cursor='on'] :is(input,textarea,[contenteditable='true']),html[data-brand-cursor='on'] :is(input,textarea,[contenteditable='true']) * { cursor:text!important; }
+  html[data-brand-cursor='on'] dialog[open],html[data-brand-cursor='on'] dialog[open] * { cursor:auto!important; }
+}

@@ -34,7 +34,7 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
       const delta = Math.min(64, time - (last || time - 16)); last = time;
       if (!pausedRef.current && !reduced) elapsed += delta / 1000;
       map.update(elapsed, reduced);
-      if (dirty) framePropertyMapCamera(camera, width, height, map.depth, yaw.get(), zoom.get());
+      if (dirty) framePropertyMapCamera(camera, width, height, map.bounds, yaw.get(), zoom.get());
       renderer.render(scene, camera);
       if (dirty) for (const marker of map.markerPositions) {
         const node = markers.current.get(marker.id); if (!node) continue;

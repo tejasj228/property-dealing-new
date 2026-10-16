@@ -605,7 +605,7 @@ body.modal-open .nav-container {
     color: var(--text-white);
     border-color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(62, 112, 84, 0.3);
 }
 
 .back-btn i {
@@ -812,7 +812,7 @@ body.modal-open .nav-container {
 
 .thumbnail.active {
     border-color: var(--accent-color);
-    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(62, 112, 84, 0.3);
 }
 
 .thumbnail-label {
@@ -1052,18 +1052,18 @@ body.modal-open .nav-container {
 }
 
 .society-open-btn:hover {
-    background: #d4a915;
-    border-color: #d4a915;
+    background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
+    border-color: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
     color: var(--text-white);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(62, 112, 84, 0.3);
 }
 
 .society-card:hover .society-open-btn {
-    background: #d4a915;
-    border-color: #d4a915;
+    background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
+    border-color: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(62, 112, 84, 0.3);
 }
 
 /* No Societies */
@@ -1383,7 +1383,7 @@ body.modal-open .nav-container {
     background: var(--accent-color) !important;
     color: var(--text-white) !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(62, 112, 84, 0.3);
 }
 
 .society-modal .btn.btn-primary {
@@ -1399,10 +1399,10 @@ body.modal-open .nav-container {
 }
 
 .society-modal .btn.btn-primary:hover {
-    background: #d4a915;
-    border-color: #d4a915;
+    background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
+    border-color: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(62, 112, 84, 0.3);
 }
 
 /* Alert Styles */
@@ -1475,7 +1475,7 @@ body.modal-open .nav-container {
 
 .dark-mode .modal-map-btn:hover {
     background: var(--accent-color) !important;
-    color: #1a1a1a !important;
+    color: var(--text-white) !important;
 }
 
 .dark-mode .alert-error {
@@ -1493,8 +1493,8 @@ body.modal-open .nav-container {
 
 .dark-mode .society-open-btn:hover,
 .dark-mode .society-card:hover .society-open-btn {
-    background: #d4a915;
-    border-color: #d4a915;
+    background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
+    border-color: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
     color: #1a1a1a;
 }
 

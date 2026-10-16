@@ -85,8 +85,8 @@ export function LayeredMap({ children }) {
     if (event.key === 'Home') reset();
     else { tiltY.set(clamp(tiltY.get() + (event.key === 'ArrowRight' ? 2 : event.key === 'ArrowLeft' ? -2 : 0), 16)); tiltX.set(clamp(tiltX.get() + (event.key === 'ArrowUp' ? 2 : event.key === 'ArrowDown' ? -2 : 0), 12)); }
   }
-  return <div className={styles.mapPerspective} tabIndex={0} role="group" aria-label="Interactive map card. Drag or use arrow keys to tilt. Double-click or press Home to reset."
-    onPointerDown={start} onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} onLostPointerCapture={stop} onDoubleClick={reset} onKeyDown={key} onBlur={event => { delete event.currentTarget.dataset.input; }}>
+  return <div className={styles.mapPerspective} data-cursor="grab" tabIndex={0} role="group" aria-label="Interactive map card. Drag or use arrow keys to tilt. Double-click or press Home to reset."
+    onDragStart={event => event.preventDefault()} onPointerDown={start} onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} onLostPointerCapture={stop} onDoubleClick={reset} onKeyDown={key} onBlur={event => { delete event.currentTarget.dataset.input; }}>
     <m.div className={styles.mapAssembly} style={{ rotateX: reduced ? tiltX : rotateX, rotateY: reduced ? tiltY : rotateY }}>
       <div className={styles.mapBase} aria-hidden="true"><span /><span /><span /><span /></div>
       <div className={styles.mapSheet}>{children}</div>

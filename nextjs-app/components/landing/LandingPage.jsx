@@ -89,7 +89,7 @@ function imageUrl(url, width = 1200) {
 function ContentImage({ src, alt, className, eager = false, fallback }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) return fallback;
-  return <img className={className} src={imageUrl(src)} alt={alt} width="1200" height="900"
+  return <img draggable={false} className={className} src={imageUrl(src)} alt={alt} width="1200" height="900"
     loading={eager ? 'eager' : 'lazy'} decoding="async" onError={() => setFailed(true)} />;
 }
 

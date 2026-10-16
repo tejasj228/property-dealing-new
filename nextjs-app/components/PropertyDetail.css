@@ -378,7 +378,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   background: var(--accent-color) !important;
-  color: #1a1a1a !important;
+  color: var(--text-white) !important;
   border: 2px solid var(--accent-color) !important;
   width: 100%;
   display: flex;
@@ -388,8 +388,8 @@
 }
 
 .contact-btn:hover {
-  background: #d4a915 !important;
-  border-color: #d4a915 !important;
+  background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark)) !important;
+  border-color: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark)) !important;
   transform: translateY(-2px);
 }
 
@@ -444,11 +444,11 @@
 }
 
 .contact-item-button:hover i {
-  color: #1a1a1a !important;
+  color: var(--text-white) !important;
 }
 
 .contact-item-button:hover span {
-  color: #1a1a1a !important;
+  color: var(--text-white) !important;
 }
 
 /* External Links Card */
@@ -576,11 +576,11 @@
 
 .dark-mode .contact-btn {
   background: var(--accent-color) !important;
-  color: #1a1a1a !important;
+  color: var(--text-white) !important;
 }
 
 .dark-mode .contact-btn:hover {
-  background: #d4a915 !important;
+  background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark)) !important;
 }
 
 /* 🆕 DARK MODE CONTACT ITEM FIXES */
@@ -609,7 +609,7 @@
 
 .dark-mode .contact-item-button:hover i,
 .dark-mode .contact-item-button:hover span {
-  color: #1a1a1a !important;
+  color: var(--text-white) !important;
 }
 
 /* Responsive Design */

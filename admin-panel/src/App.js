@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import Layout from './components/Layout/Layout';
 import theme from './theme';
+import PointerCursor from './components/PointerCursor';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Properties = lazy(() => import('./pages/Properties'));
@@ -14,7 +15,7 @@ const Images = lazy(() => import('./pages/Images'));
 const Contacts = lazy(() => import('./pages/Contacts'));
 
 export default function App() {
-  return <ThemeProvider theme={theme}><CssBaseline /><AuthProvider><BrowserRouter><ProtectedRoute><Layout>
+  return <ThemeProvider theme={theme}><CssBaseline /><PointerCursor /><AuthProvider><BrowserRouter><ProtectedRoute><Layout>
     <Suspense fallback={<div className="admin-page-loading" role="status"><span />Opening workspace…</div>}>
       <Routes>
         <Route path="/" element={<Dashboard />} />

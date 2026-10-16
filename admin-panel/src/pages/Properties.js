@@ -89,11 +89,11 @@ const PropertyImageCarousel = ({ images, title }) => {
       <Box
         sx={{
           height: 200,
-          backgroundColor: '#f5f5f5',
+          backgroundColor: 'background.default',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '1px solid #ddd',
+          border: '1px solid #476252',
         }}
       >
         <ImageIcon sx={{ fontSize: 60, color: 'text.secondary' }} />
@@ -242,7 +242,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          border: isDragging ? '2px dashed #285c4d' : '1px solid #e0e0e0',
+          border: isDragging ? '2px dashed #b2d4b8' : '1px solid #375044',
           boxShadow: isDragging ? '0 8px 20px #203e3426' : 'none',
           position: 'relative',
         }}
@@ -258,7 +258,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             left: 8, 
             zIndex: 1,
             backgroundColor: 'primary.main',
-            color: 'white'
+            color: 'primary.contrastText'
           }}
         />
 
@@ -287,7 +287,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             alignItems: 'center',
             height: 40,
             backgroundColor: 'primary.main',
-            color: 'white',
+            color: 'primary.contrastText',
             cursor: sortingDisabled ? 'default' : isDragging ? 'grabbing' : 'grab',
             '&:hover': {
               backgroundColor: 'primary.dark',

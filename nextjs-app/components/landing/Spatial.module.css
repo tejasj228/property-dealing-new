@@ -93,3 +93,5 @@
 .mapAssembly::after { content: ''; position: absolute; inset: 1px; pointer-events: none; border: 1px solid #ffffff24; border-radius: 10px; transform: translateZ(14px); }
 .mapGrabHint { display: block; font-size: 10px; text-align: center; color: var(--muted); padding-top: 26px; cursor: default; }
 @media(max-width:767px) { .mapPerspective { padding: 18px 10px 5px; } .mapGrabHint { font-size: 9px; } }
+/* Native image ghosts have no role in a draggable 3D plate. */
+.mapPerspective,.mapPerspective * { -webkit-user-drag:none; user-select:none; }

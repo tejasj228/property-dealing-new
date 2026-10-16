@@ -99,7 +99,7 @@
 
 .contact-item:hover .contact-item-icon {
     background: var(--accent-color);
-    /* Keep gold background */
+    /* Keep accent background */
     transform: none;
     /* Remove any transform */
 }
@@ -197,7 +197,7 @@
 .form-group textarea:focus {
     outline: none;
     border-color: var(--accent-color) !important;
-    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(62, 112, 84, 0.1) !important;
     transform: translateY(-1px);
 }
 
@@ -232,7 +232,7 @@
 
 .dark-mode .contact-item:hover .contact-item-icon {
     background: var(--accent-color);
-    /* Keep gold background in dark mode */
+    /* Keep accent background in dark mode */
 }
 
 .dark-mode .contact-item:hover .contact-item-icon i {
@@ -274,7 +274,7 @@
 .dark-mode .form-group select:focus,
 .dark-mode .form-group textarea:focus {
     border-color: var(--accent-color) !important;
-    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(62, 112, 84, 0.1) !important;
 }
 
 /* Mobile Responsive Design */

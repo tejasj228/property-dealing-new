@@ -87,8 +87,8 @@ const ContactCard = ({ contact, onView, onEdit, onMarkAsRead, onDelete }) => {
     <Card 
       sx={{ 
         mb: 2, 
-        border: !contact.isRead ? '2px solid #729d80' : '1px solid #e0e0e0',
-        backgroundColor: !contact.isRead ? '#f0f6f1' : 'white',
+        border: !contact.isRead ? '2px solid #729d80' : '1px solid #375044',
+        backgroundColor: !contact.isRead ? '#203f2e' : 'background.paper',
         '&:hover': {
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           transform: 'none',
@@ -100,7 +100,7 @@ const ContactCard = ({ contact, onView, onEdit, onMarkAsRead, onDelete }) => {
         {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
           <Box display="flex" alignItems="center" gap={1}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
+            <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', width: 40, height: 40 }}>
               <PersonIcon />
             </Avatar>
             <Box>
@@ -173,7 +173,7 @@ const ContactCard = ({ contact, onView, onEdit, onMarkAsRead, onDelete }) => {
             <MessageIcon fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
             Message:
           </Typography>
-          <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+          <Paper sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
             <Typography variant="body2" sx={{ lineHeight: 1.4 }}>
               {expanded || contact.message.length <= 150 
                 ? contact.message 
@@ -199,7 +199,7 @@ const ContactCard = ({ contact, onView, onEdit, onMarkAsRead, onDelete }) => {
             <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
               Admin Notes:
             </Typography>
-            <Paper sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 1 }}>
+            <Paper sx={{ p: 2, backgroundColor: '#3a3020', borderRadius: 1 }}>
               <Typography variant="body2">
                 {contact.notes}
               </Typography>
@@ -465,7 +465,7 @@ function Contacts() {
                   </Typography>
                   <Typography variant="h4">{stats.totalContacts || 0}</Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
                   <PersonIcon />
                 </Avatar>
               </Box>

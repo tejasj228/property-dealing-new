@@ -81,3 +81,20 @@ Validation: 22 scene/data/image/budget checks, 2 focused admin sign-in/partial-d
 ## Release follow-through
 
 Pointer grabbing suppresses the canvas-sized focus outline while keyboard focus remains visible. Shadow maps now update with rendered geometry instead of using a stale pre-drag view; compact/low-power scenes still omit dynamic shadows. The actual area reference card has layered depth and pointer/keyboard tilt using Motion springs, with no extra WebGL context or scroll interception. The production release also guards every property/area/society/upload mutation with the existing admin JWT/role policy and disables default admin credentials.
+
+## Local review draft — 16 October 2026
+
+The user approved these refinements for publication after local checks:
+
+- The public accent follows the forest/sage palette, including legacy property-contact buttons. Links and interactive text change colour on hover.
+- A small pointer dot, fine ring and short trail appear on mouse devices. Animation runs outside React, sleeps when settled or hidden, and yields to native text controls. Touch and reduced-motion users retain the normal cursor. The same treatment is included in admin.
+- Admin now uses a single dark forest palette across navigation, forms, tables, cards, uploads and dialogs. Existing authentication and data operations remain intact.
+- The listing map uses fixed 640px desktop / 520px mobile stages. Its camera fits the growing world rather than increasing the frame or introducing horizontal page scrolling. Numbered colour-coded links identify every property, with a fixed-height detail strip for the hovered/focused listing and the existing full-catalogue link below.
+- Parcel shapes, scale, slight rotation, roads and planting vary deterministically. Existing IDs keep their individual appearance across text edits and refreshes. All listings still come from the published API; the scenery is illustrative.
+- Area reference images explicitly disable native dragging; a capture on the surrounding interactive card cancels browser drag ghosts while retaining tilt and keyboard controls.
+
+Validation uses source checks, both production builds and regression checks only. Camera tests cover 0–250 listings at fixed mobile and desktop sizes, all parcel/scenery geometry stays in frame, and allocated resources are disposed exactly once. Browser layout and pointer/scroll feel remain unverified by user preference.
+
+Map markers now carry small property-title labels. The mouse cursor uses a larger dot/ring with white difference blending to invert the surface below it; draggable 3D surfaces hide that overlay and restore the native grab/grabbing cursor. Links on the map remain clickable and retain link feedback. Both public and admin cursor components share this behaviour.
+
+The map also mixes open parcels, residential buildings with balconies/solar roofs, and commercial shopfronts with canopies and roof plant. Explicit land/plot titles keep open residential parcels, commercial listings receive a representative commercial illustration, and other residential forms vary by stable ID. A small unmarked residential corner is scenery only, so it adds no fictitious listings or links. Marker heights clear roofs; windows and signs follow the shared day/night lighting. Models are explicitly illustrative. The 23 scene/data checks include mixed structures and framing through 250 listings; two management guard checks and two admin checks also pass.

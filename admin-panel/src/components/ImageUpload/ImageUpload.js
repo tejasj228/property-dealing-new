@@ -171,11 +171,11 @@ function ImageUpload({
       ) : (
         <Box
           sx={{
-            border: '2px dashed #ccc',
+            border: '2px dashed #476252',
             borderRadius: 2,
             p: 4,
             textAlign: 'center',
-            backgroundColor: '#fafafa',
+            backgroundColor: 'background.default',
           }}
         >
           <ImageIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />

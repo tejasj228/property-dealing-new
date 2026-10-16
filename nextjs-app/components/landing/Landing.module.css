@@ -315,3 +315,13 @@
 
 /* Pointer grabbing has no canvas-sized focus frame; keyboard focus stays visible. */
 .landing .webgl[data-input='pointer']:focus, .landing .webgl[data-dragging='true'] { outline: none; }
+/* Shared link feedback; filled actions keep their text contrast. */
+.landing { --link-hover:#378062; }
+.landing[data-theme='dark'] { --link-hover:#d7efdc; }
+@media(prefers-color-scheme:dark) { .landing[data-theme='system'] { --link-hover:#d7efdc; } }
+.landing a,.landing button { transition:color .16s ease,background-color .16s ease,border-color .16s ease; }
+.landing a:hover,.landing button:not(:disabled):hover { color:var(--link-hover); }
+.landing a:hover :is(h2,h3,h4) { color:var(--link-hover); }
+.landing .primaryButton:hover { color:var(--surface)!important; background:var(--ink); }
+
+.landing .sectorButton.sectorActive:hover { background:var(--ink); border-color:var(--ink); color:var(--surface); }

@@ -16,7 +16,7 @@
     visibility: hidden;
     transform: translateY(20px) scale(0.8);
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 8px 25px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 8px 25px rgba(62, 112, 84, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -29,9 +29,9 @@
 }
 
 .scroll-to-top:hover {
-    background: #d4a915;
+    background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
     transform: translateY(-3px) scale(1.1);
-    box-shadow: 0 12px 35px rgba(184, 134, 11, 0.4);
+    box-shadow: 0 12px 35px rgba(62, 112, 84, 0.4);
 }
 
 .scroll-to-top:active {
@@ -63,15 +63,15 @@
 /* Pulse effect on first appearance */
 @keyframes pulse {
     0% {
-        box-shadow: 0 8px 25px rgba(184, 134, 11, 0.3);
+        box-shadow: 0 8px 25px rgba(62, 112, 84, 0.3);
     }
 
     50% {
-        box-shadow: 0 8px 25px rgba(184, 134, 11, 0.6), 0 0 0 15px rgba(184, 134, 11, 0.1);
+        box-shadow: 0 8px 25px rgba(62, 112, 84, 0.6), 0 0 0 15px rgba(62, 112, 84, 0.1);
     }
 
     100% {
-        box-shadow: 0 8px 25px rgba(184, 134, 11, 0.3);
+        box-shadow: 0 8px 25px rgba(62, 112, 84, 0.3);
     }
 }
 
@@ -92,13 +92,13 @@
 .dark-mode .scroll-to-top {
     background: var(--accent-color);
     color: #1a1a1a;
-    box-shadow: 0 8px 25px rgba(184, 134, 11, 0.4);
+    box-shadow: 0 8px 25px rgba(62, 112, 84, 0.4);
 }
 
 .dark-mode .scroll-to-top:hover {
-    background: #d4a915;
+    background: color-mix(in srgb, var(--accent-color) 82%, var(--text-dark));
     color: #1a1a1a;
-    box-shadow: 0 12px 35px rgba(184, 134, 11, 0.5);
+    box-shadow: 0 12px 35px rgba(62, 112, 84, 0.5);
 }
 
 /* Responsive design */

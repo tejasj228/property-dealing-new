@@ -158,11 +158,11 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
         ) : (
           <Box
             sx={{
-              border: '2px dashed #ccc',
+              border: '2px dashed #476252',
               borderRadius: 2,
               p: 3,
               textAlign: 'center',
-              backgroundColor: '#fafafa',
+              backgroundColor: 'background.default',
               mb: 2,
             }}
           >
@@ -248,11 +248,11 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
         ) : (
           <Box
             sx={{
-              border: '1px dashed #ddd',
+              border: '1px dashed #476252',
               borderRadius: 2,
               p: 2,
               textAlign: 'center',
-              backgroundColor: '#f9f9f9',
+              backgroundColor: 'background.default',
             }}
           >
             <ImageIcon sx={{ fontSize: 32, color: 'text.secondary', mb: 1 }} />
@@ -336,11 +336,11 @@ const MapUpload = ({ mapImage, onMapChange, label = "Sub-Area Map" }) => {
       ) : (
         <Box
           sx={{
-            border: '2px dashed #ccc',
+            border: '2px dashed #476252',
             borderRadius: 2,
             p: 4,
             textAlign: 'center',
-            backgroundColor: '#fafafa',
+            backgroundColor: 'background.default',
             mb: 2,
           }}
         >
@@ -395,9 +395,9 @@ const SortableSociety = ({ society, areaKey, subAreaId, onEdit, onDelete }) => {
       style={style}
       divider
       sx={{
-        border: isDragging ? '2px dashed #285c4d' : 'none',
+        border: isDragging ? '2px dashed #b2d4b8' : 'none',
         borderRadius: isDragging ? 2 : 0,
-        backgroundColor: isDragging ? '#f5f5f5' : 'transparent',
+        backgroundColor: isDragging ? 'background.default' : 'transparent',
         cursor: isDragging ? 'grabbing' : 'default',
       }}
     >
@@ -527,7 +527,7 @@ const SortableSubArea = ({
       style={style}
       sx={{
         mb: 2,
-        border: isDragging ? '2px dashed #285c4d' : '1px solid #e0e0e0',
+        border: isDragging ? '2px dashed #b2d4b8' : '1px solid #375044',
         borderRadius: 2,
       }}
     >
@@ -640,7 +640,7 @@ const SortableSubArea = ({
                 </SortableContext>
               </DndContext>
             ) : (
-              <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: '#f8f9fa' }}>
+              <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: 'background.default' }}>
                 <HomeIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
                 <Typography variant="body2" color="textSecondary">
                   No societies/pockets yet. Add some societies to organize this sub-area better.
@@ -707,7 +707,7 @@ const SortableArea = ({
       onChange={() => setExpanded(!expanded)}
       sx={{ 
         mb: 2,
-        border: isDragging ? '2px dashed #285c4d' : '1px solid #e0e0e0',
+        border: isDragging ? '2px dashed #b2d4b8' : '1px solid #375044',
         borderRadius: 2,
         '&:before': {
           display: 'none',
@@ -819,7 +819,7 @@ const SortableArea = ({
               </SortableContext>
             </DndContext>
           ) : (
-            <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: '#f8f9fa' }}>
+            <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: 'background.default' }}>
               <BusinessIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
               <Typography variant="body2" color="textSecondary">
                 No sub-areas yet. Add some sub-areas to organize this area better.

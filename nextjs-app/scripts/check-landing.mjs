@@ -177,30 +177,49 @@ test('ambient motion continues at fixed scroll and reduced motion freezes every 
   }
 });
 
-test('map automatically places every listing and fits markers as inventory grows', () => {
-  for (const count of [1, 2, 3, 7, 18, 35]) {
+test('map fits growing inventory inside the same desktop and mobile frame', () => {
+  for (const count of [0, 1, 2, 3, 7, 18, 35, 100, 250]) {
     const properties = Array.from({ length: count }, (_, i) => ({ id: String(i), propertyType: i % 2 ? 'commercial' : 'residential' }));
     const layout = layoutProperties(properties);
     assert.equal(new Set(layout.map(p => p.id)).size, count);
     assert.equal(new Set(layout.map(p => p.x + ',' + p.z)).size, count);
-    const map = createPropertyMapModel(properties, true), camera = new OrthographicCamera(-14, 14, 10, -10, 0.1, 300);
-    for (const width of [Math.max(960, 700 + Math.ceil(count / 3) * 70), Math.max(1296, 700 + Math.ceil(count / 3) * 70)]) for (const angle of [-0.55, 0.16, 0.55]) {
-      const height = Math.max(610, Math.ceil(count / 3) * 300 + 360);
-      framePropertyMapCamera(camera, width, height, map.depth, angle, 1);
-      const labels = map.markerPositions.map(marker => {
-        const p = marker.position.clone().project(camera);
-        return { x: (p.x + 1) * width / 2, y: (1 - p.y) * height / 2 };
-      });
-      for (const point of labels) assert.ok(point.x > 94 && point.x < width - 94 && point.y > 150 && point.y < height - 20, 'Property labels must stay inside map');
-      if (angle === 0.16) for (let i = 0; i < labels.length; i++) for (let j = i + 1; j < labels.length; j++) {
-        assert.ok(Math.abs(labels[i].x - labels[j].x) > 188 || Math.abs(labels[i].y - labels[j].y) > 150, 'Default property labels must not overlap: count=' + count + ' width=' + width + ' i=' + i + ' j=' + j);
+    assert.deepEqual(layout, layoutProperties(properties.map(p => ({ ...p, title: 'Edited title' }))));
+    if (count >= 18) {
+      assert.equal(new Set(layout.map(p => p.shape)).size, 5);
+      assert.ok(new Set(layout.map(p => p.scaleX)).size > 10);
+      assert.ok(new Set(layout.map(p => p.rotation)).size > 10);
+    }
+    const map = createPropertyMapModel(properties, true), camera = new OrthographicCamera(-14, 14, 10, -10, .1, 300);
+    for (const [width, height] of [[390, 520], [960, 640], [1296, 640]]) for (const angle of [-.55, .16, .55]) {
+      framePropertyMapCamera(camera, width, height, map.bounds, angle, 1);
+      for (const marker of map.markerPositions) {
+        const p = marker.position.clone().project(camera), x = (p.x + 1) * width / 2, y = (1 - p.y) * height / 2;
+        assert.ok(x > 24 && x < width - 24 && y > 36 && y < height - 24, `Marker stays in fixed frame: count=${count}, width=${width}`);
       }
+      map.model.updateMatrixWorld(true);
+      map.model.traverse(object => assertFits(object, camera, `Scenery fits fixed frame: count=${count}, width=${width}`));
     }
     const resources = new Set();
     map.model.traverse(object => { if (object.geometry) resources.add(object.geometry); if (object.material) resources.add(object.material); });
     let disposed = 0; resources.forEach(resource => resource.addEventListener('dispose', () => disposed++));
     map.dispose(); assert.equal(disposed, resources.size);
   }
+});
+
+test('map mixes residential buildings, open land and shops without inventing listing markers', () => {
+  const properties = [
+    { id:'home', title:'Residential villa', propertyType:'residential' },
+    { id:'land', title:'Open plot', propertyType:'residential' },
+    { id:'shop', title:'Commercial space', propertyType:'commercial' },
+  ];
+  const map = createPropertyMapModel(properties, true);
+  assert.deepEqual(map.structures, [{id:'home',kind:'building'},{id:'land',kind:'plot'},{id:'shop',kind:'commercial'}]);
+  assert.deepEqual(map.markerPositions.map(marker=>marker.id), properties.map(property=>property.id));
+  assert.ok(map.markerPositions[0].position.y > map.markerPositions[1].position.y, 'Building marker clears its roof');
+  assert.ok(map.markerPositions[2].position.y > map.markerPositions[1].position.y, 'Shop marker clears its roof');
+  assert.ok(map.model.getObjectByName('map-building'));
+  assert.ok(map.model.getObjectByName('map-commercial'));
+  map.dispose();
 });
 
 test('fresh property feed includes additions beyond four and excludes inactive records', async () => {
