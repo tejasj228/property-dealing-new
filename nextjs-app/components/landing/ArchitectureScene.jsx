@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createCity, createCityCamera, frameCityCamera } from './city-model.mjs';
+import { createCity, createCityCamera, frameCityCamera, CITY_OVERSCAN } from './city-model.mjs';
 import {
   ACESFilmicToneMapping,
   PCFSoftShadowMap, Raycaster, Vector2, Scene, Vector3, WebGLRenderer,
@@ -114,7 +114,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     const resize = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
-      if (kind === 'city') frameCityCamera(camera, width, height);
+      if (kind === 'city') frameCityCamera(camera, width, height, CITY_OVERSCAN);
       else if (kind === 'house') frameSceneCamera(camera, width, height);
       else frameSpatialCamera(camera, width, height, kind);
       renderer.setPixelRatio(scenePixelRatio(width, height, { devicePixelRatio: window.devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize }));
@@ -202,6 +202,6 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     };
   }, [progress, reduceMotion, kind]);
 
-  return <div ref={hostRef} className={styles.webgl} data-draggable="true" tabIndex={0} role="group"
+  return <div ref={hostRef} className={`${styles.webgl} ${kind === 'city' ? styles.cityCanvas : ''}`} style={kind === 'city' ? { '--city-overscan': CITY_OVERSCAN } : undefined} data-draggable="true" tabIndex={0} role="group"
     aria-label={kind === 'city' ? 'Interactive illustrative city. Drag or use arrow keys to turn. Click a neighbourhood to explore it, or press 1 for societies, 2 for commercial, and 3 for plots. Double-click or Home resets the view.' : kind === 'keys' ? 'Movable house keys. Drag to move and jiggle, or use arrow keys. Double-click or press Home to reset.' : 'Interactive architectural illustration. Drag to turn, or use arrow keys. Double-click or press Home to reset.'} />;
 }

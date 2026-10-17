@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Box3, Raycaster, Vector2, Vector3, Matrix4 } from 'three';
-import { createCity, createCityCamera, frameCityCamera } from '../components/landing/city-model.mjs';
+import { createCity, createCityCamera, frameCityCamera, CITY_OVERSCAN } from '../components/landing/city-model.mjs';
 import { CITY_DISTRICTS } from '../components/landing/city-districts.mjs';
 test('city selection resolves projected clicks and highlights the matching category',()=>{
  const city=createCity(),camera=createCityCamera();frameCityCamera(camera,1000,700);city.model.updateMatrixWorld(true);
@@ -14,10 +14,10 @@ test('city selection resolves projected clicks and highlights the matching categ
  }
  city.select(null);city.model.traverse(o=>{if(o.name==='district-selection')assert.equal(o.visible,false);});city.dispose();
 });
-test('city fits desktop and mobile frames across drag limits',()=>{
+test('overscanned city fits at maximum zoom across desktop, mobile and drag limits',()=>{
  const city=createCity(),camera=createCityCamera();
  for(const aspect of [.8,1.4,2.2,3])for(const yaw of [-.92,0,.92])for(const pitch of [-.18,.18]) for(const time of [0,12,36,43]) {
-  city.update(.5,false,time);city.model.rotation.y+=yaw;city.model.rotation.x=pitch;city.model.updateMatrixWorld(true);frameCityCamera(camera,aspect*1000,1000);
+  city.update(.5,false,time);city.model.rotation.y+=yaw;city.model.rotation.x=pitch;city.model.updateMatrixWorld(true);frameCityCamera(camera,aspect*1000,1000,CITY_OVERSCAN);camera.zoom=1.45;camera.updateProjectionMatrix();
   city.model.traverse(o=>{
    if(!o.isMesh||o.material.visible===false)return;
    if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();const bounds=o.geometry.boundingBox;
@@ -73,4 +73,11 @@ test('property map trees avoid all road corridors across inventory sizes',()=>{
   let trees=0;map.model.traverse(o=>{if(o.name==='botanical-tree'){trees++;assert.ok(clearOfRoads(o.position.x,o.position.z,.95,map.roadCorridors));}});
   assert.ok(trees>0);map.dispose();
  }
+});
+
+test('overscan preserves the city apparent size at normal zoom',()=>{
+ const normal=createCityCamera(),expanded=createCityCamera();
+ frameCityCamera(normal,1000,700);frameCityCamera(expanded,1700,1190,CITY_OVERSCAN);
+ const a=new Vector3(8,2,3).project(normal),b=new Vector3(8,2,3).project(expanded);
+ assert.ok(Math.abs(a.x*500-b.x*850)<.00001);assert.ok(Math.abs(a.y*350-b.y*595)<.00001);
 });

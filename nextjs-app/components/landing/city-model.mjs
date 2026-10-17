@@ -11,8 +11,9 @@ export function createCityCamera() {
   const camera=new OrthographicCamera(-11,11,9,-9,.1,100);
   camera.position.set(17,17,21);camera.lookAt(0,.7,0);camera.updateMatrixWorld();return camera;
 }
-export function frameCityCamera(camera,width,height) {
-  const aspect=width/Math.max(1,height), half=Math.max(22,17*aspect);
+export const CITY_OVERSCAN = 1.7;
+export function frameCityCamera(camera,width,height,overscan=1) {
+  const aspect=width/Math.max(1,height), half=Math.max(22,17*aspect)*overscan;
   camera.left=-half;camera.right=half;camera.top=half/aspect;camera.bottom=-half/aspect;camera.updateProjectionMatrix();
 }
 

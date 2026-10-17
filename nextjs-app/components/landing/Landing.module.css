@@ -391,3 +391,8 @@
 @media(max-width:767px) {
   .heroGrid:has(.cityFigure) .heroCopy h1 { font-size:clamp(44px,10.5vw,66px); line-height:1.08; }
 }
+
+/* Render beyond the layout box; CSS overflow alone cannot extend a WebGL viewport.
+   Camera overscan preserves the normal scale while leaving room for zoom/orbit. */
+.cityStage { overflow:visible; }
+.cityCanvas { inset:calc((1 - var(--city-overscan)) * 50%); }
