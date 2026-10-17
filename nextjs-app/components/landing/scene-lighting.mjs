@@ -9,6 +9,7 @@ export function createSceneLighting(scene, model, renderer, { kind = 'house', co
   const sun = new DirectionalLight(0xfff8e8, 3.2); sun.position.set(-4, 12, 7);
   sun.castShadow = !compact && kind !== 'map'; sun.shadow.mapSize.set(2048, 2048);
   Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 30 });
+  if (kind === 'city') { sun.position.set(-10,24,12); Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20,far:65}); }
   sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.015;
   scene.add(sky, ambient, sun);
   const materials = new Set(), nightDetails = [];

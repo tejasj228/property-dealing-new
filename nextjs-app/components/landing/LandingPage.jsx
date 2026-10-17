@@ -9,6 +9,7 @@ import { LazyMotion, domAnimation, m, useReducedMotion, useScroll } from 'motion
 import { GuidanceKeys, LayeredMap, PropertyWorld } from './SpatialElements';
 import styles from './Landing.module.css';
 import PropertyMap from './PropertyMap';
+import { CITY_DISTRICTS } from './city-districts.mjs';
 import { Navigation, Footer, useSiteTheme } from '../SiteElements';
 import { usePublishedProperties } from './usePublishedProperties';
 
@@ -32,14 +33,7 @@ function Reveal({ children, className = '', delay = 0 }) {
 
 
 function ArchitecturalFallback() {
-  return <div className={styles.fallback} aria-hidden="true">
-    <div className={styles.fallbackPlot}>
-      <div className={styles.fallbackHouse}><span /><span /><span /><span /></div>
-      <div className={styles.fallbackUpper}><span /><span /><span /></div>
-      <div className={styles.fallbackPool} />
-      <div className={styles.fallbackTree} /><div className={styles.fallbackTree} />
-    </div>
-  </div>;
+  return <div className={styles.fallback} aria-hidden="true"><div className={styles.cityFallbackGrid}>{Array.from({length:12},(_,i)=><span key={i} data-zone={i%3}><i/><i/></span>)}</div></div>;
 }
 
 function Hero() {
@@ -47,6 +41,8 @@ function Hero() {
   const systemReduced = useReducedMotion();
   const [paused, setPaused] = useState(false);
   const reduce = systemReduced;
+  const [district, setDistrict] = useState(null), [zoom,setZoom] = useState(1);
+  const selection = CITY_DISTRICTS.find(item => item.id === district);
   const { scrollYProgress } = useScroll({ target: track, offset: ['start start', 'end start'] });
 
   return (
@@ -62,10 +58,15 @@ function Hero() {
               <Link href="/properties" className={styles.textLink}>View properties <Icon name="arrow-up-right-from-square" /></Link>
             </div>
           </m.div>
-          <figure className={styles.sceneFigure}>
-            <div className={styles.sceneStage} role="group" aria-label="An illustrative modern home with a landscaped plot. Its upper floor gently separates as you move down the page.">
+          <figure className={`${styles.sceneFigure} ${styles.cityFigure}`}>
+            <div className={`${styles.sceneStage} ${styles.cityStage}`} role="group" aria-label="An illustrative city with residential societies, commercial buildings, parks and open plots.">
               <ArchitecturalFallback />
-              <ArchitectureScene progress={scrollYProgress} reduceMotion={Boolean(reduce)} paused={paused} />
+              <ArchitectureScene kind="city" progress={scrollYProgress} reduceMotion={Boolean(reduce)} paused={paused} selectedDistrict={district} onDistrictSelect={setDistrict} zoom={zoom} />
+              <div className={styles.cityZoom} role="group" aria-label="City map zoom"><button type="button" aria-label="Zoom out city" disabled={zoom<=1} onClick={()=>setZoom(value=>Math.max(1,value-.15))}>−</button><button type="button" aria-label="Zoom in city" disabled={zoom>=1.45} onClick={()=>setZoom(value=>Math.min(1.45,value+.15))}>+</button></div>
+            </div>
+            <div className={styles.cityExplorer}>
+              <div className={styles.cityDistricts} role="group" aria-label="Explore city districts">{CITY_DISTRICTS.map(item=><button key={item.id} type="button" aria-pressed={district===item.id} onClick={()=>setDistrict(current=>current===item.id?null:item.id)}><span style={{background:item.color}} />{item.short}</button>)}</div>
+              <div className={styles.citySelection} aria-live="polite">{selection ? <><div><strong>{selection.label}</strong><p>{selection.description}</p></div><Link href={selection.href}>{selection.action}<Icon name="arrow-up-right-from-square" /></Link></> : <p>Choose a district on the map, or use the buttons above.</p>}</div>
             </div>
             <m.figcaption className={styles.sceneCaption} >
               <span><span className={styles.captionLine} />Drag to turn · double-click to reset</span>

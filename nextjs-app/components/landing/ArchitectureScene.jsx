@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { createCity, createCityCamera, frameCityCamera } from './city-model.mjs';
 import {
   ACESFilmicToneMapping,
-  PCFSoftShadowMap, Scene, Vector3, WebGLRenderer,
+  PCFSoftShadowMap, Raycaster, Vector2, Scene, Vector3, WebGLRenderer,
 } from 'three';
 import { createArchitecture, createSceneCamera, frameSceneCamera, scenePose } from './architecture.mjs';
 import { createDistrict, createKeys, createSpatialCamera, frameSpatialCamera } from './spatial-models.mjs';
@@ -14,8 +15,12 @@ import styles from './Landing.module.css';
 import { scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
 import { createSceneLighting, observeSceneTheme } from './scene-lighting.mjs';
 
-export default function ArchitectureScene({ progress, reduceMotion, paused, kind = 'house' }) {
+export default function ArchitectureScene({ progress, reduceMotion, paused, kind = 'house', selectedDistrict = null, onDistrictSelect, zoom = 1 }) {
   const hostRef = useRef(null);
+  const cityRef = useRef(null), selectionRef = useRef(selectedDistrict), onSelectRef = useRef(onDistrictSelect), zoomRef = useRef(zoom);
+  onSelectRef.current = onDistrictSelect;
+  useEffect(() => { selectionRef.current = selectedDistrict; cityRef.current?.select(selectedDistrict); invalidateRef.current?.(); }, [selectedDistrict]);
+  useEffect(() => { zoomRef.current = zoom; invalidateRef.current?.(); }, [zoom]);
   const pausedRef = useRef(paused);
   const invalidateRef = useRef(null);
 
@@ -48,9 +53,11 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     host.appendChild(renderer.domElement);
 
     const scene = new Scene();
-    const camera = kind === 'house' ? createSceneCamera() : createSpatialCamera(kind);
-    const architecture = kind === 'house' ? createArchitecture({ compact: compact || lowPower }) : kind === 'keys' ? createKeys() : kind === 'office' ? createContactOffice() : createDistrict({ compact: compact || lowPower, kind });
+    const camera = kind === 'city' ? createCityCamera() : kind === 'house' ? createSceneCamera() : createSpatialCamera(kind);
+    const architecture = kind === 'city' ? createCity({ compact: compact || lowPower }) : kind === 'house' ? createArchitecture({ compact: compact || lowPower }) : kind === 'keys' ? createKeys() : kind === 'office' ? createContactOffice() : createDistrict({ compact: compact || lowPower, kind });
     scene.add(architecture.model);
+    if (kind === 'city') { cityRef.current = architecture; architecture.select(selectionRef.current); }
+    const raycaster = new Raycaster(), pointer = new Vector2();
     const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower, invalidate });
 
     let visible = false, frame = 0, dirty = true, lastTime = 0, contextLost = false, elapsed = 0;
@@ -92,6 +99,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
         architecture.model.rotation.y += jiggle.x * 0.28;
         architecture.model.rotation.z += jiggle.angle * 0.25;
       }
+      if (kind === 'city' && camera.zoom !== zoomRef.current) { camera.zoom = zoomRef.current; camera.updateProjectionMatrix(); }
       renderer.render(scene, camera);
       if (host.dataset.ready !== 'true') host.dataset.ready = 'true';
       if (!reduceMotion && !pausedRef.current) frame = requestAnimationFrame(render);
@@ -106,7 +114,8 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     const resize = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
-      if (kind === 'house') frameSceneCamera(camera, width, height);
+      if (kind === 'city') frameCityCamera(camera, width, height);
+      else if (kind === 'house') frameSceneCamera(camera, width, height);
       else frameSpatialCamera(camera, width, height, kind);
       renderer.setPixelRatio(scenePixelRatio(width, height, { devicePixelRatio: window.devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize }));
       renderer.setSize(width, height, false); invalidate();
@@ -121,6 +130,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     const unsubscribe = reduceMotion && kind !== 'office' ? () => {} : progress.on('change', value => { targetProgress = value; if (!pausedRef.current || kind === 'office') invalidate(); });
     const onPointerMove = e => {
       if (!dragging) return;
+      if (Math.hypot(e.clientX - dragging.pointerX, e.clientY - dragging.pointerY) > 6) dragging.moved = true;
       const dx = (e.clientX - dragging.pointerX) / dragging.width;
       const dy = (e.clientY - dragging.pointerY) / dragging.height;
       if (kind === 'keys') {
@@ -139,7 +149,16 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       dragging = { pointerX: e.clientX, pointerY: e.clientY, x: dragX, y: dragY, width: Math.max(1, bounds.width), height: Math.max(1, bounds.height) };
       host.dataset.input = 'pointer'; host.setPointerCapture(e.pointerId); host.dataset.dragging = 'true'; host.focus({ preventScroll: true });
     };
-    const onPointerUp = () => { dragging = null; delete host.dataset.dragging; invalidate(); };
+    const onPointerUp = e => {
+      if (kind === 'city' && e.type === 'pointerup' && dragging && !dragging.moved) {
+        const bounds=host.getBoundingClientRect();
+        pointer.set((e.clientX-bounds.left)/bounds.width*2-1,-(e.clientY-bounds.top)/bounds.height*2+1);
+        architecture.model.updateMatrixWorld(true);raycaster.setFromCamera(pointer,camera);
+        const hit=raycaster.intersectObjects(architecture.hitAreas,false)[0];
+        if(hit) onSelectRef.current?.(hit.object.userData.cityZone);
+      }
+      dragging = null; delete host.dataset.dragging; invalidate();
+    };
     const resetKeys = () => { dragX = 0; dragY = 0; spring.reset(); orbit.reset(); invalidate(); };
     const onBlur = () => { delete host.dataset.input; };
     const onKeyDown = e => {
@@ -177,11 +196,11 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       document.removeEventListener('visibilitychange', onVisibility);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
-      invalidateRef.current = null;
+      invalidateRef.current = null; cityRef.current = null;
       stopTheme(); lighting.dispose(); architecture.dispose(); renderer.dispose(); renderer.domElement.remove(); delete host.dataset.ready;
     };
   }, [progress, reduceMotion, kind]);
 
   return <div ref={hostRef} className={styles.webgl} data-draggable="true" tabIndex={0} role="group"
-    aria-label={kind === 'keys' ? 'Movable house keys. Drag to move and jiggle, or use arrow keys. Double-click or press Home to reset.' : 'Interactive architectural illustration. Drag to turn, or use arrow keys. Double-click or press Home to reset.'} />;
+    aria-label={kind === 'city' ? 'Interactive illustrative city. Drag or use arrow keys to turn. Click a neighbourhood to explore it, or use the district buttons below. Double-click or Home resets the view.' : kind === 'keys' ? 'Movable house keys. Drag to move and jiggle, or use arrow keys. Double-click or press Home to reset.' : 'Interactive architectural illustration. Drag to turn, or use arrow keys. Double-click or press Home to reset.'} />;
 }

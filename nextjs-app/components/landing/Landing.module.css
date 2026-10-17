@@ -325,3 +325,47 @@
 .landing .primaryButton:hover { color:var(--surface)!important; background:var(--ink); }
 
 .landing .sectorButton.sectorActive:hover { background:var(--ink); border-color:var(--ink); color:var(--surface); }
+
+/* The hero city has a fixed viewport; exploring it never changes page height. */
+.cityFigure { margin:0; }
+.cityStage { flex:1; min-height:330px; max-height:680px; width:126%; margin-left:-7%; }
+.cityMapLabel { position:absolute; top:5%; left:8%; z-index:2; pointer-events:none; display:grid; gap:4px; }
+.cityMapLabel>span { font-size:9px; letter-spacing:1.6px; font-weight:650; color:var(--muted); }
+.cityMapLabel small { font-size:10px; color:var(--muted); }
+.cityZoom { position:absolute; right:5%; top:5%; z-index:2; display:flex; background:var(--surface-card); border:1px solid var(--line); border-radius:24px; overflow:hidden; }
+.cityZoom button { width:40px; height:40px; border:0; background:transparent; font-size:20px; }
+.cityZoom button:disabled { opacity:.35; cursor:default; }
+.cityZoom button:not(:disabled):hover { background:var(--surface-soft); color:var(--accent); }
+.cityExplorer { position:relative; z-index:2; margin:0 0 14px 4%; border-top:1px solid var(--line); }
+.cityDistricts { display:flex; gap:6px; padding:13px 0 10px; flex-wrap:wrap; }
+.cityDistricts button { display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:8px 12px; border:1px solid transparent; border-radius:24px; background:transparent; font-size:11px; }
+.cityDistricts button>span { width:7px; height:7px; border-radius:50%; }
+.cityDistricts button:hover,.cityDistricts button[aria-pressed='true'] { border-color:var(--line); background:var(--surface-card); color:var(--accent); }
+.citySelection { min-height:86px; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.citySelection strong { display:block; font-size:13px; font-weight:650; }
+.citySelection p { color:var(--muted); font-size:11px; line-height:1.7; max-width:300px; }
+.citySelection a { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:650; color:var(--accent); max-width:170px; }
+.cityFigure .sceneCaption { padding-left:4%; padding-bottom:18px; }
+.cityFallbackGrid { width:75%; aspect-ratio:1.25; background:var(--line); display:grid; grid-template-columns:repeat(4,1fr); gap:9px; padding:10px; transform:rotateX(40deg) rotateZ(-18deg); box-shadow:0 12px 0 var(--surface-soft); }
+.cityFallbackGrid>span { background:#b5a675; display:flex; gap:6px; padding:10px; align-items:center; }
+.cityFallbackGrid>span[data-zone='1'] { background:#b7a08a; }.cityFallbackGrid>span[data-zone='2'] { background:#c3b486; }
+.cityFallbackGrid i { display:block; width:40%; height:70%; background:#e1dcd0; box-shadow:4px 5px 0 #938b7a; }
+.cityFallbackGrid>span[data-zone='2'] i { height:35%; background:#a39871; box-shadow:none; }
+@media(min-width:1600px) { .cityStage { width:125%; margin-left:-9%; } }
+@media(max-width:1100px) and (min-width:768px) { .cityStage { width:120%; margin-left:-8%; min-height:280px; }.citySelection { flex-direction:column; align-items:flex-start; justify-content:center; gap:7px; min-height:115px; }.citySelection a { max-width:none; } }
+@media(max-width:767px) { .cityFigure { height:auto; margin-top:30px; }.cityStage { flex:none; height:380px; min-height:0; width:114%; margin-left:-7%; }.cityExplorer { margin:0 0 10px; }.cityMapLabel { top:0; }.cityZoom { top:0; }.cityDistricts { gap:0; }.cityDistricts button { padding:8px 10px; }.citySelection { min-height:120px; flex-direction:column; align-items:flex-start; justify-content:center; gap:8px; }.citySelection a { max-width:none; }.cityFigure .sceneCaption { padding-left:0; }.cityMapLabel>span { font-size:8px; } }
+
+@media(min-width:1101px) { .heroGrid:has(.cityFigure) { grid-template-columns:.68fr 1.32fr; } }
+
+/* Give the city actual vertical room, rather than enlarging a cropped canvas. */
+@media(min-width:768px) {
+  .heroSticky:has(.cityFigure) { min-height:780px; }
+  .cityStage { min-height:480px; max-height:740px; }
+  .citySelection { min-height:68px; }
+}
+@media(min-width:768px) and (max-width:1100px) {
+  .heroSticky:has(.cityFigure) { min-height:750px; }
+  .cityStage { min-height:420px; }
+  .citySelection { min-height:105px; }
+}
+@media(max-width:767px) { .cityStage { height:430px; } }
