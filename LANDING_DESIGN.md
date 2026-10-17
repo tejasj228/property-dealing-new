@@ -129,3 +129,12 @@ Added shared, batched architectural details: society security cabin/gate, apartm
 ## Contact office
 
 Contact now has its own interactive cutaway property office: consultation desk and miniature plan, wall-mounted parcel display, seating, landscaping, enquiry mailbox and an operable glass door. A button opens/closes the door; dragging/keyboard orbit, day/night lighting, pause, offscreen suspension and pixel budgets reuse the shared scene renderer. Manual door changes remain usable while paused or reduced motion is enabled. The fixed-height responsive scene has a CSS fallback. It is labelled illustrative. The contact form, validation and submission endpoint are unchanged, with direct anchors to the form and phone action. Production build and 26 geometry/progress checks passed; no browser verification or live contact submissions.
+
+
+## Glass office, dropdowns and interaction language
+
+The contact office now has a full framed flat roof with a large skylight, transparent front/side glazing and an equally transparent operable door. Single-plane low-opacity glass avoids stacked transparent box faces; it does not inherit night-window emission and uses no extra transmission render pass. Existing framing/disposal tests plus a glass day/night regression check pass.
+
+All four public select locations (contact interest, property location, landing area and society map) use a shared Radix Select wrapper: themed portal, viewport collision handling, keyboard/typeahead navigation, selected ticks, disabled options and optional empty values. Form field names/values and existing callbacks remain intact. Admin Material Select/Menu/MenuItem theme now provides consistent dark green menus, highlighted/selected options and animated chevrons; menu scroll lock is disabled to avoid changing document width.
+
+Public icon fonts replaced with a shared outlined Phosphor SVG family while preserving legacy sizing hooks. Admin icons now consistently use available outlined Material variants and direct imports. Hover/focus responses use bounded icon translation/rotation/scale and colour changes, with reduced-motion guards; no page-sized layers or new animation loops were added. Removed the global Font Awesome stylesheet. Both production builds, 27 scene/progress tests, 3 custom-control DOM tests and 12 admin tests passed. Run public DOM tests with npm run check:controls in nextjs-app (uses the installed sibling admin Jest runtime). Source/build/DOM validation only; no live enquiry submissions.

@@ -1,4 +1,6 @@
 'use client';
+import CustomSelect from '../CustomSelect';
+import BrandIcon from '../BrandIcon';
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -13,7 +15,7 @@ import { usePublishedProperties } from './usePublishedProperties';
 const ArchitectureScene = dynamic(() => import('./ArchitectureScene'), { ssr: false });
 
 function Icon({ name, className = '' }) {
-  return <i className={`fa-solid fa-${name} ${className}`} aria-hidden="true" />;
+  return <BrandIcon className={`fa-solid fa-${name} ${className}`} aria-hidden="true"  />;
 }
 
 function Reveal({ children, className = '', delay = 0 }) {
@@ -116,7 +118,7 @@ function AreaExplorer({ areas, available }) {
           <div className={styles.areaSidebar}>
             <div className={styles.areaTitle}>
               <Icon name="location-dot" />
-              {areas.length > 1 ? <label className={styles.areaSelect}>Select an area<select value={area.key} onChange={selectArea}>{areas.map(a => <option key={a.key} value={a.key}>{a.name}</option>)}</select></label> : <h3>{area.name}</h3>}
+              {areas.length > 1 ? <label className={styles.areaSelect}>Select an area<CustomSelect aria-label="Select an area" value={area.key} onChange={selectArea}>{areas.map(a => <option key={a.key} value={a.key}>{a.name}</option>)}</CustomSelect></label> : <h3>{area.name}</h3>}
             </div>
             <label className={styles.searchLabel} htmlFor="area-search">Find a sector or community</label>
             <div className={styles.searchInput}><Icon name="magnifying-glass" /><input id="area-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search locations" autoComplete="off" /></div>

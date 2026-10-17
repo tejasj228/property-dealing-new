@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useMotionValue, useReducedMotion } from 'motion/react';
@@ -14,8 +15,8 @@ export default function ContactOffice(){
       <Scene kind="office" progress={progress} reduceMotion={Boolean(reduced)} paused={paused}/>
     </div>
     <figcaption><span>Our door is open. Let’s talk.<small>Illustrative office · drag to turn</small></span>
-      <div className="contact-office-controls"><button type="button" onClick={()=>setOpen(value=>!value)} aria-pressed={open}>{open?'Close the door':'Open the door'}<i className="fa-solid fa-door-open" aria-hidden="true" /></button>
-      {!reduced&&<button type="button" onClick={()=>setPaused(value=>!value)} aria-pressed={paused} aria-label={paused?'Resume office motion':'Pause office motion'}><i className={`fa-solid fa-${paused?'play':'pause'}`} aria-hidden="true" /></button>}</div>
+      <div className="contact-office-controls"><button type="button" onClick={()=>setOpen(value=>!value)} aria-pressed={open}>{open?'Close the door':'Open the door'}<BrandIcon className="fa-solid fa-door-open" aria-hidden="true"  /></button>
+      {!reduced&&<button type="button" onClick={()=>setPaused(value=>!value)} aria-pressed={paused} aria-label={paused?'Resume office motion':'Pause office motion'}><BrandIcon className={`fa-solid fa-${paused?'play':'pause'}`} aria-hidden="true"  /></button>}</div>
     </figcaption>
   </figure>;
 }

@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 import React from 'react';
 import { useParams } from 'next/navigation';
 import { properties, areas } from '../data/data';
@@ -41,20 +42,20 @@ const Listings = () => {
                   <div className="property-price">{property.price}</div>
                   <div className="property-title">{property.title}</div>
                   <div className="property-location">
-                    <i className="fas fa-map-marker-alt"></i>
+                    <BrandIcon className="fas fa-map-marker-alt" />
                     {property.location}
                   </div>
                   <div className="property-features">
                     <div className="feature">
-                      <i className="fas fa-bed"></i>
+                      <BrandIcon className="fas fa-bed" />
                       {property.beds} Beds
                     </div>
                     <div className="feature">
-                      <i className="fas fa-bath"></i>
+                      <BrandIcon className="fas fa-bath" />
                       {property.baths} Baths
                     </div>
                     <div className="feature">
-                      <i className="fas fa-expand-arrows-alt"></i>
+                      <BrandIcon className="fas fa-expand-arrows-alt" />
                       {property.area}
                     </div>
                   </div>
@@ -83,7 +84,7 @@ const Listings = () => {
         ) : (
           <div className="no-properties">
             <div className="no-properties-content">
-              <i className="fas fa-home"></i>
+              <BrandIcon className="fas fa-home" />
               <h3>No Properties Available</h3>
               <p>We're currently updating our listings for this area. Please check back soon or contact us for the latest available properties.</p>
               <button 

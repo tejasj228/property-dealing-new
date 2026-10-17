@@ -24,13 +24,11 @@ import {
   Chip,
   Fab,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Slideshow as SlideshowIcon,
-  Folder as FolderIcon,
-  CloudUpload as UploadIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/AddOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SlideshowIcon from '@mui/icons-material/SlideshowOutlined';
+import FolderIcon from '@mui/icons-material/FolderOutlined';
+import UploadIcon from '@mui/icons-material/CloudUploadOutlined';
 import { uploadAPI } from '../services/api';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 

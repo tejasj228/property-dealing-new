@@ -1,4 +1,6 @@
 'use client';
+import CustomSelect from './CustomSelect';
+import BrandIcon from './BrandIcon';
 import React, { useState } from 'react';
 import useAreas from '@/hooks/useAreas';
 import './Contact.css';
@@ -197,7 +199,7 @@ const Contact = () => {
         <div className="contact-intro"><div className="section-title">
           <span className="page-kicker">Contact</span><h1>Let’s talk about your next move.</h1>
           <p>A home, a plot, a space for your business. Tell us what you have in mind, or visit either of our offices.</p>
-          <div className="contact-intro-actions"><a className="btn btn-primary" href="#contact-enquiry">Tell us your plans <i className="fa-solid fa-arrow-down" aria-hidden="true" /></a><a href="tel:+919811186086">Prefer a call?</a></div>
+          <div className="contact-intro-actions"><a className="btn btn-primary" href="#contact-enquiry">Tell us your plans <BrandIcon className="fa-solid fa-arrow-down" aria-hidden="true"  /></a><a href="tel:+919811186086">Prefer a call?</a></div>
         </div><ContactOffice /></div>
         
         <div className="contact-grid">
@@ -215,7 +217,7 @@ const Contact = () => {
                   style={item.onClick ? { cursor: 'pointer' } : { cursor: 'default' }}
                 >
                   <div className="contact-item-icon">
-                    <i className={item.icon}></i>
+                    <BrandIcon className={item.icon} />
                   </div>
                   <div className="contact-item-content">
                     <h4>{item.title}</h4>
@@ -231,14 +233,14 @@ const Contact = () => {
             
             {submitSuccess && (
               <div className="form-message success" role="status">
-                <i className="fas fa-check-circle"></i>
+                <BrandIcon className="fas fa-check-circle" />
                 <p>Thank you for your message! We will get back to you soon.</p>
               </div>
             )}
             
             {submitError && (
               <div className="form-message error" role="alert">
-                <i className="fas fa-exclamation-circle"></i>
+                <BrandIcon className="fas fa-exclamation-circle" />
                 <p>{submitError}</p>
               </div>
             )}
@@ -291,7 +293,7 @@ const Contact = () => {
 
               <div className="form-group">
                 <label htmlFor="interest">Area of Interest</label>
-                <select
+                <CustomSelect
                   id="interest"
                   name="interest"
                   value={formData.interest}
@@ -299,10 +301,10 @@ const Contact = () => {
                   disabled={submitting}
                 >
                   {renderInterestOptions()}
-                </select>
+                </CustomSelect>
                 {areasLoading && (
                   <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                    <i className="fas fa-spinner fa-spin" style={{ marginRight: '5px' }}></i>
+                    <BrandIcon className="fas fa-spinner fa-spin" style={{ marginRight: '5px' }} />
                     Loading available areas...
                   </small>
                 )}
@@ -329,12 +331,12 @@ const Contact = () => {
               >
                 {submitting ? (
                   <>
-                    <i className="fas fa-spinner fa-spin"></i>
+                    <BrandIcon className="fas fa-spinner fa-spin" />
                     Sending Message...
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-paper-plane"></i>
+                    <BrandIcon className="fas fa-paper-plane" />
                     Send Message
                   </>
                 )}

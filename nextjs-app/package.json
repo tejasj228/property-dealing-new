@@ -10,11 +10,14 @@
     "start:local": "next start --hostname 127.0.0.1 --port 3100",
     "check:connections": "node scripts/check-connections.cjs",
     "check:landing": "node --test scripts/check-landing.mjs",
+    "check:controls": "node scripts/check-controls.cjs",
     "check:scroll": "node --test scripts/check-scroll.mjs",
     "check:management": "node --test scripts/check-management.cjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@radix-ui/react-select": "^2.4.1",
     "@vercel/analytics": "^2.0.1",
     "axios": "^1.14.0",
     "bcryptjs": "^3.0.3",

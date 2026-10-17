@@ -30,20 +30,18 @@ import {
   CardMedia,
   Collapse,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Map as MapIcon,
-  ExpandMore as ExpandMoreIcon,
-  LocationOn as LocationIcon,
-  Business as BusinessIcon,
-  DragIndicator as DragIcon,
-  CloudUpload as UploadIcon,
-  Home as HomeIcon,
-  ExpandLess as ExpandLessIcon,
-  Image as ImageIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/AddOutlined';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import MapIcon from '@mui/icons-material/MapOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMoreOutlined';
+import LocationIcon from '@mui/icons-material/LocationOnOutlined';
+import BusinessIcon from '@mui/icons-material/BusinessOutlined';
+import DragIcon from '@mui/icons-material/DragIndicatorOutlined';
+import UploadIcon from '@mui/icons-material/CloudUploadOutlined';
+import HomeIcon from '@mui/icons-material/HomeOutlined';
+import ExpandLessIcon from '@mui/icons-material/ExpandLessOutlined';
+import ImageIcon from '@mui/icons-material/ImageOutlined';
 
 // Modern drag & drop imports
 import {

@@ -31,23 +31,21 @@ import {
   Link,
   CardActions,
 } from '@mui/material';
-import {
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  LocationOn as LocationIcon,
-  Visibility as ViewIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  MarkEmailRead as MarkReadIcon,
-  Search as SearchIcon,
-  FilterList as FilterIcon,
-  Person as PersonIcon,
-  Message as MessageIcon,
-  Schedule as TimeIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  Circle as CircleIcon,
-} from '@mui/icons-material';
+import EmailIcon from '@mui/icons-material/EmailOutlined';
+import PhoneIcon from '@mui/icons-material/PhoneOutlined';
+import LocationIcon from '@mui/icons-material/LocationOnOutlined';
+import ViewIcon from '@mui/icons-material/VisibilityOutlined';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import MarkReadIcon from '@mui/icons-material/MarkEmailReadOutlined';
+import SearchIcon from '@mui/icons-material/SearchOutlined';
+import FilterIcon from '@mui/icons-material/FilterListOutlined';
+import PersonIcon from '@mui/icons-material/PersonOutlined';
+import MessageIcon from '@mui/icons-material/MessageOutlined';
+import TimeIcon from '@mui/icons-material/ScheduleOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMoreOutlined';
+import ExpandLessIcon from '@mui/icons-material/ExpandLessOutlined';
+import CircleIcon from '@mui/icons-material/CircleOutlined';
 import { contactAPI } from '../services/api';
 
 // Enhanced Contact Card Component

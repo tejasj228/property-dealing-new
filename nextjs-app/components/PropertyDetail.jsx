@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { contentImageUrl } from '@/lib/image-url.mjs';
@@ -132,7 +133,7 @@ const PropertyDetail = () => {
               className="back-btn"
               onClick={() => window.history.length > 1 ? router.back() : router.push('/properties')}
             >
-              <i className="fas fa-arrow-left"></i>
+              <BrandIcon className="fas fa-arrow-left" />
               Back to Properties
             </button>
           </div>
@@ -142,11 +143,11 @@ const PropertyDetail = () => {
             <div className="property-title-section">
               <h1>{property.title}</h1>
               <div className="property-location">
-                <i className="fas fa-map-marker-alt"></i>
+                <BrandIcon className="fas fa-map-marker-alt" />
                 {property.location}
               </div>
               <div className="property-area-badge">
-                <i className="fas fa-building"></i>
+                <BrandIcon className="fas fa-building" />
                 {areaName}
               </div>
             </div>
@@ -174,17 +175,17 @@ const PropertyDetail = () => {
                     onClick={openImageInNewTab}
                     title="Open image in new tab" aria-label="Open full-size image in new tab"
                   >
-                    <i className="fas fa-external-link-alt"></i>
+                    <BrandIcon className="fas fa-external-link-alt" />
                   </button>
                   
                   {/* Navigation Arrows */}
                   {property.images.length > 1 && (
                     <>
                       <button className="gallery-nav gallery-prev" aria-label="Previous photo" onClick={prevImage}>
-                        <i className="fas fa-chevron-left"></i>
+                        <BrandIcon className="fas fa-chevron-left" />
                       </button>
                       <button className="gallery-nav gallery-next" aria-label="Next photo" onClick={nextImage}>
-                        <i className="fas fa-chevron-right"></i>
+                        <BrandIcon className="fas fa-chevron-right" />
                       </button>
                     </>
                   )}
@@ -220,7 +221,7 @@ const PropertyDetail = () => {
               </>
             ) : (
               <div className="no-images">
-                <i className="fas fa-image"></i>
+                <BrandIcon className="fas fa-image" />
                 <p>No images available for this property</p>
               </div>
             )}
@@ -237,33 +238,33 @@ const PropertyDetail = () => {
                   {/* 🆕 FIXED: Only show beds/baths if they exist, are not null, and are greater than 0 */}
                   {property.beds > 0 && (
                     <div className="feature-item">
-                      <i className="fas fa-bed"></i>
+                      <BrandIcon className="fas fa-bed" />
                       <span>{property.beds} Bedrooms</span>
                     </div>
                   )}
                   {property.baths > 0 && (
                     <div className="feature-item">
-                      <i className="fas fa-bath"></i>
+                      <BrandIcon className="fas fa-bath" />
                       <span>{property.baths} Bathrooms</span>
                     </div>
                   )}
                   {/* Always show area if available */}
                   {property.area && (
                     <div className="feature-item">
-                      <i className="fas fa-expand-arrows-alt"></i>
+                      <BrandIcon className="fas fa-expand-arrows-alt" />
                       <span>{property.area}</span>
                     </div>
                   )}
                   {/* 🆕 IMPROVED: Show property type specific info */}
                   {property.propertyType === 'commercial' && (
                     <div className="feature-item">
-                      <i className="fas fa-building"></i>
+                      <BrandIcon className="fas fa-building" />
                       <span>Commercial Space</span>
                     </div>
                   )}
                   {property.propertyType === 'residential' && (
                     <div className="feature-item">
-                      <i className="fas fa-users"></i>
+                      <BrandIcon className="fas fa-users" />
                       <span>Residential</span>
                     </div>
                   )}
@@ -285,7 +286,7 @@ const PropertyDetail = () => {
                   <div className="features-list">
                     {property.features.map((feature, index) => (
                       <div key={index} className="feature-tag">
-                        <i className="fas fa-check"></i>
+                        <BrandIcon className="fas fa-check" />
                         {feature}
                       </div>
                     ))}
@@ -306,7 +307,7 @@ const PropertyDetail = () => {
                     className="btn btn-primary contact-btn"
                     onClick={() => router.push('/contact')}
                   >
-                    <i className="fas fa-phone"></i>
+                    <BrandIcon className="fas fa-phone" />
                     Contact Us
                   </button>
                   
@@ -316,7 +317,7 @@ const PropertyDetail = () => {
                       onClick={() => handlePhoneCall('+919811186086')}
                       className="contact-item contact-item-button"
                     >
-                      <i className="fas fa-phone"></i>
+                      <BrandIcon className="fas fa-phone" />
                       <span>+91-9811186086</span>
                     </button>
                     {/* 🆕 FUNCTIONAL EMAIL BUTTON */}
@@ -324,7 +325,7 @@ const PropertyDetail = () => {
                       onClick={() => handleEmail('pawan127jitendra@gmail.com')}
                       className="contact-item contact-item-button"
                     >
-                      <i className="fas fa-envelope"></i>
+                      <BrandIcon className="fas fa-envelope" />
                       <span>pawan127jitendra@gmail.com</span>
                     </button>
                   </div>
@@ -343,7 +344,7 @@ const PropertyDetail = () => {
                         rel="noopener noreferrer"
                         className="external-link"
                       >
-                        <i className="fas fa-external-link-alt"></i>
+                        <BrandIcon className="fas fa-external-link-alt" />
                         View on 99acres
                       </a>
                     )}
@@ -354,7 +355,7 @@ const PropertyDetail = () => {
                         rel="noopener noreferrer"
                         className="external-link"
                       >
-                        <i className="fas fa-external-link-alt"></i>
+                        <BrandIcon className="fas fa-external-link-alt" />
                         View on MagicBricks
                       </a>
                     )}

@@ -10,11 +10,9 @@ import {
   CardMedia,
   GridLegacy as Grid,
 } from '@mui/material';
-import {
-  CloudUpload as UploadIcon,
-  Delete as DeleteIcon,
-  Image as ImageIcon,
-} from '@mui/icons-material';
+import UploadIcon from '@mui/icons-material/CloudUploadOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import ImageIcon from '@mui/icons-material/ImageOutlined';
 import { uploadAPI } from '../../services/api';
 import { getImageUrl, handleImageError } from '../../utils/imageUtils';
 

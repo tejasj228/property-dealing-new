@@ -1,0 +1,18 @@
+/* SVG icons replace the font glyphs while keeping existing sizing hooks. */
+i.brand-icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:1em; height:1em; vertical-align:-.12em; font-style:normal; line-height:1; }
+i.brand-icon::before,i.brand-icon::after { content:none!important; }
+i.brand-icon>svg { display:block; width:1em; height:1em; overflow:visible; }
+@media(prefers-reduced-motion:no-preference) {
+  body :is(a,button,[role='link'],[role='option']) { transition:color .18s ease,background-color .18s ease,border-color .18s ease,box-shadow .18s ease!important; }
+  body i.brand-icon { transition:translate .2s ease,rotate .2s ease,scale .2s ease,color .18s ease!important; }
+  body :is(a,button,[role='link']):is(:hover,:focus-visible)>i.brand-icon { translate:0 -1px; scale:1.08; }
+  body :is(a,button):is(:hover,:focus-visible)>i.brand-icon:is([data-icon='arrow-right'],[data-icon='chevron-right']) { translate:3px 0; }
+  body :is(a,button):is(:hover,:focus-visible)>i.brand-icon:is([data-icon='arrow-up-right-from-square'],[data-icon='arrow-up-right'],[data-icon='external-link-alt']) { translate:2px -2px; }
+  body :is(a,button):is(:hover,:focus-visible)>i.brand-icon:is([data-icon='phone'],[data-icon='key'],[data-icon='sun']) { rotate:-10deg; }
+  body :is(a,button):is(:hover,:focus-visible)>i.brand-icon:is([data-icon='arrow-left'],[data-icon='chevron-left']) { translate:-3px 0; }
+  body :is(a,button,[role='link']):is(:hover,:focus-visible) :is(.contact-item-icon,.contact-item-text)>.brand-icon { scale:1.1; rotate:-5deg; }
+  body :is(button,a).btn:active { scale:.98; }
+  .brand-icon[data-icon='spinner'] { animation:brand-spin 1s linear infinite; }
+  @keyframes brand-spin { to { transform:rotate(360deg); } }
+}
+@media(prefers-reduced-motion:reduce) { body i.brand-icon { animation:none!important; transition:none!important; translate:none!important; rotate:none!important; scale:none!important; } }

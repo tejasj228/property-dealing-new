@@ -56,3 +56,15 @@ a,button { transition:color .15s ease,background-color .15s ease; }
 /* One stable document scroller; no elastic rebound or anchor corrections. */
 html { overflow-x:clip; overflow-y:auto; scrollbar-gutter:stable; overscroll-behavior-y:none; overflow-anchor:none; scroll-behavior:auto; }
 body { overflow-x:clip; overflow-y:visible; }
+
+/* Small composited icon responses; never animate layout or drag transforms. */
+@media(prefers-reduced-motion:no-preference) {
+  :is(a,button,.MuiButtonBase-root) { transition:color .18s ease,background-color .18s ease,border-color .18s ease,box-shadow .18s ease; }
+  :is(a,button,.MuiButtonBase-root) .MuiSvgIcon-root { transition:translate .18s ease,scale .18s ease,rotate .18s ease; }
+  :is(a,button,.MuiButtonBase-root):is(:hover,:focus-visible)>.MuiSvgIcon-root:not(.MuiSelect-icon),.MuiButton-root:is(:hover,:focus-visible) .MuiButton-icon>.MuiSvgIcon-root { translate:0 -1px; scale:1.09; }
+  .admin-navigation a:is(:hover,:focus-visible)>.MuiSvgIcon-root { translate:3px 0; }
+  .MuiIconButton-root:active>.MuiSvgIcon-root { scale:.94; }
+  .MuiCard-root { transition:border-color .18s ease,box-shadow .18s ease; }
+  .MuiCard-root:hover { border-color:#64866e; }
+}
+@media(prefers-reduced-motion:reduce) { .MuiSvgIcon-root { transition:none!important; translate:none!important; rotate:none!important; scale:none!important; } }

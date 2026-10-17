@@ -443,3 +443,17 @@ test('contact office stays framed when turned, and its door responds without amb
   const resources=new Set();office.model.traverse(object=>{if(object.geometry)resources.add(object.geometry);if(object.material)resources.add(object.material);});
   let released=0;resources.forEach(resource=>resource.addEventListener('dispose',()=>released++));office.dispose();assert.equal(released,resources.size);
 });
+
+
+test('office roof and clear glazing stay transparent in night lighting',()=>{
+  const office=createContactOffice(),scene=new Scene();scene.add(office.model);
+  assert.ok(office.model.getObjectByName('office-roof'));
+  const panes=[];office.model.traverse(o=>{if(o.name.startsWith('office-glass')||o.name==='office-skylight')panes.push(o);});
+  assert.ok(panes.length>=6);
+  const lighting=createSceneLighting(scene,office.model,{}, {kind:'office'});
+  for(const night of [false,true]){
+    lighting.setNight(night);
+    for(const pane of panes){assert.equal(pane.material.transparent,true);assert.ok(pane.material.opacity<=.22);assert.equal(pane.material.depthWrite,false);assert.equal(pane.material.emissiveIntensity,1);assert.equal(pane.material.emissive.getHex(),0);assert.equal(pane.castShadow,false);}
+  }
+  lighting.dispose();office.dispose();
+});

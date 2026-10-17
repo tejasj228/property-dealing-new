@@ -24,22 +24,20 @@ import {
   Fab,
   CardMedia,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Home as HomeIcon,
-  LocationOn as LocationIcon,
-  Bed as BedIcon,
-  Bathtub as BathtubIcon,
-  AspectRatio as AreaIcon,
-  Image as ImageIcon,
-  DragIndicator as DragIcon,
-  ChevronLeft as PrevIcon,
-  ChevronRight as NextIcon,
-  Business as CommercialIcon,
-  House as ResidentialIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/AddOutlined';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import HomeIcon from '@mui/icons-material/HomeOutlined';
+import LocationIcon from '@mui/icons-material/LocationOnOutlined';
+import BedIcon from '@mui/icons-material/BedOutlined';
+import BathtubIcon from '@mui/icons-material/BathtubOutlined';
+import AreaIcon from '@mui/icons-material/AspectRatioOutlined';
+import ImageIcon from '@mui/icons-material/ImageOutlined';
+import DragIcon from '@mui/icons-material/DragIndicatorOutlined';
+import PrevIcon from '@mui/icons-material/ChevronLeftOutlined';
+import NextIcon from '@mui/icons-material/ChevronRightOutlined';
+import CommercialIcon from '@mui/icons-material/BusinessOutlined';
+import ResidentialIcon from '@mui/icons-material/HouseOutlined';
 
 // Modern drag & drop imports
 import {

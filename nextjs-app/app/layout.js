@@ -1,7 +1,7 @@
 import './globals.css';
 import localFont from 'next/font/local';
 const manrope = localFont({ src: '../public/fonts/manrope/Manrope-Variable.ttf', display: 'swap', variable: '--font-manrope' });
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import '@/components/Interactions.css';
 import SiteChrome from '@/components/SiteChrome';
 import { Analytics } from '@vercel/analytics/react';
 

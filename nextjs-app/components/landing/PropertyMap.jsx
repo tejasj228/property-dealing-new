@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from '../BrandIcon';
 
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -31,7 +32,7 @@ export default function PropertyMap({ properties }) {
   function endDrag() { drag.current = null; }
   return <div className={styles.propertyMap}>
     <div className={styles.mapBar}>
-      <div className={styles.legend} aria-label="Property types"><span><i data-type="residential" />Residential</span><span><i data-type="commercial" />Commercial</span></div>
+      <div className={styles.legend} aria-label="Property types"><span><BrandIcon data-type="residential"  />Residential</span><span><BrandIcon data-type="commercial"  />Commercial</span></div>
       <span className={styles.count}>{properties.length} {properties.length === 1 ? 'property' : 'properties'} to explore</span>
     </div>
     <div ref={viewport} className={styles.mapViewport} data-cursor="grab" data-density={properties.length > 50 ? 'high' : 'normal'}
@@ -55,18 +56,18 @@ export default function PropertyMap({ properties }) {
         <span className={styles.previewNumber}>{properties.indexOf(selected) + 1}</span>
         <span className={styles.previewCopy}><small>{typeLabel(selected.propertyType)}{selected.location ? ` · ${selected.location}` : ''}</small><strong>{selected.title}</strong></span>
         <span className={styles.previewPrice}><b>{selected.price}</b><small>{selected.area}</small></span>
-        <i className="fa-solid fa-arrow-up-right" aria-hidden="true" />
+        <BrandIcon className="fa-solid fa-arrow-up-right" aria-hidden="true"  />
       </Link> : <p>New places will appear here as they become available.</p>}
     </div>
     <div className={styles.mapBottom}>
       <p>Drag to turn. Choose a marker to open a property.<small>Illustrative setting · models and positions do not represent the actual properties.</small></p>
       <div className={styles.controls} role="group" aria-label="Map controls">
-        <button type="button" onClick={() => rotate(-.15)} aria-label="Rotate map left"><i className="fa-solid fa-rotate-left" aria-hidden="true" /></button>
-        <button type="button" onClick={() => rotate(.15)} aria-label="Rotate map right"><i className="fa-solid fa-rotate-right" aria-hidden="true" /></button>
+        <button type="button" onClick={() => rotate(-.15)} aria-label="Rotate map left"><BrandIcon className="fa-solid fa-rotate-left" aria-hidden="true"  /></button>
+        <button type="button" onClick={() => rotate(.15)} aria-label="Rotate map right"><BrandIcon className="fa-solid fa-rotate-right" aria-hidden="true"  /></button>
         <button type="button" onClick={() => changeZoom(-.15)} aria-label="Zoom map out">−</button>
         <button type="button" onClick={() => changeZoom(.15)} aria-label="Zoom map in">+</button>
-        <button type="button" onClick={() => { yaw.set(.16); zoom.set(1); }} aria-label="Fit all properties"><i className="fa-solid fa-expand" aria-hidden="true" /></button>
-        {!reduced && <button type="button" onClick={() => setPaused(value => !value)} aria-pressed={paused} aria-label={paused ? 'Resume map animation' : 'Pause map animation'}><i className={`fa-solid fa-${paused ? 'play' : 'pause'}`} aria-hidden="true" /></button>}
+        <button type="button" onClick={() => { yaw.set(.16); zoom.set(1); }} aria-label="Fit all properties"><BrandIcon className="fa-solid fa-expand" aria-hidden="true"  /></button>
+        {!reduced && <button type="button" onClick={() => setPaused(value => !value)} aria-pressed={paused} aria-label={paused ? 'Resume map animation' : 'Pause map animation'}><BrandIcon className={`fa-solid fa-${paused ? 'play' : 'pause'}`} aria-hidden="true"  /></button>}
       </div>
     </div>
   </div>;

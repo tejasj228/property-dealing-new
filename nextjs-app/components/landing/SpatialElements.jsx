@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from '../BrandIcon';
 
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -52,7 +53,7 @@ export function SpatialIllustration({ progress, kind = 'land', caption }) {
     </div>
     <figcaption className={styles.illustrationCaption}><span>{caption || (isKeys ? 'Drag the keys · double-click to reset' : 'Drag to turn · double-click to reset')}</span>
       {!reduced && <button type="button" onClick={() => setPaused(p => !p)} aria-pressed={paused}>
-        <i className={`fa-solid fa-${paused ? 'play' : 'pause'}`} aria-hidden="true" />{paused ? 'Resume 3D motion' : 'Pause 3D motion'}
+        <BrandIcon className={`fa-solid fa-${paused ? 'play' : 'pause'}`} aria-hidden="true"  />{paused ? 'Resume 3D motion' : 'Pause 3D motion'}
       </button>}
     </figcaption>
   </figure>;

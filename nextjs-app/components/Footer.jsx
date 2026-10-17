@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -37,27 +38,27 @@ const Footer = () => {
             <h3>Contact Info</h3>
             <div className="footer-contact-list">
               <div className="footer-contact-item clickable" onClick={() => handleEmailClick('pawan127jitendra@gmail.com')} style={{ cursor: 'pointer' }}>
-                <i className="fas fa-envelope"></i>
+                <BrandIcon className="fas fa-envelope" />
                 <span>pawan127jitendra@gmail.com</span>
               </div>
               <div className="footer-contact-item clickable" onClick={() => handlePhoneClick('+91-9811186086')} style={{ cursor: 'pointer' }}>
-                <i className="fas fa-phone"></i>
+                <BrandIcon className="fas fa-phone" />
                 <span>+91-9811186086</span>
               </div>
               <div className="footer-contact-item clickable" onClick={() => handlePhoneClick('+91-9811186083')} style={{ cursor: 'pointer' }}>
-                <i className="fas fa-phone"></i>
+                <BrandIcon className="fas fa-phone" />
                 <span>+91-9811186083</span>
               </div>
               <div className="footer-contact-item clickable" onClick={() => handlePhoneClick('0120-3244364')} style={{ cursor: 'pointer' }}>
-                <i className="fas fa-phone"></i>
+                <BrandIcon className="fas fa-phone" />
                 <span>0120-3244364</span>
               </div>
               <div className="footer-contact-item clickable" onClick={() => handleLocationClick('https://maps.app.goo.gl/F4oyJaHCwG5fEHzn8?g_st=iw')} style={{ cursor: 'pointer' }}>
-                <i className="fas fa-map-marker-alt"></i>
+                <BrandIcon className="fas fa-map-marker-alt" />
                 <span>Shop No.1, SKYTECH MATROTT, Aditya Celebrity Homes, Sector 76, Noida, U.P. 201316</span>
               </div>
               <div className="footer-contact-item clickable" onClick={() => handleLocationClick('https://maps.google.com/?q=28.306482,77.558189')} style={{ cursor: 'pointer' }}>
-                <i className="fas fa-map-marker-alt"></i>
+                <BrandIcon className="fas fa-map-marker-alt" />
                 <span>GF 90 & 96 Gaur Runway Suites, Gaur Yamuna City Sec-19, Yamuna Expressway, Greater Noida - 203201</span>
               </div>
             </div>
@@ -77,9 +78,9 @@ const Footer = () => {
           <div className="footer-social">
             <span>Follow us:</span>
             <div className="social-icons">
-              <a href="#" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+              <a href="#" aria-label="Facebook"><BrandIcon className="fab fa-facebook-f" /></a>
               <a href="https://www.instagram.com/pawan.buildhome?igsh=MXNib2M3NmdlcDdlZQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <i className="fab fa-instagram"></i>
+                <BrandIcon className="fab fa-instagram" />
               </a>
             </div>
           </div>

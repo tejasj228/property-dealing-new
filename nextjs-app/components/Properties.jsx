@@ -1,4 +1,6 @@
 'use client';
+import CustomSelect from './CustomSelect';
+import BrandIcon from './BrandIcon';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -11,12 +13,12 @@ function PropertyPhoto({ property, href }) {
   const images = property.images || [], src = images[index];
   return <div className="catalogue-image">
     <Link href={href} aria-label={`View ${property.title}`}>
-      {src && !failed[src] ? <img src={contentImageUrl(src, 900)} decoding="async" alt={property.title} loading="lazy" onError={() => setFailed(old => ({ ...old, [src]: true }))} /> : <span className="image-empty"><i className="fas fa-draw-polygon" aria-hidden="true" />Image not available</span>}
+      {src && !failed[src] ? <img src={contentImageUrl(src, 900)} decoding="async" alt={property.title} loading="lazy" onError={() => setFailed(old => ({ ...old, [src]: true }))} /> : <span className="image-empty"><BrandIcon className="fas fa-draw-polygon" aria-hidden="true"  />Image not available</span>}
     </Link>
     {images.length > 1 && <div className="image-controls">
-      <button type="button" aria-label={`Previous photo of ${property.title}`} onClick={() => setIndex((index + images.length - 1) % images.length)}><i className="fas fa-chevron-left" aria-hidden="true" /></button>
+      <button type="button" aria-label={`Previous photo of ${property.title}`} onClick={() => setIndex((index + images.length - 1) % images.length)}><BrandIcon className="fas fa-chevron-left" aria-hidden="true"  /></button>
       <span>{index + 1} / {images.length}</span>
-      <button type="button" aria-label={`Next photo of ${property.title}`} onClick={() => setIndex((index + 1) % images.length)}><i className="fas fa-chevron-right" aria-hidden="true" /></button>
+      <button type="button" aria-label={`Next photo of ${property.title}`} onClick={() => setIndex((index + 1) % images.length)}><BrandIcon className="fas fa-chevron-right" aria-hidden="true"  /></button>
     </div>}
   </div>;
 }
@@ -58,17 +60,17 @@ export default function Properties() {
     </header>
     <div className="catalogue-tools">
       <div className="catalogue-types" role="group" aria-label="Property type">{[['all', 'All properties'], ['residential', 'Residential'], ['commercial', 'Commercial']].map(([value, label]) => <button key={value} type="button" aria-pressed={type === value} onClick={() => filter(area, value)}>{label}</button>)}</div>
-      <div className="catalogue-area"><label htmlFor="catalogue-area">Location</label><select id="catalogue-area" value={area} onChange={e => filter(e.target.value, type)}><option value="all">All locations</option>{area !== 'all' && !areas[area] && <option value={area}>{areaName}</option>}{Object.entries(areas).map(([key, value]) => <option key={key} value={key}>{value.displayName || value.name || key}</option>)}</select></div>
+      <div className="catalogue-area"><label htmlFor="catalogue-area">Location</label><CustomSelect id="catalogue-area" value={area} onChange={e => filter(e.target.value, type)}><option value="all">All locations</option>{area !== 'all' && !areas[area] && <option value={area}>{areaName}</option>}{Object.entries(areas).map(([key, value]) => <option key={key} value={key}>{value.displayName || value.name || key}</option>)}</CustomSelect></div>
     </div>
     <p className="catalogue-count" role="status">{loading ? 'Finding properties…' : error ? 'Collection unavailable' : `${properties.length} ${properties.length === 1 ? 'property' : 'properties'}${area === 'all' ? '' : ` in ${areaName}`}`}</p>
     {loading ? <div className="catalogue-state" aria-busy="true"><div className="loading-spinner" /><p>Loading the latest listings…</p></div> : error ? <div className="catalogue-state" role="alert"><h2>We couldn’t load the collection.</h2><p>Please try again, or contact our team for available properties.</p><div><button className="btn btn-primary" onClick={() => setAttempt(n => n + 1)}>Try again</button><Link className="btn btn-outline" href="/contact">Contact us</Link></div></div> : !properties.length ? <div className="catalogue-state"><h2>No properties here just yet.</h2><p>Try another location or explore the full collection.</p><button className="btn btn-primary" onClick={() => filter('all', 'all')}>Show all properties</button></div> : <div className="catalogue-grid">{properties.map(property => {
       const href = `/property/${encodeURIComponent(property._id || property.id)}`;
       return <article className="catalogue-card" key={property._id || property.id}>
         <PropertyPhoto property={property} href={href} />
-        <div className="catalogue-meta"><span><i data-type={property.propertyType} aria-hidden="true" />{property.propertyType === 'commercial' ? 'Commercial' : property.propertyType === 'residential' ? 'Residential' : 'Property'}</span><span>{property.area}</span></div>
-        <h2><Link href={href}>{property.title}<i className="fas fa-arrow-up-right-from-square" aria-hidden="true" /></Link></h2>
+        <div className="catalogue-meta"><span><BrandIcon data-type={property.propertyType} aria-hidden="true"  />{property.propertyType === 'commercial' ? 'Commercial' : property.propertyType === 'residential' ? 'Residential' : 'Property'}</span><span>{property.area}</span></div>
+        <h2><Link href={href}>{property.title}<BrandIcon className="fas fa-arrow-up-right-from-square" aria-hidden="true"  /></Link></h2>
         <p className="catalogue-price">{property.price}</p>
-        {property.location && <p className="catalogue-location"><i className="fas fa-map-marker-alt" aria-hidden="true" />{property.location}</p>}
+        {property.location && <p className="catalogue-location"><BrandIcon className="fas fa-map-marker-alt" aria-hidden="true"  />{property.location}</p>}
         {(property.beds > 0 || property.baths > 0) && <div className="catalogue-features">{property.beds > 0 && <span>{property.beds} bedrooms</span>}{property.baths > 0 && <span>{property.baths} bathrooms</span>}</div>}
       </article>;
     })}</div>}

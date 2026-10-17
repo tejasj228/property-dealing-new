@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -6,7 +7,7 @@ import { m, useReducedMotion } from 'motion/react';
 import styles from './landing/Landing.module.css';
 
 function Icon({ name, className = '' }) {
-  return <i className={`fa-solid fa-${name} ${className}`} aria-hidden="true" />;
+  return <BrandIcon className={`fa-solid fa-${name} ${className}`} aria-hidden="true"  />;
 }
 
 function Reveal({ children, className = '', delay = 0 }) {
@@ -71,7 +72,7 @@ export function Footer() {
       <div className={styles.footerOffice}><h3>Visit us in Greater Noida</h3><a href="https://maps.google.com/?q=28.306482,77.558189" target="_blank" rel="noopener noreferrer">GF 90 & 96 Gaur Runway Suites,<br />Gaur Yamuna City Sec-19, Yamuna Expressway,<br />Greater Noida - 203201 <Icon name="arrow-up-right-from-square" /></a></div>
       <div className={styles.footerContact}><h3>Get in touch</h3><a href="tel:+919811186086">+91-9811186086</a><a href="tel:+919811186083">+91-9811186083</a><a href="tel:01203244364">0120-3244364</a><a href="mailto:pawan127jitendra@gmail.com">pawan127jitendra@gmail.com</a></div>
     </div>
-    <div className={styles.footerBottom}><p>© 2025 Pawan Buildhome. All rights reserved.</p><div><a href="/#areas">Our Areas</a><Link href="/properties">Properties</Link><Link href="/contact">Contact</Link><a href="https://www.instagram.com/pawan.buildhome?igsh=MXNib2M3NmdlcDdlZQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Pawan Buildhome on Instagram"><i className="fa-brands fa-instagram" aria-hidden="true" /></a></div></div>
+    <div className={styles.footerBottom}><p>© 2025 Pawan Buildhome. All rights reserved.</p><div><a href="/#areas">Our Areas</a><Link href="/properties">Properties</Link><Link href="/contact">Contact</Link><a href="https://www.instagram.com/pawan.buildhome?igsh=MXNib2M3NmdlcDdlZQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Pawan Buildhome on Instagram"><BrandIcon className="fa-brands fa-instagram" aria-hidden="true"  /></a></div></div>
   </footer>;
 }
 

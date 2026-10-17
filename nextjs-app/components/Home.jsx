@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { features } from '@/data/data'; // Keep features as static for now
@@ -256,7 +257,7 @@ const Home = () => {
             {features.map((feature, index) => (
               <div key={feature.id} className={`feature-card scroll-reveal stagger-${index + 1}`}>
                 <div className="feature-icon">
-                  <i className={feature.icon}></i>
+                  <BrandIcon className={feature.icon} />
                 </div>
                 <h3>{feature.title}</h3>
                 <p>{feature.description}</p>

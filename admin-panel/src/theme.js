@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 
 const colors = { background:'#12231e', paper:'#1c3027', raised:'#23392e', ink:'#e3eee5', muted:'#abc1b2', accent:'#b2d4b8', line:'#375044' };
 export default createTheme({
@@ -19,6 +20,10 @@ export default createTheme({
   },
   shape:{ borderRadius:10 }, transitions:{ duration:{ shortest:120, shorter:150, short:180, standard:200 } },
   components:{
+    MuiSelect:{ defaultProps:{ IconComponent:KeyboardArrowDownRounded, MenuProps:{ disableScrollLock:true, marginThreshold:12, transitionDuration:140, slotProps:{paper:{sx:{maxHeight:320,mt:.75,p:.5,border:'1px solid #476252',borderRadius:2,boxShadow:'0 14px 35px #06100c66'}}} } }, styleOverrides:{ select:{'&:focus':{backgroundColor:'#274333'}}, icon:{transition:'transform .18s ease'}, iconOpen:{transform:'rotate(180deg)'} } },
+    MuiMenuItem:{ styleOverrides:{ root:{ minHeight:42,borderRadius:6,margin:'2px 0',fontSize:13,transition:'background-color .16s ease,color .16s ease','&:hover,&.Mui-focusVisible':{backgroundColor:'#335440'},'&.Mui-selected':{backgroundColor:'#2a4936',color:'#d2ead8',fontWeight:650},'&.Mui-selected:hover':{backgroundColor:'#375c43'} } } },
+    MuiMenu:{ styleOverrides:{ paper:{border:'1px solid #476252',borderRadius:12,backgroundColor:'#20382b'},list:{padding:6} } },
+
     MuiButtonBase:{ defaultProps:{ disableRipple:true } },
     MuiButton:{ defaultProps:{ disableElevation:true }, styleOverrides:{ root:{ borderRadius:8, minHeight:40, paddingInline:17, whiteSpace:'nowrap' }, sizeLarge:{ minHeight:44, fontSize:13 }, text:{ '&:hover':{ color:'#e3f2e5', backgroundColor:'#2b4938' } }, outlined:{ '&:hover':{ color:'#e3f2e5', borderColor:'#e3f2e5' } } } },
     MuiPaper:{ defaultProps:{ elevation:0 }, styleOverrides:{ root:{ backgroundImage:'none' }, outlined:{ borderColor:colors.line } } },

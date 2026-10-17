@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 // frontend/src/components/Modal.jsx - Enhanced responsive modal
 import React, { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -161,7 +162,7 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
           aria-label="Close modal"
           title="Close (Esc)"
         >
-          <i className="fas fa-times"></i>
+          <BrandIcon className="fas fa-times" />
         </button>
         
         <div className="modal-left">
@@ -186,13 +187,13 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
           <h2 id="modal-title">{subArea.title}</h2>
           <div className="modal-description">
             <p className="modal-area-name">
-              <i className="fas fa-map-marker-alt" style={{ marginRight: '8px' }}></i>
+              <BrandIcon className="fas fa-map-marker-alt" style={{ marginRight: '8px' }} />
               {subArea.parentArea.name}
             </p>
             <p className="modal-subarea-desc">{subArea.description}</p>
             <div className="modal-area-info">
               <h4>
-                <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+                <BrandIcon className="fas fa-info-circle" style={{ marginRight: '8px' }} />
                 About {subArea.parentArea.name}
               </h4>
               <p>{subArea.parentArea.description}</p>
@@ -204,7 +205,7 @@ const Modal = ({ isOpen, onClose, subArea, onViewProperties, cardPosition }) => 
               onClick={openMapInNewTab}
               title="Open map in new tab"
             >
-              <i className="fas fa-external-link-alt" style={{ marginRight: '5px' }}></i>
+              <BrandIcon className="fas fa-external-link-alt" style={{ marginRight: '5px' }} />
               Open Map in New Tab
             </button>
             <button 

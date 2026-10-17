@@ -1,4 +1,5 @@
 'use client';
+import BrandIcon from './BrandIcon';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -87,7 +88,7 @@ const Header = () => {
     if (areasLoading) {
       return (
         <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
-          <i className="fas fa-spinner fa-spin" style={{ marginRight: '5px' }}></i>
+          <BrandIcon className="fas fa-spinner fa-spin" style={{ marginRight: '5px' }} />
           Loading areas...
         </div>
       );
@@ -96,7 +97,7 @@ const Header = () => {
     if (areasError) {
       return (
         <div style={{ padding: '10px', textAlign: 'center', color: '#e74c3c' }}>
-          <i className="fas fa-exclamation-triangle" style={{ marginRight: '5px' }}></i>
+          <BrandIcon className="fas fa-exclamation-triangle" style={{ marginRight: '5px' }} />
           Using default areas
         </div>
       );
@@ -118,11 +119,11 @@ const Header = () => {
       <>
         <div className="mobile-header">
           <button className="mobile-hamburger" onClick={toggleMenu}>
-            <i className="fas fa-bars"></i>
+            <BrandIcon className="fas fa-bars" />
           </button>
           <Link href="/" className="mobile-logo">Pawan Buildhome</Link>
           <button className="mobile-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-            <i className={isDarkMode ? 'fas fa-moon' : 'fas fa-sun'}></i>
+            <BrandIcon className={isDarkMode ? 'fas fa-moon' : 'fas fa-sun'} />
           </button>
         </div>
 
@@ -130,19 +131,19 @@ const Header = () => {
           <div className="mobile-sidebar-header">
             <h3>Pawan Buildhome</h3>
             <button className="sidebar-close" onClick={toggleMenu}>
-              <i className="fas fa-times"></i>
+              <BrandIcon className="fas fa-times" />
             </button>
           </div>
 
           <div className="mobile-sidebar-content">
             <nav className="mobile-nav">
               <Link href="/" onClick={handleNavClick} className={currentPage === 'home' ? 'active' : ''}>
-                <i className="fas fa-home"></i>Home
+                <BrandIcon className="fas fa-home" />Home
               </Link>
 
               <div className="mobile-nav-section">
                 <button onClick={handlePropertiesClick} className={currentPage === 'properties' ? 'active' : ''}>
-                  <i className="fas fa-building"></i>Properties
+                  <BrandIcon className="fas fa-building" />Properties
                 </button>
                 <div className="mobile-subnav">
                   {areasArray.map((area) => (
@@ -154,7 +155,7 @@ const Header = () => {
               </div>
 
               <Link href="/contact" onClick={handleNavClick} className={currentPage === 'contact' ? 'active' : ''}>
-                <i className="fas fa-envelope"></i>Contact
+                <BrandIcon className="fas fa-envelope" />Contact
               </Link>
             </nav>
           </div>
@@ -187,7 +188,7 @@ const Header = () => {
 
         <div className="theme-container">
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-            <i className={isDarkMode ? 'fas fa-moon' : 'fas fa-sun'}></i>
+            <BrandIcon className={isDarkMode ? 'fas fa-moon' : 'fas fa-sun'} />
             <span>{isDarkMode ? 'Dark' : 'Light'}</span>
           </button>
         </div>
