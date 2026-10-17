@@ -64,8 +64,8 @@ import ImageUpload from '../components/ImageUpload/ImageUpload';
 
 // 🆕 NEW: Property Type Options
 const typeColors = {
-  residential: { ink:'#b4d8bf', background:'#233c2d', border:'#45664f' },
-  commercial: { ink:'#dfc49b', background:'#363023', border:'#69583d' },
+  residential: { ink:'#ffffff', background:'#44886a', border:'#44886a', option:'#8dceac' },
+  commercial: { ink:'#24180e', background:'#c58a51', border:'#c58a51', option:'#edb17b' },
 };
 const propertyTypeOptions = [
   { value: 'residential', label: 'Residential', icon: <ResidentialIcon /> },
@@ -724,7 +724,7 @@ function Properties() {
 
       <div className="admin-property-filters">
         <TextField label="Search properties" placeholder="Title, location or price" value={search} onChange={event => setSearch(event.target.value)} />
-        <TextField select label="Property type" value={type} onChange={event => setType(event.target.value)}><MenuItem value="all">All types</MenuItem><MenuItem value="residential" sx={{color:typeColors.residential.ink}}><ResidentialIcon sx={{mr:1}}/>Residential</MenuItem><MenuItem value="commercial" sx={{color:typeColors.commercial.ink}}><CommercialIcon sx={{mr:1}}/>Commercial</MenuItem></TextField>
+        <TextField select label="Property type" value={type} onChange={event => setType(event.target.value)}><MenuItem value="all">All types</MenuItem><MenuItem value="residential" sx={{color:typeColors.residential.option}}><ResidentialIcon sx={{mr:1}}/>Residential</MenuItem><MenuItem value="commercial" sx={{color:typeColors.commercial.option}}><CommercialIcon sx={{mr:1}}/>Commercial</MenuItem></TextField>
         <TextField select label="Location" value={areaFilter} onChange={event => setAreaFilter(event.target.value)}><MenuItem value="all">All locations</MenuItem>{Object.entries(areas).map(([key, value]) => <MenuItem key={key} value={key}>{value.name}</MenuItem>)}</TextField>
         <Button variant="text" onClick={() => { setSearch(''); setType('all'); setAreaFilter('all'); }} disabled={!filtered}>Clear filters</Button>
       </div><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} role="status">{visibleProperties.length} of {properties.length} properties</Typography>
@@ -815,7 +815,7 @@ function Properties() {
                   label="Property Type"
                 >
                   {propertyTypeOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value} sx={{color:typeColors[option.value].ink}}>
+                    <MenuItem key={option.value} value={option.value} sx={{color:typeColors[option.value].option}}>
                       <Box display="flex" alignItems="center" gap={1}>
                         {option.icon}
                         {option.label}
