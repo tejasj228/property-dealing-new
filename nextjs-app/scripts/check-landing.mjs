@@ -2,7 +2,7 @@ import test from 'node:test';
 import { createPropertyMapModel, framePropertyMapCamera, layoutProperties } from '../components/landing/property-map-model.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { Matrix4, OrthographicCamera, Vector3 } from 'three';
+import { Box3, Matrix4, OrthographicCamera, Vector3 } from 'three';
 import { createArchitecture, createSceneCamera, frameSceneCamera, scenePose } from '../components/landing/architecture.mjs';
 import { createDistrict, createKeys, createSpatialCamera, frameSpatialCamera } from '../components/landing/spatial-models.mjs';
 
@@ -383,6 +383,42 @@ test('grabbed architectural geometry remains inside desktop and mobile camera fr
         if(kind==='house') { const pose=scenePose(progress); illustration.model.rotation.set(pitch,pose.rotation+yaw,0); illustration.upperFloor.position.y=pose.lift; illustration.roof.position.y=pose.roofLift; illustration.model.scale.setScalar(pose.scale); }
         else { illustration.update(progress,false,3); illustration.model.rotation.set(pitch,yaw,0); }
         illustration.model.updateMatrixWorld(true); illustration.model.traverseVisible(object=>assertFits(object,camera,kind+' grabbed model must fit'));
+      }
+    }
+    illustration.dispose();
+  }
+});
+
+
+test('pedestrian routes stay clear of furniture throughout a full walking cycle', () => {
+  for (const kind of ['land', 'society', 'commercial']) for (const compact of [false, true]) {
+    const illustration = createDistrict({ kind, compact });
+    const district = illustration.model.children[0], people = [], fixtures = [];
+    district.traverse(object => {
+      if (object.name === 'person') people.push(object);
+      if (object.userData.pedestrianObstacle) fixtures.push(object);
+    });
+    assert.ok(people.length > 0 && fixtures.length > 0);
+    const bounds = new Box3(), matrix = new Matrix4();
+    for (const reduced of [false, true]) for (let step = 0; step <= 160; step++) {
+      illustration.update((step % 41) / 40, reduced, step * .25);
+      // Collision is invariant under the district's presentation rotation.
+      district.rotation.y = 0; illustration.model.updateMatrixWorld(true);
+      const obstacles=[];
+      for(const fixture of fixtures) fixture.traverse(mesh=>{
+        if(!mesh.isMesh)return;
+        if(!mesh.geometry.boundingBox)mesh.geometry.computeBoundingBox();
+        for(let i=0;i<(mesh.isInstancedMesh?mesh.count:1);i++){
+          if(mesh.isInstancedMesh){mesh.getMatrixAt(i,matrix);matrix.premultiply(mesh.matrixWorld);}else matrix.copy(mesh.matrixWorld);
+          obstacles.push({name:fixture.name,box:mesh.geometry.boundingBox.clone().applyMatrix4(matrix)});
+        }
+      });
+      for(const person of people){
+        bounds.setFromObject(person);
+        for(const obstacle of obstacles)assert.ok(!bounds.intersectsBox(obstacle.box),`${kind} pedestrian intersects ${obstacle.name} at ${step*.25}s`);
+        const {start,end}=person.userData.route;
+        assert.ok(person.position.x>=Math.min(start[0],end[0])-.001&&person.position.x<=Math.max(start[0],end[0])+.001);
+        assert.ok(person.position.z>=Math.min(start[1],end[1])-.001&&person.position.z<=Math.max(start[1],end[1])+.001);
       }
     }
     illustration.dispose();

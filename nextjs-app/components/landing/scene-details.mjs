@@ -80,10 +80,11 @@ export function createDetailKit() {
     return g;
   }
   function bench(parent, x, z, angle = 0) {
-    const g = new Group(); g.position.set(x, 0.1, z); g.rotation.y = angle; parent.add(g);
+    const g = new Group(); g.name = 'bench'; g.userData.pedestrianObstacle = true; g.position.set(x, 0.1, z); g.rotation.y = angle; parent.add(g);
     box(g, 'trunk', [0.72, 0.07, 0.24], [0, 0.22, 0]);
     box(g, 'trunk', [0.72, 0.25, 0.05], [0, 0.39, -0.12]);
     for (const x of [-0.25, 0.25]) box(g, 'dark', [0.04, 0.2, 0.22], [x, 0.1, 0]);
+    return g;
   }
   function base() {
     const g = new Group();

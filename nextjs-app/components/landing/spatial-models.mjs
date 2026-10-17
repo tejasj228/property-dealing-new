@@ -4,6 +4,7 @@ import {
 import { createDetailKit } from './scene-details.mjs';
 import { batchSceneMeshes } from './scene-batching.mjs';
 import { createSceneLife } from './scene-life.mjs';
+import { addDistrictDetails } from './district-details.mjs';
 
 const clamp = value => Math.min(1, Math.max(0, value));
 const smooth = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
@@ -33,6 +34,14 @@ export function createDistrict({ compact = false, kind = 'land' } = {}) {
   const t = createDetailKit(), model = new Group();
   const district = t.base(); district.name = kind; model.add(district);
   const cars = [], walkers = [];
+  function addWalkers(routes) {
+    routes.slice(0, compact ? 3 : routes.length).forEach(([start, end], i) => {
+      const object = t.person(district, start[0], start[1], i % 2 ? 'ivory' : 'cloth');
+      object.position.y = kind === 'commercial' ? .13 : kind === 'society' ? .115 : .07;
+      object.userData.route = { start, end };
+      walkers.push({ object, start, end });
+    });
+  }
   let buildings, swing;
   if (kind === 'land') {
     const land = district;
@@ -45,7 +54,7 @@ export function createDistrict({ compact = false, kind = 'land' } = {}) {
       for (const dx of [-1.7, 1.7]) t.box(land, 'ivory', [0.055, 0.2, 0.055], [x + dx, 0.15, z + 0.72]);
   }
   [[-4.4, -3.1], [4.3, -2.9], [-4.4, 1.7]].forEach(([x, z]) => t.tree(land, x, z));
-  const landCar = t.car(land, 2.6, 3.05, Math.PI / 2); walkers.push({ object: t.person(land, 0.65, 1.5), x: 0.65, z: 1.5 });
+  const landCar = t.car(land, 2.6, 3.05, Math.PI / 2); addWalkers([[[0, 0.4], [0, 1.55]]]);
   // Fenced perimeter, a survey tripod and an entrance marker.
   for (let x = -4.5; x <= 4.5; x += 0.75) t.box(land, 'ivory', [0.05, 0.4, 0.05], [x, 0.25, -3.5]);
   t.box(land, 'trunk', [9, 0.035, 0.04], [0, 0.43, -3.5]);
@@ -85,9 +94,9 @@ export function createDistrict({ compact = false, kind = 'land' } = {}) {
   for (const x of [-0.15, 0.15]) t.box(swing, 'dark', [0.015, 0.57, 0.015], [x, -0.3, 0], false);
   for (const x of [-3.8, 3.8]) { t.box(society, 'stone', [0.22, 0.6, 0.24], [x, 0.35, 2.25]); t.round(society, 'ivory', [0.14, 0.16, 0.14], [x, 0.72, 2.25]); }
   const societyCar = t.car(society, -2.3, 3.05, Math.PI / 2); cars.push({ object: t.car(society, 2, 3.05, Math.PI / 2, 'green'), x: 2 });
-  const societyWalkers = [[0.4, 1.5], [-1.1, 0.12], [2.65, 1.7], [-0.1, -0.45]].slice(0, compact ? 3 : 4).map(([x, z], i) => ({ object: t.person(society, x, z, i % 2 ? 'ivory' : 'cloth'), x, z }));
+  addWalkers([[[-2.8, 0.1], [-1.6, 0.1]], [[-0.6, 0.1], [0.6, 0.1]], [[1.3, 0.1], [2.6, 0.1]], [[0, 0.7], [0, 1.8]]]);
   cars.push({ object: societyCar, x: -2.3, distance: 1.8 });
-  walkers.push(...societyWalkers);
+
   }
 
   // Commercial frontage: offices, shop windows, plaza seating and pedestrians.
@@ -111,18 +120,21 @@ export function createDistrict({ compact = false, kind = 'land' } = {}) {
   t.box(commercial, 'stone', [8.7, 0.06, 2.15], [0, 0.07, 0.72], false);
   for (const x of [-3.6, 0, 3.5]) { t.box(commercial, 'ivory', [0.8, 0.28, 0.72], [x, 0.23, 1.5]); t.tree(commercial, x, 1.5, 0.76); }
   for (const x of [0.7, 2.4]) {
-    t.round(commercial, 'trunk', [0.28, 0.05, 0.28], [x, 0.42, 0.35]);
-    t.round(commercial, 'metal', [0.035, 0.35, 0.035], [x, 0.22, 0.35]);
-    for (const z of [0, 0.7]) t.box(commercial, 'green', [0.2, 0.25, 0.2], [x, 0.22, z]);
+    const seating = new Group(); seating.name = 'cafe-seating'; seating.userData.pedestrianObstacle = true; commercial.add(seating);
+    t.round(seating, 'trunk', [0.28, 0.05, 0.28], [x, 0.42, 0.35]);
+    t.round(seating, 'metal', [0.035, 0.35, 0.035], [x, 0.22, 0.35]);
+    for (const z of [0, 0.7]) t.box(seating, 'green', [0.2, 0.25, 0.2], [x, 0.22, z]);
   }
   for (const x of [-3.65, -2.9, -2.15]) t.box(offices, 'ivory', [0.035, 3.48, 0.065], [x, 2.08, -0.65], false);
   t.bench(commercial, -1.5, 0.9); t.bench(commercial, 1.7, 1.5, Math.PI / 2);
-  const commercialWalkers = [[-1.1, 0], [-0.1, 1.05], [1.15, 0.2], [2.8, 0.3], [-3.7, 0.4]].slice(0, compact ? 3 : 5).map(([x, z], i) => ({ object: t.person(commercial, x, z, i % 2 ? 'ivory' : 'cloth'), x, z }));
+  // Separate clear promenade segments keep pedestrians away from seating and planters.
+  addWalkers([[[-3.5, 2.1], [-2.4, 2.1]], [[-1.9, 2.1], [-0.8, 2.1]], [[0.2, 2.1], [1.1, 2.1]], [[1.6, 2.1], [2.4, 2.1]], [[2.8, 2.1], [3.5, 2.1]]]);
   const commercialCar = t.car(commercial, 2.1, 3.05, Math.PI / 2, 'green'); cars.push({ object: t.car(commercial, -2, 3.05, Math.PI / 2), x: -2 });
   cars.push({ object: commercialCar, x: 2.1, distance: -1.6 });
-  walkers.push(...commercialWalkers);
+
   }
 
+  addDistrictDetails(t, district, kind, buildings);
   const life = createSceneLife(district, { compact, kind });
   function update(progress, reduced, seconds = 0) {
     const time = reduced ? 0 : seconds;
@@ -130,7 +142,6 @@ export function createDistrict({ compact = false, kind = 'land' } = {}) {
     district.rotation.y = -0.17 + p * 0.37;
     if (buildings) buildings.scale.y = reduced ? 1 : 0.9 + smooth(p / 0.4) * 0.1;
     model.position.y = reduced ? 0 : Math.sin(p * Math.PI) * 0.15;
-    const movement = reduced ? 0 : p - 0.5;
     for (let i = 0; i < cars.length; i++) {
       const car = cars[i], phase = time * 0.22 + i * Math.PI + 0.6;
       car.object.position.x = reduced ? car.x : Math.sin(phase) * 3.7;
@@ -142,8 +153,12 @@ export function createDistrict({ compact = false, kind = 'land' } = {}) {
     t.animate(time, reduced); life.update(time, reduced);
     for (let i = 0; i < walkers.length; i++) {
       const walker = walkers[i];
-      walker.object.rotation.y = reduced ? 0 : Math.atan2(Math.cos(time * 0.5 + i), 0.2);
-      walker.object.position.x = walker.x + (reduced ? 0 : Math.sin(time * 0.5 + i) * 0.4 + movement * 0.15);
+      const phase = time * 0.38 + i * 1.3;
+      const along = reduced ? 0.5 : (1 + Math.sin(phase)) / 2;
+      const dx = walker.end[0] - walker.start[0], dz = walker.end[1] - walker.start[1];
+      walker.object.position.x = walker.start[0] + dx * along;
+      walker.object.position.z = walker.start[1] + dz * along;
+      walker.object.rotation.y = Math.atan2(dx, dz) + (reduced ? 0 : (1 - Math.tanh(Math.cos(phase) * 8)) * Math.PI / 2);
     }
   }
   batchSceneMeshes(model);

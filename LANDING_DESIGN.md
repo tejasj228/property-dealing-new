@@ -117,3 +117,10 @@ Document scrolling uses stable scrollbar space, disables elastic rebound and anc
 A slim landing-only progress bar updates its transform once per animation frame, measures page length only on resize/content changes, and exposes percent explored/remaining accessibly. Its regression test checks progress, overscroll bounds, dynamic height, coalescing and cleanup.
 
 Validation: both production builds pass, 12 admin tests and 24 landing/progress checks pass. Source/build/DOM checks only, as requested. No claim of a reproduced or resolved real-device scroll symptom without user confirmation.
+
+
+## District identity and pedestrian clearance
+
+Replaced free sideways pedestrian sway with explicitly bounded walkway routes, with eased turns at the ends. Commercial pedestrians use the clear front promenade, society residents stay on the park paths, and the survey visitor stays on the central access strip. Cafe tables/chairs and benches have collision metadata; the regression check samples the actual person and fixture geometry over 40 seconds, both compact/full scenes and normal/reduced motion.
+
+Added shared, batched architectural details: society security cabin/gate, apartment entrances, rooftop tanks and a slide; commercial shop signs, cafe/retail symbols, office entrance, bicycle parking and paved promenade; plot survey flags/corner markings, parcel sales board, utility cabinet and access barrier. These remain illustrative settings, not claimed amenities of listed properties. Existing night lighting, disposal, camera framing, reduced-motion and batching checks cover the additions. No browser or screenshot validation was performed.
