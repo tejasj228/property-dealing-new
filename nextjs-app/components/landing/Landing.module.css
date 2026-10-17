@@ -369,3 +369,25 @@
   .citySelection { min-height:105px; }
 }
 @media(max-width:767px) { .cityStage { height:430px; } }
+
+.cityPopover { position:absolute; left:7%; bottom:6%; z-index:3; max-width:270px; padding:17px 40px 17px 18px; background:var(--surface-card); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 35px #0002; }
+.cityPopover strong { display:block; font-size:13px; margin-bottom:7px; }
+.cityPopover a { display:flex; gap:10px; align-items:center; font-size:11px; color:var(--accent); }
+.cityPopover>button { position:absolute; right:4px; top:4px; width:32px; height:32px; background:transparent; border:0; font-size:22px; }
+@media(min-width:768px) { .heroSticky:has(.cityFigure) { min-height:900px; max-height:1100px; }.cityStage { min-height:740px; max-height:900px; } }
+@media(min-width:1101px) { .heroGrid:has(.cityFigure) { grid-template-columns:.58fr 1.42fr; } }
+@media(min-width:768px) and (max-width:1100px) { .heroSticky:has(.cityFigure) { min-height:800px; }.cityStage { min-height:650px; } }
+@media(max-width:767px) { .cityStage { height:530px; }.cityPopover { bottom:3%; } }
+
+/* Keep the airport hero headline broad and readable beside the city. */
+@media(min-width:768px) {
+  .heroGrid:has(.cityFigure) { grid-template-columns:minmax(340px,.8fr) minmax(0,1.2fr); }
+  .heroGrid:has(.cityFigure) .heroCopy h1 { font-size:clamp(48px,4.6vw,68px); letter-spacing:-.065em; line-height:1.08; }
+}
+@media(min-width:768px) and (max-width:1100px) {
+  .heroGrid:has(.cityFigure) { grid-template-columns:minmax(290px,.85fr) minmax(0,1.15fr); }
+  .heroGrid:has(.cityFigure) .heroCopy h1 { font-size:48px; }
+}
+@media(max-width:767px) {
+  .heroGrid:has(.cityFigure) .heroCopy h1 { font-size:clamp(44px,10.5vw,66px); line-height:1.08; }
+}

@@ -163,6 +163,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     const onBlur = () => { delete host.dataset.input; };
     const onKeyDown = e => {
       host.dataset.input = 'keyboard';
+      if (kind === 'city' && ['1','2','3'].includes(e.key)) { e.preventDefault(); onSelectRef.current?.(['society','commercial','plots'][Number(e.key)-1]); return; }
       if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'].includes(e.key)) return;
       e.preventDefault();
       if (e.key === 'Home') resetKeys();
@@ -202,5 +203,5 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
   }, [progress, reduceMotion, kind]);
 
   return <div ref={hostRef} className={styles.webgl} data-draggable="true" tabIndex={0} role="group"
-    aria-label={kind === 'city' ? 'Interactive illustrative city. Drag or use arrow keys to turn. Click a neighbourhood to explore it, or use the district buttons below. Double-click or Home resets the view.' : kind === 'keys' ? 'Movable house keys. Drag to move and jiggle, or use arrow keys. Double-click or press Home to reset.' : 'Interactive architectural illustration. Drag to turn, or use arrow keys. Double-click or press Home to reset.'} />;
+    aria-label={kind === 'city' ? 'Interactive illustrative city. Drag or use arrow keys to turn. Click a neighbourhood to explore it, or press 1 for societies, 2 for commercial, and 3 for plots. Double-click or Home resets the view.' : kind === 'keys' ? 'Movable house keys. Drag to move and jiggle, or use arrow keys. Double-click or press Home to reset.' : 'Interactive architectural illustration. Drag to turn, or use arrow keys. Double-click or press Home to reset.'} />;
 }

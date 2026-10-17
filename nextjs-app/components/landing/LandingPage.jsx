@@ -52,21 +52,18 @@ function Hero() {
           <m.div className={styles.heroCopy} >
             <p className={styles.eyebrow}>Real estate, rooted in NCR</p>
             <h1>A place to <span>build more.</span></h1>
-            <p className={styles.heroDescription}>Discover residential plots and commercial spaces, with local guidance from your first shortlist to your next move.</p>
+            <p className={styles.heroDescription}>Explore residential plots and commercial spaces near the airport, with local guidance from your first shortlist to your next move.</p>
             <div className={styles.heroActions}>
               <a href="#areas" className={styles.primaryButton}>Explore areas <Icon name="arrow-down" /></a>
               <Link href="/properties" className={styles.textLink}>View properties <Icon name="arrow-up-right-from-square" /></Link>
             </div>
           </m.div>
           <figure className={`${styles.sceneFigure} ${styles.cityFigure}`}>
-            <div className={`${styles.sceneStage} ${styles.cityStage}`} role="group" aria-label="An illustrative city with residential societies, commercial buildings, parks and open plots.">
+            <div className={`${styles.sceneStage} ${styles.cityStage}`} role="group" aria-label="An illustrative airport-side city with homes, plots, a shopping mall, a large park and a street market.">
               <ArchitecturalFallback />
               <ArchitectureScene kind="city" progress={scrollYProgress} reduceMotion={Boolean(reduce)} paused={paused} selectedDistrict={district} onDistrictSelect={setDistrict} zoom={zoom} />
+              {selection && <div className={styles.cityPopover}><button type="button" onClick={()=>setDistrict(null)} aria-label="Close district details">×</button><strong>{selection.label}</strong><Link href={selection.href}>{selection.action}<Icon name="arrow-up-right-from-square" /></Link></div>}
               <div className={styles.cityZoom} role="group" aria-label="City map zoom"><button type="button" aria-label="Zoom out city" disabled={zoom<=1} onClick={()=>setZoom(value=>Math.max(1,value-.15))}>−</button><button type="button" aria-label="Zoom in city" disabled={zoom>=1.45} onClick={()=>setZoom(value=>Math.min(1.45,value+.15))}>+</button></div>
-            </div>
-            <div className={styles.cityExplorer}>
-              <div className={styles.cityDistricts} role="group" aria-label="Explore city districts">{CITY_DISTRICTS.map(item=><button key={item.id} type="button" aria-pressed={district===item.id} onClick={()=>setDistrict(current=>current===item.id?null:item.id)}><span style={{background:item.color}} />{item.short}</button>)}</div>
-              <div className={styles.citySelection} aria-live="polite">{selection ? <><div><strong>{selection.label}</strong><p>{selection.description}</p></div><Link href={selection.href}>{selection.action}<Icon name="arrow-up-right-from-square" /></Link></> : <p>Choose a district on the map, or use the buttons above.</p>}</div>
             </div>
             <m.figcaption className={styles.sceneCaption} >
               <span><span className={styles.captionLine} />Drag to turn · double-click to reset</span>

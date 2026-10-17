@@ -1,3 +1,5 @@
+import { addCityLandmarks } from './city-landmarks.mjs';
+import { roadCorridor, clearOfRoads } from './road-clearance.mjs';
 import { BoxGeometry, BufferGeometry, CatmullRomCurve3, ExtrudeGeometry, Float32BufferAttribute, Shape, Group, LineLoop, LineBasicMaterial, Mesh, MeshBasicMaterial, OrthographicCamera, Vector3 } from 'three';
 import { createDetailKit } from './scene-details.mjs';
 import { batchSceneMeshes } from './scene-batching.mjs';
@@ -10,16 +12,16 @@ export function createCityCamera() {
   camera.position.set(17,17,21);camera.lookAt(0,.7,0);camera.updateMatrixWorld();return camera;
 }
 export function frameCityCamera(camera,width,height) {
-  const aspect=width/Math.max(1,height), half=Math.max(15.6,10.9*aspect);
+  const aspect=width/Math.max(1,height), half=Math.max(22,17*aspect);
   camera.left=-half;camera.right=half;camera.top=half/aspect;camera.bottom=-half/aspect;camera.updateProjectionMatrix();
 }
 
 // A fictional district atlas. These buildings never represent available listings.
 export function createCity({compact=false}={}) {
-  const model=new Group();model.name='illustrative-city';
+  const world=new Group(),model=new Group();world.name='illustrative-city';world.add(model);
   const t=createDetailKit({compact:true}), hitAreas=[], outlines=[], cars=[];
   const hitGeometry=new BoxGeometry(1,1,1), hitMaterial=new MeshBasicMaterial({visible:false});
-  const extraGeometries=[];
+  const extraGeometries=[],roadCorridors=[];
   const parcelLineMaterial=new LineBasicMaterial({color:'#f1e7ce'});
   const outlineMaterial=new LineBasicMaterial({color:'#f5d47c',depthTest:false});
   const b=(material,size,pos,parent=model)=>t.box(parent,material,size,pos);
@@ -30,7 +32,7 @@ export function createCity({compact=false}={}) {
     const geometry=new ExtrudeGeometry(shape,{depth:height,bevelEnabled:false});geometry.rotateX(-Math.PI/2);extraGeometries.push(geometry);
     const mesh=new Mesh(geometry,t.materials[material]);mesh.position.y=y;mesh.name=name;mesh.receiveShadow=true;mesh.castShadow=height>.1;parent.add(mesh);return mesh;
   }
-  const boundary=[[-14,-3],[-12.8,-7.1],[-9.2,-9],[-4.6,-8.7],[-1.5,-9.4],[3.6,-8.6],[8.4,-9.3],[12.7,-7.6],[14,-3.8],[13.5,.4],[14.4,4.1],[12.5,7.4],[8.3,9.4],[3.5,9.9],[-.6,9],[-5.1,10],[-9.8,8.3],[-13,5.3],[-13.6,.8]];
+  const boundary=[[-14,-3],[-14,-11],[-12,-18],[8,-18.5],[13.8,-16],[14.2,-10],[12.7,-7.6],[14,-3.8],[13.5,.4],[14.4,4.1],[12.5,7.4],[8.3,9.4],[3.5,9.9],[-.6,9],[-5.1,10],[-9.8,8.3],[-13,5.3],[-13.6,.8]];
   parcel(model,boundary,'stone',.42,-.4,'irregular-city-foundation');
   parcel(model,boundary.map(([x,z])=>[x*.993,z*.993]),'grass',.065,.02,'irregular-city-terrain');
   function ribbon(curve,width,material,y,name) {
@@ -45,6 +47,7 @@ export function createCity({compact=false}={}) {
   }
   function road(points,closed=false,width=.58) {
     const curve=new CatmullRomCurve3(points.map(([x,z])=>new Vector3(x,0,z)),closed,'centripetal');
+    roadCorridors.push(roadCorridor(curve,width/2));
     ribbon(curve,width+.22,'stone',.10,'curved-pavement');ribbon(curve,width,'road',.12,'curved-road');
     const count=Math.floor(curve.getLength()/.8);
     for(let i=0;i<count;i++) {const p=curve.getPointAt(i/count),v=curve.getTangentAt(i/count);const dash=b('paint',[.025,.009,.3],[p.x,.132,p.z]);dash.rotation.y=Math.atan2(v.x,v.z);}
@@ -53,7 +56,11 @@ export function createCity({compact=false}={}) {
   // A winding ring road and offset neighbourhood streets replace the square grid.
   const ring=road([[-12.7,-3],[-11.9,-6.9],[-7.5,-7.9],[-1,-7.7],[5.8,-7.8],[11.6,-6.8],[12.6,-2.8],[12.2,2.8],[11.4,6.7],[6.6,7.8],[.5,7.5],[-5.9,8],[-11.3,6.3],[-12.5,2]],true,.7);
   for(const z of [-2.5,2.5])road([-12.5,-8,-4,0,4,8,12.3].map(x=>warp(x,z)));
-  for(const x of [-8,-4,0,4,8])road([-7.7,-5,-2.5,0,2.5,5,7.7].map(z=>warp(x,z)),false,.46);
+  for(const x of [-8,-4,0,4,8]) {
+    const segments=x===-4?[[-7.7,-5,-2.5]]:x===4?[[-7.7,-5,-2.5],[2.5,5,7.7]]:[[-7.7,-5,-2.5,0,2.5,5,7.7]];
+    segments.forEach(zs=>road(zs.map(z=>warp(x,z)),false,.46));
+  }
+  road([[7.5,-7.8],[8,-9.1],[7,-10]],false,.65);
   const river=new CatmullRomCurve3([[-10,8.3],[-6.4,8.9],[-2,8.25],[2.8,8.6],[6.4,8.9],[9.6,8.1]].map(([x,z])=>new Vector3(x,0,z)));
   ribbon(river,.55,'stone',.104,'canal-bank');ribbon(river,.4,'water',.115,'curving-canal');
   function tower(parent,x,z,height,office=false,width=1.08) {
@@ -122,6 +129,7 @@ export function createCity({compact=false}={}) {
     blocks.push({x:x+(random(index+1)-.5)*.34,z:z+(random(index+8)-.5)*.55,type:types[row][col],style:index});
   }
   blocks.forEach(({x,z,type,style:index})=>{
+    if([7,8,9,10,13,14].includes(index))return;
     const district=new Group();district.name=`city-block-${index}`;district.position.set(x,0,z);district.rotation.y=(random(index+17)-.5)*.18;
     district.userData.cityZone=type==='park'?'society':type;model.add(district);
     const w=1.45+random(index+32)*.13,d=1.65+random(index+48)*.22;
@@ -184,13 +192,23 @@ export function createCity({compact=false}={}) {
     if(i%3===0)t.tree(model,x-v.z*.35,z+v.x*.35,.55);
   }
   for(let i=0;i<(compact?2:4);i++){const car=t.car(model,0,0,0,i%2?'green':'ivory');car.scale.setScalar(.55);cars.push(car);}
+  const landmarks=addCityLandmarks(model,t,parcel);
+  // The landmark blocks replace six small parcels, keeping the new park and mall clear of streets.
+  for(const [x,z,type,width,depth,height] of [[-4,0,'society',7.1,3.5,.8],[4,0,'commercial',7.1,3.5,1.9],[-4,5,'commercial',7.1,3.4,1.5]]) {
+    const hit=new Mesh(hitGeometry,hitMaterial);hit.position.set(x,height/2,z);hit.scale.set(width,height,depth);hit.userData.cityZone=type;model.add(hit);hitAreas.push(hit);
+  }
+  model.updateMatrixWorld(true);
+  const unsafeTrees=[];
+  model.traverse(o=>{if(o.name==='botanical-tree'){const p=o.getWorldPosition(new Vector3());if(!clearOfRoads(p.x,p.z,.52,roadCorridors))unsafeTrees.push(o);}});
+  unsafeTrees.forEach(tree=>{tree.traverse(o=>{if(o.isInstancedMesh)o.dispose();});tree.removeFromParent();});
+  model.position.z=4.2;
   batchSceneMeshes(model);
   let selected=null;
   function select(id) {selected=CITY_DISTRICTS.some(d=>d.id===id)?id:null;outlines.forEach(item=>item.outline.visible=item.type===selected);}
   function update(progress,reduced=false,seconds=0) {
     const time=reduced?0:seconds;
-    model.rotation.y=-.12+(reduced?0:Math.max(0,Math.min(1,progress))*.24);
-    t.animate(time,reduced);
+    world.rotation.y=-.12+(reduced?0:Math.max(0,Math.min(1,progress))*.24);
+    t.animate(time,reduced); landmarks.update(time,reduced);
     cars.forEach((car,i)=>{
       const along=(time*.009+i/cars.length)%1,p=ring.getPointAt(along),v=ring.getTangentAt(along);
       car.position.set(p.x,.16,p.z);car.rotation.y=Math.atan2(v.x,v.z);
@@ -198,5 +216,5 @@ export function createCity({compact=false}={}) {
     });
   }
   update(0,true);
-  return {model,hitAreas,select,update,dispose(){disposeSpatialModel(model,{geometries:[...t.resources.geometries,hitGeometry,...extraGeometries],materials:[...t.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial]});}};
+  return {model:world,roadCorridors,hitAreas,select,update,dispose(){disposeSpatialModel(world,{geometries:[...t.resources.geometries,hitGeometry,...extraGeometries,...landmarks.resources.geometries],materials:[...t.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial,...landmarks.resources.materials]});}};
 }

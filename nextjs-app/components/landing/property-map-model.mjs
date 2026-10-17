@@ -1,3 +1,4 @@
+import { roadCorridor, clearOfRoads } from './road-clearance.mjs';
 import { BoxGeometry, CatmullRomCurve3, ConeGeometry, CylinderGeometry, ExtrudeGeometry, Group, InstancedMesh, Mesh, MeshStandardMaterial, Object3D, Shape, TubeGeometry, Vector3 } from 'three';
 import { createDetailKit } from './scene-details.mjs';
 import { disposeSpatialModel } from './spatial-models.mjs';
@@ -37,11 +38,13 @@ export function createPropertyMapModel(properties, compact = false) {
   const roadMaterial = new MeshStandardMaterial({ name:'road', color:'#787d7a',roughness:1 }), dashMaterial = new MeshStandardMaterial({ color:'#e8eee1',roughness:1 });
   const dashGeometry = new BoxGeometry(.24,.012,.05), markerGeometry = new CylinderGeometry(.18,.28,.07,12);
   const plotGeometries = outlines.map(parcelGeometry), colours = Object.fromEntries(Object.entries(propertyColours).map(([key,color]) => [key,new MeshStandardMaterial({color,roughness:.9})]));
+  const roadCorridors = [];
   const cars = [], rows = [...new Set(plots.map(plot => plot.gz))].sort((a,b)=>a-b);
   const centerZ = plots.length ? plots[0].gz * 6.2 - plots[0].z : 0;
   for (const [index,row] of rows.entries()) {
     const seed = mapSeed('street-'+row), z = row * 6.2 - centerZ + 2.5;
     const curve = new CatmullRomCurve3(Array.from({length:7},(_,i)=>new Vector3(-width/2+.25+i*(width-.5)/6,.06,z+(mapRandom(seed,i)-.5)*.8)));
+    roadCorridors.push(roadCorridor(curve,.47));
     const road = new Mesh(new TubeGeometry(curve,compact?32:52,.47,6,false),roadMaterial); road.scale.y=.07; road.position.y=.1; model.add(road);
     for(let i=1;i<Math.min(80,Math.ceil(width*1.5));i++) { const t=i/Math.min(80,Math.ceil(width*1.5)), p=curve.getPoint(t), tangent=curve.getTangent(t), dash=new Mesh(dashGeometry,dashMaterial);dash.position.set(p.x,.15,p.z);dash.rotation.y=-Math.atan2(tangent.z,tangent.x);model.add(dash); }
     if(index<4) cars.push({car:kit.car(model,0,z,Math.PI/2,index%2?'green':'ivory'),curve});
@@ -49,6 +52,7 @@ export function createPropertyMapModel(properties, compact = false) {
   // A meandering side lane joins the district roads; each block has a different frontage.
   if(rows.length>1) {
     const side = new CatmullRomCurve3(Array.from({length:rows.length+1},(_,i)=>new Vector3(width/2-2.3+Math.sin(i*1.8)*.3,.06,-depth/2+1.5+i*(depth-3)/(rows.length))));
+    roadCorridors.push(roadCorridor(side,.38));
     const road=new Mesh(new TubeGeometry(side,Math.min(100,rows.length*12),.38,6,false),roadMaterial);road.scale.y=.07;road.position.y=.1;model.add(road);
   }
   const markerPositions = [], structures = [];
@@ -76,6 +80,17 @@ export function createPropertyMapModel(properties, compact = false) {
     const seed=mapSeed('tree-'+i), side=i%4, t=mapRandom(seed,1), inset=1+mapRandom(seed,2)*.8;
     let x=side<2?-width/2+1+t*(width-2):(side===2?-width/2+inset:width/2-inset);
     let z=side<2?(side===0?-depth/2+inset:depth/2-inset):-depth/2+1+t*(depth-2);
+    // Keep the canopy and trunk off both the curved streets and the side lane.
+    if(!clearOfRoads(x,z,.95,roadCorridors)) {
+      let safe=false;
+      for(let attempt=1;attempt<=12;attempt++) {
+        const offset=Math.ceil(attempt/2)*.55*(attempt%2?1:-1);
+        const candidateX=side<2?Math.max(-width/2+1,Math.min(width/2-1,x+offset)):x;
+        const candidateZ=side<2?z:Math.max(-depth/2+1,Math.min(depth/2-1,z+offset));
+        if(clearOfRoads(candidateX,candidateZ,.95,roadCorridors)){x=candidateX;z=candidateZ;safe=true;break;}
+      }
+      if(!safe)continue;
+    }
     const scale=.55+mapRandom(seed,3)*.55; kit.tree(model,x,z,scale);
     const crown=model.children[model.children.length-1];crown.scale.set(.75+mapRandom(seed,4)*.6,.8+mapRandom(seed,5)*.7,.8+mapRandom(seed,6)*.4);crown.rotation.y=mapRandom(seed,7)*Math.PI;
   }
@@ -85,9 +100,10 @@ export function createPropertyMapModel(properties, compact = false) {
     const seed=mapSeed('grass-'+i), edge=i%4,t=mapRandom(seed,0), inset=.4+mapRandom(seed,1)*.5;
     return {x:edge<2?-width/2+1+t*(width-2):(edge===2?-width/2+inset:width/2-inset),z:edge<2?(edge===0?-depth/2+inset:depth/2-inset):-depth/2+1+t*(depth-2),scale:.6+mapRandom(seed,2)*.7};
   });
+  const grassClearance=grassSpots.map(spot=>clearOfRoads(spot.x,spot.z,.12,roadCorridors));
   function update(seconds,reduced) {
     kit.animate(seconds,reduced);
-    grassSpots.forEach((spot,i)=>{blade.position.set(spot.x,.16,spot.z);blade.scale.setScalar(spot.scale);blade.rotation.set(0,i*2.4,reduced?.06:(.25+Math.sin(seconds*.8+spot.x*.3)*.12+Math.sin(seconds*2.6+i*.4)*.24));blade.updateMatrix();grass.setMatrixAt(i,blade.matrix);});grass.instanceMatrix.needsUpdate=true;
+    grassSpots.forEach((spot,i)=>{blade.position.set(spot.x,.16,spot.z);blade.scale.setScalar(grassClearance[i]?spot.scale:0);blade.rotation.set(0,i*2.4,reduced?.06:(.25+Math.sin(seconds*.8+spot.x*.3)*.12+Math.sin(seconds*2.6+i*.4)*.24));blade.updateMatrix();grass.setMatrixAt(i,blade.matrix);});grass.instanceMatrix.needsUpdate=true;
     cars.forEach(({car,curve},i)=>{const t=reduced?.28+i*.05:(seconds*.022+i*.27+.1)%1,p=curve.getPoint(t),tangent=curve.getTangent(t);car.position.set(p.x,.14,p.z);car.rotation.y=Math.atan2(tangent.x,tangent.z);car.scale.setScalar(Math.min(1,t*20,(1-t)*20));car.userData.wheels.forEach(wheel=>{wheel.rotation.x=reduced?0:seconds*2;});});
   }
   // Preserve animated cars, branches and light pools while batching every static parcel.
@@ -95,5 +111,5 @@ export function createPropertyMapModel(properties, compact = false) {
   model.traverse(object=>{if(!object.isMesh||object.isInstancedMesh||object.userData.nightOnly)return;for(let parent=object.parent;parent;parent=parent.parent)if(parent.userData.animated)return;const key=object.geometry.uuid+':'+object.material.uuid;if(!batches.has(key))batches.set(key,[]);batches.get(key).push(object);});
   for(const meshes of batches.values()){if(meshes.length<2)continue;const batch=new InstancedMesh(meshes[0].geometry,meshes[0].material,meshes.length);meshes.forEach((mesh,i)=>{batch.setMatrixAt(i,mesh.matrixWorld);mesh.removeFromParent();});batch.instanceMatrix.needsUpdate=true;model.add(batch);}
   update(0,true);
-  return {model,markerPositions,structures,bounds,depth,update,dispose:()=>disposeSpatialModel(model,{geometries:[...kit.resources.geometries,markerGeometry,...plotGeometries],materials:[...kit.resources.materials,roadMaterial,dashMaterial,...Object.values(colours)]})};
+  return {model,roadCorridors,markerPositions,structures,bounds,depth,update,dispose:()=>disposeSpatialModel(model,{geometries:[...kit.resources.geometries,markerGeometry,...plotGeometries],materials:[...kit.resources.materials,roadMaterial,dashMaterial,...Object.values(colours)]})};
 }
