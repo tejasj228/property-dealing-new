@@ -8,7 +8,7 @@ jest.mock('./contexts/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('./services/api', () => ({ analyticsAPI: { getOverview: jest.fn().mockResolvedValue({ available: false, reason: 'not_configured' }) }, propertyAPI: { getAll: jest.fn() }, areaAPI: { getAll: jest.fn() }, contactAPI: { getAll: jest.fn(), getStats: jest.fn() } }));
 jest.mock('react-router-dom', () => ({ Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a> }), { virtual: true });
 
-beforeEach(() => analyticsAPI.getOverview.mockResolvedValue({ available:false, reason:'not_configured' }));
+beforeEach(() => { jest.clearAllMocks(); analyticsAPI.getOverview.mockResolvedValue({ available:false, reason:'not_configured' }); });
 
 test('sign-in preserves the existing authentication call and supports password visibility', async () => {
   const login = jest.fn().mockResolvedValue({ success: false });
@@ -45,7 +45,10 @@ test('overview charts use real category counts and do not fabricate traffic', as
   analyticsAPI.getOverview.mockResolvedValue({ available:false, reason:'not_configured' });
   render(<Dashboard />);
   expect(await screen.findByText('50% of your portfolio is residential.')).toBeInTheDocument();
-  expect(await screen.findByText('Connect your website insights.')).toBeInTheDocument();
+  expect(screen.queryByText('Website traffic')).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Portfolio composition — view properties' })).toHaveAttribute('href', '/properties');
+  expect(screen.getByRole('link', { name: 'Enquiry pipeline — view enquiries' })).toHaveAttribute('href', '/contacts');
+  expect(analyticsAPI.getOverview).not.toHaveBeenCalled();
   expect(screen.queryByText('All time · production')).not.toBeInTheDocument();
 });
 
