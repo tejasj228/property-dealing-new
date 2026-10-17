@@ -64,8 +64,8 @@ import ImageUpload from '../components/ImageUpload/ImageUpload';
 
 // 🆕 NEW: Property Type Options
 const typeColors = {
-  residential: { ink:'#bde5cc', background:'#274b38', border:'#6a9d7b', header:'#315e45', hover:'#3d7255' },
-  commercial: { ink:'#f6d399', background:'#4b3822', border:'#b48a50', header:'#71512b', hover:'#886337' },
+  residential: { ink:'#b4d8bf', background:'#233c2d', border:'#45664f' },
+  commercial: { ink:'#dfc49b', background:'#363023', border:'#69583d' },
 };
 const propertyTypeOptions = [
   { value: 'residential', label: 'Residential', icon: <ResidentialIcon /> },
@@ -244,8 +244,8 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          border: `1px ${isDragging ? 'dashed' : 'solid'} ${propertyTypeInfo.colors.border}`,
-          '&:hover': { borderColor: propertyTypeInfo.colors.ink },
+          border: `1px ${isDragging ? 'dashed' : 'solid'} ${isDragging ? '#8aaf97' : '#375044'}`,
+          '&:hover': { borderColor: '#5a7864' },
           boxShadow: isDragging ? '0 8px 20px #203e3426' : 'none',
           position: 'relative',
         }}
@@ -260,8 +260,8 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             top: 8, 
             left: 8, 
             zIndex: 1,
-            backgroundColor: propertyTypeInfo.colors.header,
-            color: propertyTypeInfo.colors.ink
+            backgroundColor: 'transparent',
+            color: 'text.secondary'
           }}
         />
 
@@ -275,8 +275,8 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             top: 8, 
             right: 8, 
             zIndex: 1,
-            fontWeight: 650, backgroundColor: propertyTypeInfo.colors.background, color: propertyTypeInfo.colors.ink,
-            border: `1px solid ${propertyTypeInfo.colors.border}`, '& .MuiChip-icon': { color:'inherit' }
+            fontWeight: 600, fontSize: 11, height: 25, backgroundColor: propertyTypeInfo.colors.background, color: propertyTypeInfo.colors.ink,
+            border: `1px solid ${propertyTypeInfo.colors.border}`, '& .MuiChip-icon': { color:'inherit', fontSize:16 }
           }}
         />
 
@@ -289,11 +289,12 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             justifyContent: 'center',
             alignItems: 'center',
             height: 40,
-            backgroundColor: propertyTypeInfo.colors.header,
-            color: propertyTypeInfo.colors.ink,
+            backgroundColor: '#172b22',
+            color: '#92ad9c',
+            borderBottom: '1px solid #375044',
             cursor: sortingDisabled ? 'default' : isDragging ? 'grabbing' : 'grab',
             '&:hover': {
-              backgroundColor: propertyTypeInfo.colors.hover,
+              backgroundColor: '#20392b',
             },
           }}
         >
@@ -346,14 +347,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
               size="small"
               color="secondary"
             />
-            {/* 🆕 Property Type Chip */}
-            <Chip
-              icon={propertyTypeInfo.icon}
-              label={propertyTypeInfo.label}
-              size="small"
-              variant="outlined"
-              sx={{ color:propertyTypeInfo.colors.ink, backgroundColor:propertyTypeInfo.colors.background, borderColor:propertyTypeInfo.colors.border, '& .MuiChip-icon':{color:'inherit'} }}
-            />
+
           </Box>
 
           {/* 🆕 UPDATED: Conditional display of beds/baths */}
