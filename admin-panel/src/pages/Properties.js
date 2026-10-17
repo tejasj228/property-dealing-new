@@ -63,6 +63,10 @@ import { propertyAPI, areaAPI } from '../services/api';
 import ImageUpload from '../components/ImageUpload/ImageUpload';
 
 // 🆕 NEW: Property Type Options
+const typeColors = {
+  residential: { ink:'#bde5cc', background:'#274b38', border:'#6a9d7b', header:'#315e45', hover:'#3d7255' },
+  commercial: { ink:'#f6d399', background:'#4b3822', border:'#b48a50', header:'#71512b', hover:'#886337' },
+};
 const propertyTypeOptions = [
   { value: 'residential', label: 'Residential', icon: <ResidentialIcon /> },
   { value: 'commercial', label: 'Commercial', icon: <CommercialIcon /> },
@@ -202,7 +206,7 @@ const getPropertyTypeInfo = (propertyType) => {
   return {
     icon: typeInfo?.icon || <HomeIcon />,
     label: typeInfo?.label || propertyType,
-    color: propertyType === 'commercial' ? 'primary' : 'secondary'
+    colors: typeColors[propertyType] || typeColors.residential
   };
 };
 
@@ -240,7 +244,8 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          border: isDragging ? '2px dashed #b2d4b8' : '1px solid #375044',
+          border: `1px ${isDragging ? 'dashed' : 'solid'} ${propertyTypeInfo.colors.border}`,
+          '&:hover': { borderColor: propertyTypeInfo.colors.ink },
           boxShadow: isDragging ? '0 8px 20px #203e3426' : 'none',
           position: 'relative',
         }}
@@ -255,8 +260,8 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             top: 8, 
             left: 8, 
             zIndex: 1,
-            backgroundColor: 'primary.main',
-            color: 'primary.contrastText'
+            backgroundColor: propertyTypeInfo.colors.header,
+            color: propertyTypeInfo.colors.ink
           }}
         />
 
@@ -265,13 +270,13 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
           icon={propertyTypeInfo.icon}
           label={propertyTypeInfo.label}
           size="small"
-          color={propertyTypeInfo.color}
           sx={{ 
             position: 'absolute', 
             top: 8, 
             right: 8, 
             zIndex: 1,
-            fontWeight: 600
+            fontWeight: 650, backgroundColor: propertyTypeInfo.colors.background, color: propertyTypeInfo.colors.ink,
+            border: `1px solid ${propertyTypeInfo.colors.border}`, '& .MuiChip-icon': { color:'inherit' }
           }}
         />
 
@@ -284,11 +289,11 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             justifyContent: 'center',
             alignItems: 'center',
             height: 40,
-            backgroundColor: 'primary.main',
-            color: 'primary.contrastText',
+            backgroundColor: propertyTypeInfo.colors.header,
+            color: propertyTypeInfo.colors.ink,
             cursor: sortingDisabled ? 'default' : isDragging ? 'grabbing' : 'grab',
             '&:hover': {
-              backgroundColor: 'primary.dark',
+              backgroundColor: propertyTypeInfo.colors.hover,
             },
           }}
         >
@@ -346,8 +351,8 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
               icon={propertyTypeInfo.icon}
               label={propertyTypeInfo.label}
               size="small"
-              color={propertyTypeInfo.color}
               variant="outlined"
+              sx={{ color:propertyTypeInfo.colors.ink, backgroundColor:propertyTypeInfo.colors.background, borderColor:propertyTypeInfo.colors.border, '& .MuiChip-icon':{color:'inherit'} }}
             />
           </Box>
 
@@ -725,7 +730,7 @@ function Properties() {
 
       <div className="admin-property-filters">
         <TextField label="Search properties" placeholder="Title, location or price" value={search} onChange={event => setSearch(event.target.value)} />
-        <TextField select label="Property type" value={type} onChange={event => setType(event.target.value)}><MenuItem value="all">All types</MenuItem><MenuItem value="residential">Residential</MenuItem><MenuItem value="commercial">Commercial</MenuItem></TextField>
+        <TextField select label="Property type" value={type} onChange={event => setType(event.target.value)}><MenuItem value="all">All types</MenuItem><MenuItem value="residential" sx={{color:typeColors.residential.ink}}><ResidentialIcon sx={{mr:1}}/>Residential</MenuItem><MenuItem value="commercial" sx={{color:typeColors.commercial.ink}}><CommercialIcon sx={{mr:1}}/>Commercial</MenuItem></TextField>
         <TextField select label="Location" value={areaFilter} onChange={event => setAreaFilter(event.target.value)}><MenuItem value="all">All locations</MenuItem>{Object.entries(areas).map(([key, value]) => <MenuItem key={key} value={key}>{value.name}</MenuItem>)}</TextField>
         <Button variant="text" onClick={() => { setSearch(''); setType('all'); setAreaFilter('all'); }} disabled={!filtered}>Clear filters</Button>
       </div><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} role="status">{visibleProperties.length} of {properties.length} properties</Typography>
@@ -816,7 +821,7 @@ function Properties() {
                   label="Property Type"
                 >
                   {propertyTypeOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
+                    <MenuItem key={option.value} value={option.value} sx={{color:typeColors[option.value].ink}}>
                       <Box display="flex" alignItems="center" gap={1}>
                         {option.icon}
                         {option.label}
