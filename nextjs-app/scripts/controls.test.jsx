@@ -2,6 +2,7 @@ import React from 'react';
 import { act, render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import CustomSelect from '../components/CustomSelect';
 import BrandIcon from '../components/BrandIcon';
+import PropertyTypeBadge from '../components/PropertyTypeBadge';
 afterEach(cleanup);
 function Fixture({disabled=false}){
   const [value,setValue]=React.useState('');
@@ -23,4 +24,11 @@ test('escape closes without changing selection and disabled controls cannot open
 });
 test('icons use decorative SVGs and preserve legacy semantic names',()=>{
   const {container}=render(<BrandIcon className="fas fa-phone"/>);expect(container.querySelector('svg')).toBeTruthy();expect(container.firstChild).toHaveAttribute('data-icon','phone');expect(container.firstChild).toHaveAttribute('aria-hidden','true');
+});
+
+test('property types have explicit distinct badge identities and matching icons',()=>{
+ const {container}=render(<><PropertyTypeBadge type="residential"/><PropertyTypeBadge type="commercial"/></>);
+ const residential=container.querySelector('[data-type="residential"]'),commercial=container.querySelector('[data-type="commercial"]');
+ expect(residential).toHaveTextContent('Residential');expect(residential.querySelector('[data-icon="home"]')).toBeTruthy();
+ expect(commercial).toHaveTextContent('Commercial');expect(commercial.querySelector('[data-icon="building"]')).toBeTruthy();
 });

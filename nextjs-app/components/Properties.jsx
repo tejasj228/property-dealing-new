@@ -1,5 +1,6 @@
 'use client';
 import CustomSelect from './CustomSelect';
+import PropertyTypeBadge from './PropertyTypeBadge';
 import BrandIcon from './BrandIcon';
 
 import { useEffect, useState } from 'react';
@@ -67,7 +68,7 @@ export default function Properties() {
       const href = `/property/${encodeURIComponent(property._id || property.id)}`;
       return <article className="catalogue-card" key={property._id || property.id}>
         <PropertyPhoto property={property} href={href} />
-        <div className="catalogue-meta"><span><BrandIcon data-type={property.propertyType} aria-hidden="true"  />{property.propertyType === 'commercial' ? 'Commercial' : property.propertyType === 'residential' ? 'Residential' : 'Property'}</span><span>{property.area}</span></div>
+        <div className="catalogue-meta"><PropertyTypeBadge type={property.propertyType}/><span>{property.area}</span></div>
         <h2><Link href={href}>{property.title}<BrandIcon className="fas fa-arrow-up-right-from-square" aria-hidden="true"  /></Link></h2>
         <p className="catalogue-price">{property.price}</p>
         {property.location && <p className="catalogue-location"><BrandIcon className="fas fa-map-marker-alt" aria-hidden="true"  />{property.location}</p>}

@@ -1,5 +1,6 @@
 'use client';
 import BrandIcon from '../BrandIcon';
+import PropertyTypeBadge from '../PropertyTypeBadge';
 
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -32,7 +33,7 @@ export default function PropertyMap({ properties }) {
   function endDrag() { drag.current = null; }
   return <div className={styles.propertyMap}>
     <div className={styles.mapBar}>
-      <div className={styles.legend} aria-label="Property types"><span><BrandIcon data-type="residential"  />Residential</span><span><BrandIcon data-type="commercial"  />Commercial</span></div>
+      <div className={styles.legend} aria-label="Property types"><PropertyTypeBadge type="residential"/><PropertyTypeBadge type="commercial"/></div>
       <span className={styles.count}>{properties.length} {properties.length === 1 ? 'property' : 'properties'} to explore</span>
     </div>
     <div ref={viewport} className={styles.mapViewport} data-cursor="grab" data-density={properties.length > 50 ? 'high' : 'normal'}

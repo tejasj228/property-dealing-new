@@ -44,8 +44,7 @@
 .public-pages .image-controls span { font-size: 10px; min-width: 45px; text-align: center; }
 .public-pages .catalogue-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; margin: 20px 0 11px; }
 .public-pages .catalogue-meta > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
-.public-pages .catalogue-meta i { width: 7px; height: 7px; border-radius: 50%; background: #44886a; }
-.public-pages .catalogue-meta i[data-type='commercial'] { background: #c58a51; border-radius: 1px; }
+
 .public-pages .catalogue-card h2 { font-size: clamp(23px, 2.3vw, 31px); line-height: 1.35; letter-spacing: -.035em; font-weight: 500; }
 .public-pages .catalogue-card h2 a { display: flex; align-items: start; justify-content: space-between; gap: 18px; }
 .public-pages .catalogue-card h2 i { font-size: 11px; padding: 12px; border: 1px solid var(--line); border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
