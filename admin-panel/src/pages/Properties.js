@@ -95,7 +95,7 @@ const PropertyImageCarousel = ({ images, title }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '1px solid #476252',
+          border: '1px solid #605a49',
         }}
       >
         <ImageIcon sx={{ fontSize: 60, color: 'text.secondary' }} />
@@ -244,9 +244,9 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          border: `1px ${isDragging ? 'dashed' : 'solid'} ${isDragging ? '#8aaf97' : '#375044'}`,
-          '&:hover': { borderColor: '#5a7864' },
-          boxShadow: isDragging ? '0 8px 20px #203e3426' : 'none',
+          border: `1px ${isDragging ? 'dashed' : 'solid'} ${isDragging ? '#afa58a' : '#414037'}`,
+          '&:hover': { borderColor: '#786f5a' },
+          boxShadow: isDragging ? '0 8px 20px #2a282126' : 'none',
           position: 'relative',
         }}
       >
@@ -289,12 +289,12 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
             justifyContent: 'center',
             alignItems: 'center',
             height: 40,
-            backgroundColor: '#172b22',
-            color: '#92ad9c',
-            borderBottom: '1px solid #375044',
+            backgroundColor: '#26231c',
+            color: '#ada592',
+            borderBottom: '1px solid #414037',
             cursor: sortingDisabled ? 'default' : isDragging ? 'grabbing' : 'grab',
             '&:hover': {
-              backgroundColor: '#20392b',
+              backgroundColor: '#332f26',
             },
           }}
         >

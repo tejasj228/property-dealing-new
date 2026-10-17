@@ -1,0 +1,22 @@
+.property-story { width:100%; max-width:760px; margin:auto; container:story / inline-size; --story-radius:clamp(135px,31cqw,230px); --story-width:clamp(210px,45cqw,248px); }
+.story-viewport { position:relative; height:440px; perspective:1100px; overflow:hidden; }
+.story-workflow { position:absolute; inset:0; transform-style:preserve-3d; transform:translateZ(calc(-1 * var(--story-radius))) rotateY(calc(-1 * var(--story-turn))); transition:transform .85s cubic-bezier(.45,0,.2,1); }
+.story-orbit { position:absolute; width:var(--story-width); height:380px; left:50%; top:50%; margin-left:calc(var(--story-width) / -2); margin-top:-190px; transform-style:preserve-3d; transform:rotateY(var(--story-slot)) translateZ(var(--story-radius)); }
+.story-sheet { position:absolute; inset:0; box-sizing:border-box; display:flex; flex-direction:column; padding:22px; border:1px solid #62583f; border-radius:16px; background:#282720; color:#f2eee3; box-shadow:0 5px 0 #141410,0 16px 25px #0003; transform:rotateY(calc(var(--story-turn) - var(--story-slot))); transition:transform .85s cubic-bezier(.45,0,.2,1),border-color .3s,background-color .3s,filter .85s cubic-bezier(.45,0,.2,1); filter:blur(3px); backface-visibility:hidden; }
+[data-step='0'] .story-publish .story-sheet,[data-step='1'] .story-explore .story-sheet,[data-step='2'] .story-connect .story-sheet { border-color:#d2ac4b; background:#343023; filter:blur(0); }
+.story-sheet-icon { display:grid; place-items:center; width:40px; height:40px; border:1px solid #b29853; border-radius:12px; color:#e4ba45; margin-bottom:12px; background:#49402a; box-shadow:0 3px 0 #15140f; }
+.story-sheet-icon svg { font-size:26px; }.story-sheet-kicker { font-size:9px; letter-spacing:1.4px; color:#d1bd83; }
+.story-sheet strong { display:block; font-size:21px; font-weight:500; letter-spacing:-.6px; line-height:1.15; margin:10px 0 14px; min-height:56px; }
+.story-fields { display:grid; gap:10px; margin-bottom:20px; }.story-fields span { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#e1dbc9; }.story-fields svg { color:#e4ba45; font-size:16px; }
+.story-sheet-footer { margin-top:auto; display:flex; align-items:center; gap:7px; border-top:1px solid #615638; padding-top:14px; color:#ebc766; font-size:10px; }.story-sheet-footer svg { font-size:16px; margin-left:auto; }
+.story-search { border:1px solid #746442; border-radius:6px; display:flex; align-items:center; gap:7px; padding:7px; font-size:11px; }.story-search svg { font-size:16px; color:#e4ba45; }.story-filter-chips { display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 16px; }.story-filter-chips span { padding:3px 5px; border-radius:4px; background:#4a422f; font-size:9px; color:#dfd1ac; }
+.story-message { font-size:12px; line-height:1.5; background:#45402f; border-radius:8px 8px 8px 0; padding:12px; margin-bottom:20px; color:#eee3c5; }.story-status-dot { width:5px; height:5px; border-radius:50%; background:#e4ba45; }
+.story-eyebrow { font-size:10px; letter-spacing:1.6px; text-transform:uppercase; color:#e4ba45; }
+.admin-login-brand .story-copy h2 { font-size:clamp(28px,2.6vw,40px); line-height:1.17; margin:14px 0; min-height:94px; max-width:490px; }
+.admin-login-brand .story-copy p { min-height:76px; margin:0; max-width:480px; }
+.story-controls { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:25px; }
+.story-chapters { display:flex; gap:16px; }.story-chapters button,.story-pause { font:inherit; font-size:11px; color:#bcb6a5; border:0; background:none; cursor:pointer; padding:8px 0; }
+.story-chapters button[aria-pressed='true'] { color:#f4ce69; }.story-chapters button span { display:inline-grid; place-items:center; width:21px; height:21px; margin-right:6px; border:1px solid currentColor; border-radius:50%; font-size:10px; }.story-pause { text-decoration:underline; text-underline-offset:4px; }
+@container story (max-width:380px) { .story-viewport { height:420px; }.story-sheet { padding:18px; }.story-sheet strong { font-size:20px; } }
+@media(max-width:900px) { .admin-login-brand .story-copy h2 { min-height:0; }.story-copy p { min-height:0!important; }.story-chapters { gap:12px; } }
+@media(prefers-reduced-motion:reduce) { .story-workflow,.story-sheet { transition:none; } }

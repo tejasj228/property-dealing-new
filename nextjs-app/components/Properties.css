@@ -354,8 +354,8 @@
 /* Residential Property Type */
 .property-type-residential {
     background: rgba(76, 175, 80, 0.1);
-    color: #388e3c;
-    border-color: #4caf50;
+    color: #716955;
+    border-color: #8f856c;
 }
 
 /* Commercial Property Type */
@@ -367,7 +367,7 @@
 
 /* Property Type Badge Hover Effects */
 .property-card:hover .property-type-badge.property-type-residential {
-    background: #4caf50;
+    background: #8f856c;
     color: white;
 }
 
@@ -559,8 +559,8 @@
 /* 🆕 NEW: Dark Mode Property Type Badges */
 .dark-mode .property-type-residential {
     background: rgba(76, 175, 80, 0.2);
-    color: #66bb6a;
-    border-color: #4caf50;
+    color: #a09781;
+    border-color: #8f856c;
 }
 
 .dark-mode .property-type-commercial {

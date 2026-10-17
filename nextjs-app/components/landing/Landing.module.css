@@ -1,15 +1,15 @@
 /* Local to the landing page. Legacy route tokens and selectors stay untouched.
    Layers: content 0, scene 1, header 20, mobile menu 21. */
 .landing {
-  --surface: #f4f7f5;
-  --surface-soft: #e8eeea;
-  --surface-card: #fafdFA;
-  --ink: #203e34;
-  --muted: #5c6e65;
-  --accent: #285c4d;
-  --accent-ink: #f6faf7;
-  --line: #ced9d1;
-  --scene-tint: #d4dfd4;
+  --surface: #faf8f1;
+  --surface-soft: #eeeadd;
+  --surface-card: #fffef9;
+  --ink: #2a2821;
+  --muted: #716b5d;
+  --accent: #9b720b;
+  --accent-ink: #fffaf0;
+  --line: #ded7c5;
+  --scene-tint: #e0d2a8;
   --primary-font: var(--font-manrope), 'Segoe UI', sans-serif;
   --secondary-font: var(--primary-font);
   background: var(--surface);
@@ -25,16 +25,16 @@
 :global(html):has(.landing) { overflow-x: clip; overflow-y: visible; scroll-behavior: smooth; scroll-padding-top: 94px; }
 :global(body):has(.landing) { overflow-x: clip; overflow-y: visible; }
 .landing[data-theme='dark'] {
-  --surface: #15251f; --surface-soft: #1c3027; --surface-card: #23392e;
-  --ink: #e3eee5; --muted: #b5c6bb; --accent: #b2d4b8;
-  --accent-ink: #172e22; --line: #3c5144; --scene-tint: #56735f;
+  --surface: #191916; --surface-soft: #22221e; --surface-card: #2b2a24;
+  --ink: #f2eee3; --muted: #beb8a8; --accent: #e4ba45;
+  --accent-ink: #26200e; --line: #454238; --scene-tint: #776239;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   .landing[data-theme='system'] {
-    --surface: #15251f; --surface-soft: #1c3027; --surface-card: #23392e;
-    --ink: #e3eee5; --muted: #b5c6bb; --accent: #b2d4b8;
-    --accent-ink: #172e22; --line: #3c5144; --scene-tint: #56735f;
+    --surface: #191916; --surface-soft: #22221e; --surface-card: #2b2a24;
+    --ink: #f2eee3; --muted: #beb8a8; --accent: #e4ba45;
+    --accent-ink: #26200e; --line: #454238; --scene-tint: #776239;
     color-scheme: dark;
   }
 }
@@ -119,9 +119,9 @@
 .areaProperties { display: inline-flex; align-items: center; gap: 16px; margin-top: auto; padding-top: 24px; font-size: 12px; font-weight: 600; }
 .areaProperties i { font-size: 11px; }
 .areaDetail { padding: 0 0 12px; min-width: 0; }
-.mapFrame { aspect-ratio: 1.5; max-height: 390px; width: 100%; overflow: hidden; background: #e5e9e0; border-radius: 10px; }
+.mapFrame { aspect-ratio: 1.5; max-height: 390px; width: 100%; overflow: hidden; background: #e9e6e0; border-radius: 10px; }
 .areaImage { width: 100%; height: 100%; object-fit: contain; padding: 10px; display: block; }
-.mapUnavailable { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; color: #45634b; }
+.mapUnavailable { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; color: #605948; }
 .mapUnavailable i { font-size: 54px; }
 .mapUnavailable span { font-size: 15px; }
 .areaDetailCaption { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-right: 8px; }
@@ -197,13 +197,13 @@
 /* CSS sculpture stays visible until the first WebGL frame, or permanently if unavailable. */
 .fallback { position: absolute; inset: 0; display: grid; place-items: center; perspective: 1000px; opacity: 1; }
 .sceneStage:has(.webgl[data-ready='true']) .fallback { opacity: 0; visibility: hidden; }
-.fallbackPlot { width: 330px; height: 260px; background: #b7c5a4; border: 8px solid #d8dfcf; transform: rotateX(55deg) rotateZ(-32deg); transform-style: preserve-3d; box-shadow: -12px 18px 0 #b6c2ae, -30px 44px 60px #203e3422; position: relative; }
+.fallbackPlot { width: 330px; height: 260px; background: #b7c5a4; border: 8px solid #d8dfcf; transform: rotateX(55deg) rotateZ(-32deg); transform-style: preserve-3d; box-shadow: -12px 18px 0 #c2bcae, -30px 44px 60px #2a282122; position: relative; }
 .fallbackHouse, .fallbackUpper { position: absolute; width: 160px; height: 110px; left: 55px; top: 50px; transform: translateZ(60px); background: #e8ebe3; transform-style: preserve-3d; }
-.fallbackHouse::before, .fallbackUpper::before { content: ''; width: 100%; height: 60px; position: absolute; bottom: 0; left: 0; background: #45665d; transform-origin: bottom; transform: rotateX(90deg); border: 6px solid #d6dcd2; }
-.fallbackHouse::after, .fallbackUpper::after { content: ''; width: 60px; height: 100%; position: absolute; right: 0; top: 0; background: #cbd3c5; transform-origin: right; transform: rotateY(-90deg); }
+.fallbackHouse::before, .fallbackUpper::before { content: ''; width: 100%; height: 60px; position: absolute; bottom: 0; left: 0; background: #615b4a; transform-origin: bottom; transform: rotateX(90deg); border: 6px solid #dcd9d2; }
+.fallbackHouse::after, .fallbackUpper::after { content: ''; width: 60px; height: 100%; position: absolute; right: 0; top: 0; background: #d3cfc5; transform-origin: right; transform: rotateY(-90deg); }
 .fallbackUpper { width: 110px; height: 100px; top: 35px; transform: translateZ(118px); }
-.fallbackPool { position: absolute; right: 16px; top: 35px; height: 155px; width: 45px; background: #80b6ac; border: 5px solid #e5eade; }
-.fallbackTree { position: absolute; width: 35px; height: 35px; border-radius: 50%; background: #6e8b62; transform: translateZ(35px); top: 16px; left: 15px; box-shadow: 0 0 0 6px #7f9a73; }
+.fallbackPool { position: absolute; right: 16px; top: 35px; height: 155px; width: 45px; background: #afa487; border: 5px solid #e5eade; }
+.fallbackTree { position: absolute; width: 35px; height: 35px; border-radius: 50%; background: #877e66; transform: translateZ(35px); top: 16px; left: 15px; box-shadow: 0 0 0 6px #978e76; }
 .fallbackTree:last-child { top: auto; bottom: 15px; left: auto; right: 15px; }
 @media (min-width: 1600px) { .heroGrid { padding-top: 35px; } .sceneStage { width: 135%; margin-left: -12%; } }
 @media (max-width: 1100px) {
@@ -295,8 +295,8 @@
   .primaryButton:hover, .secondaryButton:hover, .propertyImageLink:hover .propertyImage { transform: none; }
 }
 
-.webgl[data-draggable="true"] { cursor: grab; touch-action: pan-y; }
-.webgl[data-dragging="true"] { cursor: grabbing; }
+.webgl[data-draggable="true"] { cursor: var(--model-cursor); touch-action: pan-y; }
+.webgl[data-dragging="true"] { cursor: var(--model-cursor-active); }
 
 /* Stable document flow: no pinned hero or competing vertical parallax. */
 :global(html):has(.landing) { scroll-behavior: auto; overflow-anchor: none; }
@@ -316,9 +316,9 @@
 /* Pointer grabbing has no canvas-sized focus frame; keyboard focus stays visible. */
 .landing .webgl[data-input='pointer']:focus, .landing .webgl[data-dragging='true'] { outline: none; }
 /* Shared link feedback; filled actions keep their text contrast. */
-.landing { --link-hover:#378062; }
-.landing[data-theme='dark'] { --link-hover:#d7efdc; }
-@media(prefers-color-scheme:dark) { .landing[data-theme='system'] { --link-hover:#d7efdc; } }
+.landing { --link-hover:#936a08; }
+.landing[data-theme='dark'] { --link-hover:#f3cb65; }
+@media(prefers-color-scheme:dark) { .landing[data-theme='system'] { --link-hover:#f3cb65; } }
 .landing a,.landing button { transition:color .16s ease,background-color .16s ease,border-color .16s ease; }
 .landing a:hover,.landing button:not(:disabled):hover { color:var(--link-hover); }
 .landing a:hover :is(h2,h3,h4) { color:var(--link-hover); }

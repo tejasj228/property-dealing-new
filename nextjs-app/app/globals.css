@@ -23,9 +23,9 @@ html {
 :root {
   --primary-color: #2c3e50;
   --secondary-color: #34495e;
-  --accent-color: #285c4d;
+  --accent-color: #9b720b;
   --button-color: #1a1a1a;
-  --success-color: #27ae60;
+  --success-color: #79715c;
   --text-dark: #2c3e50;
   --text-light: #7f8c8d;
   --text-white: #ffffff;
@@ -47,7 +47,7 @@ html {
 .dark-mode {
   --primary-color: #e8e8e8;
   --secondary-color: #cccccc;
-  --accent-color: #b2d4b8;
+  --accent-color: #e4ba45;
   --text-dark: #e8e8e8;
   --text-light: #a0a0a0;
   --text-white: #ffffff;
@@ -336,9 +336,9 @@ body.theme-override:not(.dark-mode) {
 }
 
 /* The scrollbar belongs to the document, outside the themed page wrapper. */
-html { --scroll-track:#f4f7f5; --scroll-thumb:#789b87; --scroll-hover:#285c4d; scrollbar-color:var(--scroll-thumb) var(--scroll-track); scrollbar-width:thin; }
-html:has([data-theme='dark']) { --scroll-track:#15251f; --scroll-thumb:#64826e; --scroll-hover:#b2d4b8; }
-@media(prefers-color-scheme:dark) { html:has([data-theme='system']) { --scroll-track:#15251f; --scroll-thumb:#64826e; --scroll-hover:#b2d4b8; } }
+html { --scroll-track:#faf8f1; --scroll-thumb:#9a9179; --scroll-hover:#9b720b; scrollbar-color:var(--scroll-thumb) var(--scroll-track); scrollbar-width:thin; }
+html:has([data-theme='dark']) { --scroll-track:#191916; --scroll-thumb:#827a64; --scroll-hover:#e4ba45; }
+@media(prefers-color-scheme:dark) { html:has([data-theme='system']) { --scroll-track:#191916; --scroll-thumb:#827a64; --scroll-hover:#e4ba45; } }
 html::-webkit-scrollbar, body::-webkit-scrollbar { width:9px; height:9px; }
 html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background:var(--scroll-track); }
 html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border:2px solid var(--scroll-track); border-radius:8px; }
@@ -347,3 +347,6 @@ html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover { backg
 /* One stable document scroller; no elastic rebound or anchor corrections. */
 html { overflow-x:clip; overflow-y:auto; scrollbar-gutter:stable; overscroll-behavior-y:none; overflow-anchor:none; scroll-behavior:auto; }
 body { overflow-x:clip; overflow-y:visible; }
+
+/* Native custom cursors stay responsive even while the WebGL scene renders. */
+:root { --model-cursor: url("/cursors/rotate.svg") 20 20, move; --model-cursor-active: url("/cursors/rotate-active.svg") 20 20, move; }

@@ -31,10 +31,10 @@ function parcelGeometry(points) {
   const geometry = new ExtrudeGeometry(shape, { depth:.14, bevelEnabled:false }); geometry.rotateX(-Math.PI / 2); return geometry;
 }
 export function createPropertyMapModel(properties, compact = false) {
-  const model = new Group(), kit = createDetailKit(), plots = layoutProperties(properties), bounds = mapBounds(plots);
+  const model = new Group(), kit = createDetailKit({ compact: compact || properties.length > 20 }), plots = layoutProperties(properties), bounds = mapBounds(plots);
   const { width, depth } = bounds;
   kit.box(model, 'stone', [width,.6,depth], [0,-.4,0]); kit.box(model, 'grass', [width-.2,.1,depth-.2], [0,-.03,0]);
-  const roadMaterial = new MeshStandardMaterial({ color:'#acbcb0',roughness:1 }), dashMaterial = new MeshStandardMaterial({ color:'#e8eee1',roughness:1 });
+  const roadMaterial = new MeshStandardMaterial({ name:'road', color:'#787d7a',roughness:1 }), dashMaterial = new MeshStandardMaterial({ color:'#e8eee1',roughness:1 });
   const dashGeometry = new BoxGeometry(.24,.012,.05), markerGeometry = new CylinderGeometry(.18,.28,.07,12);
   const plotGeometries = outlines.map(parcelGeometry), colours = Object.fromEntries(Object.entries(propertyColours).map(([key,color]) => [key,new MeshStandardMaterial({color,roughness:.9})]));
   const cars = [], rows = [...new Set(plots.map(plot => plot.gz))].sort((a,b)=>a-b);
@@ -80,14 +80,14 @@ export function createPropertyMapModel(properties, compact = false) {
     const crown=model.children[model.children.length-1];crown.scale.set(.75+mapRandom(seed,4)*.6,.8+mapRandom(seed,5)*.7,.8+mapRandom(seed,6)*.4);crown.rotation.y=mapRandom(seed,7)*Math.PI;
   }
   kit.round(model,'water',[1.1,.025,.6],[-width/2+2.5,.09,-depth/2+2]); kit.bench(model,-width/2+3.6,-depth/2+1.8,-.2);
-  const grass = new InstancedMesh(new ConeGeometry(.05,.3,3),new MeshStandardMaterial({color:'#719566',roughness:1}),compact?90:180);grass.name='map-grass';model.add(grass);
+  const grass = new InstancedMesh(new ConeGeometry(.05,.3,3),new MeshStandardMaterial({name:'grass',color:'#c4a04d',roughness:1}),compact?90:180);grass.name='map-grass';model.add(grass);
   const blade = new Object3D(), grassSpots=Array.from({length:grass.count},(_,i)=>{
     const seed=mapSeed('grass-'+i), edge=i%4,t=mapRandom(seed,0), inset=.4+mapRandom(seed,1)*.5;
     return {x:edge<2?-width/2+1+t*(width-2):(edge===2?-width/2+inset:width/2-inset),z:edge<2?(edge===0?-depth/2+inset:depth/2-inset):-depth/2+1+t*(depth-2),scale:.6+mapRandom(seed,2)*.7};
   });
   function update(seconds,reduced) {
     kit.animate(seconds,reduced);
-    grassSpots.forEach((spot,i)=>{blade.position.set(spot.x,.16,spot.z);blade.scale.setScalar(spot.scale);blade.rotation.set(0,i*2.4,reduced?.06:Math.sin(seconds*1.2+i*.4)*.14);blade.updateMatrix();grass.setMatrixAt(i,blade.matrix);});grass.instanceMatrix.needsUpdate=true;
+    grassSpots.forEach((spot,i)=>{blade.position.set(spot.x,.16,spot.z);blade.scale.setScalar(spot.scale);blade.rotation.set(0,i*2.4,reduced?.06:(.25+Math.sin(seconds*.8+spot.x*.3)*.12+Math.sin(seconds*2.6+i*.4)*.24));blade.updateMatrix();grass.setMatrixAt(i,blade.matrix);});grass.instanceMatrix.needsUpdate=true;
     cars.forEach(({car,curve},i)=>{const t=reduced?.28+i*.05:(seconds*.022+i*.27+.1)%1,p=curve.getPoint(t),tangent=curve.getTangent(t);car.position.set(p.x,.14,p.z);car.rotation.y=Math.atan2(tangent.x,tangent.z);car.scale.setScalar(Math.min(1,t*20,(1-t)*20));car.userData.wheels.forEach(wheel=>{wheel.rotation.x=reduced?0:seconds*2;});});
   }
   // Preserve animated cars, branches and light pools while batching every static parcel.

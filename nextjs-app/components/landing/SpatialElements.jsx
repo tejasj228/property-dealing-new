@@ -36,7 +36,7 @@ function KeyFallback() {
 
 export function SpatialIllustration({ progress, kind = 'land', caption }) {
   const root = useRef(null);
-  const nearby = useInView(root, { once: true, margin: '240px' });
+  const nearby = useInView(root, { once: true, margin: '650px' });
   const reduced = useReducedMotion();
   const [paused, setPaused] = useState(false);
   const isKeys = kind === 'keys';

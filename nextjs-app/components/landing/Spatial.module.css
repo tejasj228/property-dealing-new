@@ -9,13 +9,13 @@
 .illustrationCaption i { font-size: 8px; }
 .mapPerspective { perspective: 1100px; padding: 12px 12px 15px; }
 .mapAssembly { position: relative; transform-style: preserve-3d; transform-origin: center; }
-.mapBase { position: absolute; inset: 0; background: var(--scene-tint); border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 9px 0 var(--line), 0 28px 36px #25402e12; transform: translateZ(-4px); overflow: hidden; }
+.mapBase { position: absolute; inset: 0; background: var(--scene-tint); border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 9px 0 var(--line), 0 28px 36px #3a362b12; transform: translateZ(-4px); overflow: hidden; }
 .mapBase span { position: absolute; border: 1px solid var(--muted); opacity: .24; width: 33%; height: 38%; top: 12%; left: 10%; }
 .mapBase span:nth-child(2) { left: 57%; }.mapBase span:nth-child(3) { top: 58%; height: 28%; }.mapBase span:nth-child(4) { left: 57%; top: 58%; height: 28%; }
-.mapSheet { position: relative; border-radius: 10px; box-shadow: 0 18px 36px #25402e16; }
+.mapSheet { position: relative; border-radius: 10px; box-shadow: 0 18px 36px #3a362b16; }
 .mediaPerspective { perspective: 1200px; }
 .mediaPlate { position: relative; transform-origin: center; transform-style: preserve-3d; }
-.mediaPlate::before { content: ''; position: absolute; inset: 4px 3px -7px; border-radius: 16px; border: 1px solid var(--line); background: var(--line); transform: translateZ(-10px); box-shadow: 0 24px 35px #25402e14; }
+.mediaPlate::before { content: ''; position: absolute; inset: 4px 3px -7px; border-radius: 16px; border: 1px solid var(--line); background: var(--line); transform: translateZ(-10px); box-shadow: 0 24px 35px #3a362b14; }
 .districtSection { max-width: 1440px; margin: 0 auto; padding: 40px 5% 90px; }
 .storyHeading { max-width: 660px; margin-bottom: 10px; }
 .storyHeading h2 { font-size: clamp(34px, 4vw, 56px); font-weight: 500; letter-spacing: -.055em; line-height: 1.15; }
@@ -34,22 +34,22 @@
 .keys .illustrationStage::before { inset: 12% 0; opacity: .65; }
 .keys .keyFallback { transform: scale(1.8) rotate(-20deg); }
 .keys .illustrationCaption { padding-left: 2%; padding-right: 4%; font-size: 10px; }
-.keyFallback { width: 150px; height: 175px; position: relative; transform: rotate(-20deg); filter: drop-shadow(12px 18px 10px #25402e18); }
-.keyRing { position: absolute; top: 0; left: 30px; width: 100px; height: 100px; border: 5px solid #a8b9ac; border-radius: 50%; }
-.keyBlade { position: absolute; height: 110px; width: 15px; left: 50px; top: 70px; background: #c3cdc2; border: 2px solid #9aaa9c; transform: rotate(10deg); border-radius: 3px; }
-.keyBlade::before { content: ''; position: absolute; top: -24px; left: -16px; height: 40px; width: 40px; border: 8px solid #c3cdc2; border-radius: 50%; }
-.keyBlade::after { content: ''; position: absolute; width: 18px; height: 9px; left: 10px; bottom: 5px; background: #c3cdc2; box-shadow: 0 -23px 0 #c3cdc2; }
+.keyFallback { width: 150px; height: 175px; position: relative; transform: rotate(-20deg); filter: drop-shadow(12px 18px 10px #3a362b18); }
+.keyRing { position: absolute; top: 0; left: 30px; width: 100px; height: 100px; border: 5px solid #b9b4a8; border-radius: 50%; }
+.keyBlade { position: absolute; height: 110px; width: 15px; left: 50px; top: 70px; background: #cdcac2; border: 2px solid #aaa69a; transform: rotate(10deg); border-radius: 3px; }
+.keyBlade::before { content: ''; position: absolute; top: -24px; left: -16px; height: 40px; width: 40px; border: 8px solid #cdcac2; border-radius: 50%; }
+.keyBlade::after { content: ''; position: absolute; width: 18px; height: 9px; left: 10px; bottom: 5px; background: #cdcac2; box-shadow: 0 -23px 0 #cdcac2; }
 .keyBlade:nth-of-type(3) { left: 93px; top: 60px; transform: rotate(-28deg); }
-.keyFob { position: absolute; top: 44px; left: 60px; width: 43px; height: 48px; border-radius: 7px; background: #356d59; }
+.keyFob { position: absolute; top: 44px; left: 60px; width: 43px; height: 48px; border-radius: 7px; background: #5c5646; }
 .districtFallback { perspective: 1000px; width: 100%; height: 100%; display: grid; place-items: center; }
-.miniNeighbourhood { width: 330px; height: 260px; position: relative; background: #b0bea3; border: 9px solid #cbd5c5; box-shadow: -5px 10px 0 #b4c0ad, -20px 32px 40px #25402e14; transform: rotateX(45deg) rotateZ(-26deg); transform-style: preserve-3d; }
-.miniPark { position: absolute; width: 110px; height: 75px; background: #7d9a78; bottom: 38px; left: 15px; border-radius: 20px; }
+.miniNeighbourhood { width: 330px; height: 260px; position: relative; background: #beb6a3; border: 9px solid #d5d1c5; box-shadow: -5px 10px 0 #c0bbad, -20px 32px 40px #3a362b14; transform: rotateX(45deg) rotateZ(-26deg); transform-style: preserve-3d; }
+.miniPark { position: absolute; width: 110px; height: 75px; background: #9a9078; bottom: 38px; left: 15px; border-radius: 20px; }
 .miniBlock { position: absolute; left: 20px; top: 20px; width: 55px; height: 65px; background: #e8ebdf; transform: translateZ(56px); transform-style: preserve-3d; }
 .miniBlock:nth-of-type(2) { left: 115px; }.miniBlock:nth-of-type(3) { left: 220px; }.miniBlock:nth-of-type(4) { left: 218px; top: 130px; transform: translateZ(30px); }
-.miniBlock::before { content: ''; position: absolute; width: 55px; height: 56px; background: repeating-linear-gradient(0deg,#e0e6d9 0 12px,#75978a 12px 20px); bottom: 0; left: 0; transform: rotateX(90deg); transform-origin: bottom; }
-.miniBlock::after { content: ''; position: absolute; width: 56px; height: 65px; background: #bdcabc; right: 0; top: 0; transform: rotateY(-90deg); transform-origin: right; }
-.miniStreet { position: absolute; bottom: 0; left: 0; right: 0; height: 26px; background: #a2b1a5; border-top: 3px solid #e4eadf; }
-.miniTree { position: absolute; width: 30px; height: 30px; border-radius: 50%; left: 38px; bottom: 55px; background: #648565; transform: translateZ(28px); }
+.miniBlock::before { content: ''; position: absolute; width: 55px; height: 56px; background: repeating-linear-gradient(0deg,#e6e2d9 0 12px,#978d75 12px 20px); bottom: 0; left: 0; transform: rotateX(90deg); transform-origin: bottom; }
+.miniBlock::after { content: ''; position: absolute; width: 56px; height: 65px; background: #cac6bc; right: 0; top: 0; transform: rotateY(-90deg); transform-origin: right; }
+.miniStreet { position: absolute; bottom: 0; left: 0; right: 0; height: 26px; background: #b1ada2; border-top: 3px solid #eae7df; }
+.miniTree { position: absolute; width: 30px; height: 30px; border-radius: 50%; left: 38px; bottom: 55px; background: #857c64; transform: translateZ(28px); }
 .miniTree:last-child { left: 105px; bottom: 76px; }
 @media (max-width: 1100px) {
   .districtSection { padding-bottom: 70px; }
@@ -81,15 +81,15 @@
 .miniNeighbourhood[data-kind='land'] .miniBlock { transform: none; background: transparent; border: 1px solid #e9ece2; }
 .miniNeighbourhood[data-kind='land'] .miniBlock::before, .miniNeighbourhood[data-kind='land'] .miniBlock::after { display: none; }
 .miniNeighbourhood[data-kind='land'] .miniPark { border-radius: 0; background: transparent; border: 1px solid #e9ece2; }
-.miniNeighbourhood[data-kind='commercial'] .miniBlock { background: #668d86; }
-.miniNeighbourhood[data-kind='commercial'] .miniPark { background: #d9dfd3; border-radius: 0; }
+.miniNeighbourhood[data-kind='commercial'] .miniBlock { background: #8b8168; }
+.miniNeighbourhood[data-kind='commercial'] .miniPark { background: #dfdcd3; border-radius: 0; }
 
-.mapPerspective { padding: 24px 20px 8px; cursor: grab; touch-action: pan-y; }
-.mapPerspective[data-dragging='true'] { cursor: grabbing; }
+.mapPerspective { padding: 24px 20px 8px; cursor: var(--model-cursor); touch-action: pan-y; }
+.mapPerspective[data-dragging='true'] { cursor: var(--model-cursor-active); }
 .mapPerspective[data-input='pointer']:focus { outline: none; }
 .mapPerspective img { pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .mapSheet { transform: translateZ(12px); border: 1px solid var(--line); }
-.mapBase { inset: -2px; transform: translateZ(-7px); box-shadow: 0 8px 0 var(--line), 0 28px 45px #10291f24; }
+.mapBase { inset: -2px; transform: translateZ(-7px); box-shadow: 0 8px 0 var(--line), 0 28px 45px #201e1924; }
 .mapAssembly::after { content: ''; position: absolute; inset: 1px; pointer-events: none; border: 1px solid #ffffff24; border-radius: 10px; transform: translateZ(14px); }
 .mapGrabHint { display: block; font-size: 10px; text-align: center; color: var(--muted); padding-top: 26px; cursor: default; }
 @media(max-width:767px) { .mapPerspective { padding: 18px 10px 5px; } .mapGrabHint { font-size: 9px; } }

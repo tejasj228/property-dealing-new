@@ -242,9 +242,9 @@ test('day/night lighting follows every scene and restores original materials', (
   for (const kind of ['house', 'land', 'society', 'commercial', 'keys', 'map']) {
     const illustration = kind === 'house' ? createArchitecture() : kind === 'keys' ? createKeys() : kind === 'map' ? createPropertyMapModel([{ id: '1', propertyType: 'residential' }]) : createDistrict({ kind });
     const scene = new Scene(), renderer = {}; scene.add(illustration.model);
+    const lighting = createSceneLighting(scene, illustration.model, renderer, { kind });
     const before = new Map();
     illustration.model.traverse(o => { if (o.material?.isMeshStandardMaterial) before.set(o.material, { color: o.material.color.getHex(), emissive: o.material.emissive.getHex(), intensity: o.material.emissiveIntensity }); });
-    const lighting = createSceneLighting(scene, illustration.model, renderer, { kind });
     lighting.setNight(true); assert.equal(scene.getObjectByName('night-sky'), undefined); assert.equal(renderer.toneMappingExposure, 1.12);
     illustration.model.traverse(o => { if (o.name === 'drifting-cloud') assert.equal(o.visible, true); if (o.userData.nightOnly) assert.equal(o.visible, true); if (o.material?.userData.nightWindow) assert.ok(o.material.emissiveIntensity > 0); });
     lighting.setNight(false); assert.equal(scene.getObjectByName('night-sky'), undefined);
@@ -456,4 +456,69 @@ test('office roof and clear glazing stay transparent in night lighting',()=>{
     for(const pane of panes){assert.equal(pane.material.transparent,true);assert.ok(pane.material.opacity<=.22);assert.equal(pane.material.depthWrite,false);assert.equal(pane.material.emissiveIntensity,1);assert.equal(pane.material.emissive.getHex(),0);assert.equal(pane.castShadow,false);}
   }
   lighting.dispose();office.dispose();
+});
+
+
+test('pergola feet stay supported by the terrace throughout the house animation', () => {
+  const house = createArchitecture();
+  const pergola = house.model.getObjectByName('supported-pergola');
+  const slab = pergola.children.find(child => child.material?.name === 'edge');
+  const posts = pergola.children.filter(child => child.name === 'pergola-post');
+  assert.equal(posts.length, 4);
+  for (const progress of [0, .5, 1]) {
+    const pose = scenePose(progress, false);
+    house.upperFloor.position.y = pose.lift; house.roof.position.y = pose.roofLift;
+    house.model.updateMatrixWorld(true);
+    const support = new Box3().setFromObject(slab);
+    for (const post of posts) {
+      const foot = new Box3().setFromObject(post);
+      assert.ok(foot.min.x >= support.min.x && foot.max.x <= support.max.x);
+      assert.ok(foot.min.z >= support.min.z && foot.max.z <= support.max.z);
+      assert.ok(foot.min.y <= support.max.y && foot.min.y >= support.max.y - .025);
+    }
+  }
+  house.dispose();
+});
+
+const { createBotanicalKit } = await import('../components/landing/botanical-trees.mjs');
+test('autumn trees use bounded instanced leaves and remain deterministic', () => {
+  const first = createBotanicalKit(), second = createBotanicalKit(), mobile = createBotanicalKit({compact:true});
+  const a=new Scene(), b=new Scene(), c=new Scene();
+  first.tree(a,1,2);second.tree(b,1,2);mobile.tree(c,1,2);
+  const leaves=a.getObjectByName('individual-autumn-leaves');
+  assert.ok(leaves.isInstancedMesh);assert.equal(leaves.count,644);
+  assert.equal(c.getObjectByName('individual-autumn-leaves').count,308);
+  assert.deepEqual(leaves.instanceMatrix.array,b.getObjectByName('individual-autumn-leaves').instanceMatrix.array);
+  assert.deepEqual(leaves.instanceColor.array,b.getObjectByName('individual-autumn-leaves').instanceColor.array);
+  first.animate(10,true); assert.equal(a.getObjectByName('tree-crown').rotation.z,0);
+  for(const [kit,scene] of [[first,a],[second,b],[mobile,c]]) {
+    scene.traverse(object=>{if(object.isInstancedMesh)object.dispose();});
+    kit.resources.geometries.forEach(g=>g.dispose());kit.resources.materials.forEach(m=>m.dispose());
+  }
+});
+
+test('hero has furnished rooms behind clear glazing with separate night illumination', () => {
+  const house=createArchitecture();
+  assert.ok(house.model.getObjectByName('furnished-living-room'));
+  let panes=0, lights=0;
+  house.model.traverse(object=>{
+    if(object.material?.name==='glass') { panes++;assert.equal(object.material.isMeshPhysicalMaterial,true);assert.ok(object.material.transparent);assert.ok(object.material.opacity<.4);assert.equal(object.material.userData.nightWindow,undefined); }
+    if(object.isPointLight){lights++;assert.equal(object.userData.nightOnly,true);assert.equal(object.castShadow,false);}
+  });
+  assert.equal(panes,4);assert.equal(lights,2);house.dispose();
+});
+
+const { vehicleBodyGeometry } = await import('../components/landing/vehicle-geometry.mjs');
+test('car shells have outward-facing closed surfaces rather than inverted faces', () => {
+  for(const cabin of [false,true]) {
+    const geometry=vehicleBodyGeometry(cabin), points=geometry.getAttribute('position'), indices=geometry.index;
+    let volume=0;
+    for(let i=0;i<indices.count;i+=3) {
+      const a=new Vector3().fromBufferAttribute(points,indices.getX(i));
+      const b=new Vector3().fromBufferAttribute(points,indices.getX(i+1));
+      const c=new Vector3().fromBufferAttribute(points,indices.getX(i+2));
+      volume+=a.dot(b.cross(c))/6;
+    }
+    assert.ok(volume>0, 'Outward winding gives positive signed volume');geometry.dispose();
+  }
 });

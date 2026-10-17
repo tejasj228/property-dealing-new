@@ -1,0 +1,113 @@
+[
+  {
+    "asset": "brushed_concrete",
+    "map": "Diffuse",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brushed_concrete/brushed_concrete_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/brushed_concrete"
+  },
+  {
+    "asset": "brushed_concrete",
+    "map": "nor_gl",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brushed_concrete/brushed_concrete_nor_gl_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/brushed_concrete"
+  },
+  {
+    "asset": "brushed_concrete",
+    "map": "Rough",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brushed_concrete/brushed_concrete_rough_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/brushed_concrete"
+  },
+  {
+    "asset": "wood_floor_deck",
+    "map": "Diffuse",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_floor_deck/wood_floor_deck_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/wood_floor_deck"
+  },
+  {
+    "asset": "wood_floor_deck",
+    "map": "nor_gl",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_floor_deck/wood_floor_deck_nor_gl_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/wood_floor_deck"
+  },
+  {
+    "asset": "wood_floor_deck",
+    "map": "Rough",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_floor_deck/wood_floor_deck_rough_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/wood_floor_deck"
+  },
+  {
+    "asset": "asphalt_02",
+    "map": "Diffuse",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/asphalt_02"
+  },
+  {
+    "asset": "asphalt_02",
+    "map": "nor_gl",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_nor_gl_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/asphalt_02"
+  },
+  {
+    "asset": "asphalt_02",
+    "map": "Rough",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_rough_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/asphalt_02"
+  },
+  {
+    "asset": "grass_ground",
+    "map": "Diffuse",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/grass_ground"
+  },
+  {
+    "asset": "grass_ground",
+    "map": "nor_gl",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_nor_gl_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/grass_ground"
+  },
+  {
+    "asset": "grass_ground",
+    "map": "Rough",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_rough_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/grass_ground"
+  },
+  {
+    "asset": "bark_brown_02",
+    "map": "Diffuse",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_diff_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/bark_brown_02"
+  },
+  {
+    "asset": "bark_brown_02",
+    "map": "nor_gl",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_nor_gl_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/bark_brown_02"
+  },
+  {
+    "asset": "bark_brown_02",
+    "map": "Rough",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_02/bark_brown_02_rough_1k.jpg",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/bark_brown_02"
+  },
+  {
+    "asset": "autumn_field_puresky",
+    "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/autumn_field_puresky_1k.hdr",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/autumn_field_puresky"
+  }
+]

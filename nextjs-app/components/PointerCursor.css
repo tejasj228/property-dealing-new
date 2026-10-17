@@ -1,6 +1,6 @@
-/* Green stays green: contrast comes from a dual edge, not difference blending. */
-.brand-cursor[data-tone="deep"] { color:#187044; --cursor-edge:#edf8ee; }
-.brand-cursor { position:fixed; left:0; top:0; width:min(96px,100vw); height:min(96px,100vh); z-index:10000; pointer-events:none; color:#8ee2ae; --cursor-edge:#102d21; contain:strict; overflow:clip; will-change:transform; }
+/* Gold stays gold: contrast comes from a dual edge, not difference blending. */
+.brand-cursor[data-tone="deep"] { color:#916808; --cursor-edge:#faf5e7; }
+.brand-cursor { position:fixed; left:0; top:0; width:min(96px,100vw); height:min(96px,100vh); z-index:10000; pointer-events:none; color:#edc653; --cursor-edge:#29251d; contain:strict; overflow:clip; will-change:transform; }
 .brand-cursor[hidden] { display:none; }
 .brand-cursor,.brand-cursor * { pointer-events:none!important; transition:none!important; }
 .brand-cursor>span { position:absolute; top:48px; left:48px; width:0; height:0; }

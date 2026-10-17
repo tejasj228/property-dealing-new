@@ -31,7 +31,7 @@ export function disposeSpatialModel(model, resources = {}) {
 }
 
 export function createDistrict({ compact = false, kind = 'land' } = {}) {
-  const t = createDetailKit(), model = new Group();
+  const t = createDetailKit({ compact }), model = new Group();
   const district = t.base(); district.name = kind; model.add(district);
   const cars = [], walkers = [];
   function addWalkers(routes) {
@@ -71,6 +71,18 @@ export function createDistrict({ compact = false, kind = 'land' } = {}) {
     for (const [x, z, height] of [[-3, -2.2, 2.7], [0, -2.2, 3.2], [3, -2.2, 2.7]]) {
       t.box(buildings, 'ivory', [1.85, height, 1.85], [x, height / 2 + 0.1, z]);
       t.box(buildings, 'stone', [2.08, 0.11, 2.08], [x, height + 0.16, z]);
+      // Parapets, roof plant and side-facing window bays give every block depth.
+      for(const dx of [-.94,.94]) t.box(buildings,'ivory',[.065,.18,1.98],[x+dx,height+.3,z]);
+      for(const dz of [-.94,.94]) t.box(buildings,'ivory',[1.98,.18,.065],[x,height+.3,z+dz]);
+      t.box(buildings,'metal',[.52,.22,.44],[x-.38,height+.32,z-.35]);
+      for(let fin=0;fin<5;fin++)t.box(buildings,'dark',[.035,.018,.39],[x-.56+fin*.09,height+.44,z-.35],false);
+      for(const side of [-1,1])for(let floor=0;floor<3;floor++)for(const dz of [-.46,.31]) {
+        const y=.58+floor*(height-.5)/3;
+        t.box(buildings,'dark',[.03,.48,.51],[x+side*.933,y,z+dz]);
+        t.box(buildings,'glass',[.035,.4,.43],[x+side*.953,y,z+dz],false);
+        t.box(buildings,'ivory',[.09,.035,.57],[x+side*.96,y-.25,z+dz]);
+      }
+
       for (let floor = 0; floor < (compact ? 3 : 4); floor++) {
         t.box(buildings, 'glass', [1.52, 0.34, 0.045], [x, 0.55 + floor * (height - 0.5) / (compact ? 3 : 4), z + 0.95], false);
         t.box(buildings, 'stone', [2.02, 0.06, 0.34], [x, 0.34 + floor * (height - 0.5) / (compact ? 3 : 4), z + 1.03]);

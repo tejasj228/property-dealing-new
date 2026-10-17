@@ -15,7 +15,7 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export default function PropertyMap({ properties }) {
   const viewport = useRef(null), markers = useRef(new Map()), drag = useRef(null);
-  const nearby = useInView(viewport, { once: true, margin: '240px' });
+  const nearby = useInView(viewport, { once: true, margin: '650px' });
   const reduced = useReducedMotion(), yaw = useMotionValue(.16), zoom = useMotionValue(1);
   const [paused, setPaused] = useState(false), [selectedId, setSelectedId] = useState(null);
   const layout = useMemo(() => layoutProperties(properties), [properties]);

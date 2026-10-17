@@ -23,7 +23,7 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
     renderer.domElement.setAttribute('aria-hidden', 'true');
     const scene = new Scene();
     const map = createPropertyMapModel(properties, compact || lowPower); scene.add(map.model);
-    const lighting = createSceneLighting(scene, map.model, renderer, { kind: 'map', compact });
+    const lighting = createSceneLighting(scene, map.model, renderer, { kind: 'map', compact: compact || lowPower, invalidate });
     const camera = new OrthographicCamera(-14, 14, 10, -10, 0.1, 300);
     let width = 0, height = 0, frame = 0, visible = false, lost = false, last = 0, elapsed = 0, dirty = true;
     const point = camera.position.clone();
@@ -48,7 +48,7 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
     const stopTheme = observeSceneTheme(element, lighting, invalidate);
     wake.current = invalidate;
     const resize = new ResizeObserver(([entry]) => { width = entry.contentRect.width; height = entry.contentRect.height; if (width && height) { renderer.setPixelRatio(scenePixelRatio(width, height, { devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize })); renderer.setSize(width, height, false); } invalidate(); }); resize.observe(element);
-    const visibility = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) invalidate(); else { cancelAnimationFrame(frame); frame = 0; last = 0; } }); visibility.observe(element);
+    const visibility = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) invalidate(); else { cancelAnimationFrame(frame); frame = 0; last = 0; } }, { rootMargin: '180px' }); visibility.observe(element);
     const onVisibility = () => { if (document.hidden) { cancelAnimationFrame(frame); frame = 0; last = 0; } else invalidate(); };
     const onLost = e => { e.preventDefault(); lost = true; cancelAnimationFrame(frame); frame = 0; delete root.dataset.ready; };
     const onRestored = () => { lost = false; invalidate(); };

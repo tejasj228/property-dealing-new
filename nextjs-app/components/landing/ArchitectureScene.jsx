@@ -51,7 +51,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     const camera = kind === 'house' ? createSceneCamera() : createSpatialCamera(kind);
     const architecture = kind === 'house' ? createArchitecture({ compact: compact || lowPower }) : kind === 'keys' ? createKeys() : kind === 'office' ? createContactOffice() : createDistrict({ compact: compact || lowPower, kind });
     scene.add(architecture.model);
-    const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower });
+    const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower, invalidate });
 
     let visible = false, frame = 0, dirty = true, lastTime = 0, contextLost = false, elapsed = 0;
     let currentProgress = reduceMotion && kind !== 'office' ? 0 : progress.get();
@@ -116,7 +116,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       visible = entry.isIntersecting;
       if (visible) invalidate();
       else { cancelAnimationFrame(frame); frame = 0; lastTime = 0; }
-    }, { threshold: 0.01 });
+    }, { threshold: 0.01, rootMargin: '180px' });
     visibility.observe(host);
     const unsubscribe = reduceMotion && kind !== 'office' ? () => {} : progress.on('change', value => { targetProgress = value; if (!pausedRef.current || kind === 'office') invalidate(); });
     const onPointerMove = e => {

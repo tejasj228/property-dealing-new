@@ -3,7 +3,7 @@
   --primary-color: var(--ink); --secondary-color: var(--muted); --accent-color: var(--accent);
   --text-dark: var(--ink); --text-light: var(--muted); --text-white: var(--accent-ink);
   --bg-light: var(--surface); --bg-white: var(--surface-card); --bg-card: var(--surface-card); --bg-subcard: var(--surface-soft);
-  --border-light: var(--line); --shadow-light: #193b2910; --shadow-medium: #193b2918;
+  --border-light: var(--line); --shadow-light: #302d2410; --shadow-medium: #302d2418;
   --theme-transition: none; --hover-transition: color .2s ease; --transform-transition: transform .2s ease;
   overflow: clip;
 }
@@ -39,8 +39,8 @@
 .public-pages .catalogue-card:hover .catalogue-image img { transform: scale(1.025); }
 .public-pages .image-empty { display: grid; place-content: center; justify-items: center; gap: 16px; height: 100%; color: var(--muted); font-size: 12px; }
 .public-pages .image-empty i { font-size: 32px; }
-.public-pages .image-controls { position: absolute; bottom: 14px; right: 14px; display: flex; align-items: center; background: #f4f7f5; color: #203e34; border-radius: 999px; padding: 4px; box-shadow: 0 4px 20px #10261c24; }
-.public-pages .image-controls button { width: 38px; height: 38px; border-radius: 50%; border: 0; color: #203e34; background: transparent; }
+.public-pages .image-controls { position: absolute; bottom: 14px; right: 14px; display: flex; align-items: center; background: #faf8f1; color: #2a2821; border-radius: 999px; padding: 4px; box-shadow: 0 4px 20px #1f1d1724; }
+.public-pages .image-controls button { width: 38px; height: 38px; border-radius: 50%; border: 0; color: #2a2821; background: transparent; }
 .public-pages .image-controls span { font-size: 10px; min-width: 45px; text-align: center; }
 .public-pages .catalogue-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; margin: 20px 0 11px; }
 .public-pages .catalogue-meta > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
@@ -147,7 +147,7 @@
 .public-pages .neighbourhood-card p { font-size: 13px; line-height: 1.8; color: var(--muted); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .public-pages .neighbourhood-explore { display: flex; align-items: center; gap: 14px; padding: 12px 0; margin-top: 10px; border: 0; background: none; font-size: 12px; font-weight: 600; }
 .public-pages .neighbourhood-dialog { width: min(1100px,94vw); max-height: 90svh; padding: 0; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-card); color: var(--ink); margin: auto; overflow: auto; }
-.public-pages .neighbourhood-dialog::backdrop { background: #071810b8; backdrop-filter: blur(5px); }
+.public-pages .neighbourhood-dialog::backdrop { background: #12100db8; backdrop-filter: blur(5px); }
 .public-pages .neighbourhood-dialog-grid { display: grid; grid-template-columns: 1.2fr 1fr; }
 .public-pages .neighbourhood-close { position: absolute; right: 14px; top: 14px; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); z-index: 1; }
 .public-pages .neighbourhood-gallery { padding: 24px; background: var(--surface-soft); min-width: 0; }

@@ -1,4 +1,4 @@
-import { DoubleSide, Group, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
+import { DoubleSide, Group, Mesh, MeshPhysicalMaterial, PlaneGeometry } from 'three';
 import { createDetailKit } from './scene-details.mjs';
 import { batchSceneMeshes } from './scene-batching.mjs';
 import { disposeSpatialModel } from './spatial-models.mjs';
@@ -13,7 +13,7 @@ export function createContactOffice() {
   // Clear single-surface glazing avoids overlapping transparent box faces.
   // No transmission pass or night-window emission: the interior stays visible.
   const paneGeometry=new PlaneGeometry(1,1);
-  const glazing=new MeshStandardMaterial({color:'#b5d8cc',transparent:true,opacity:.17,roughness:.18,metalness:.08,depthWrite:false,side:DoubleSide});
+  const glazing=new MeshPhysicalMaterial({name:'windscreen',color:'#c5d3d4',transparent:true,opacity:.17,roughness:.18,metalness:.08,depthWrite:false,side:DoubleSide});
   const skylight=glazing.clone();skylight.opacity=.22;
   t.resources.geometries.push(paneGeometry);t.resources.materials.push(glazing,skylight);
   function pane(parent,name,width,height,position,rotation=[0,0,0],material=glazing){

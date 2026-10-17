@@ -278,3 +278,4 @@ export const healthCheck = async () => {
 
 // Export the axios instance for custom requests
 export default api;
+export const analyticsAPI = { getOverview: async () => (await api.get("/analytics")).data };

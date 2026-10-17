@@ -196,10 +196,10 @@ const Contact = () => {
   return (
     <div className="contact-page">
       <div className="container">
-        <div className="contact-intro"><div className="section-title">
+        <div className="contact-intro"><div className="section-title"><div className="contact-intro-copy">
           <span className="page-kicker">Contact</span><h1>Let’s talk about your next move.</h1>
           <p>A home, a plot, a space for your business. Tell us what you have in mind, or visit either of our offices.</p>
-          <div className="contact-intro-actions"><a className="btn btn-primary" href="#contact-enquiry">Tell us your plans <BrandIcon className="fa-solid fa-arrow-down" aria-hidden="true"  /></a><a href="tel:+919811186086">Prefer a call?</a></div>
+          </div><div className="contact-intro-actions"><a className="btn btn-primary" href="#contact-enquiry">Tell us your plans <BrandIcon className="fa-solid fa-arrow-down" aria-hidden="true"  /></a><a href="tel:+919811186086">Prefer a call?</a></div>
         </div><ContactOffice /></div>
         
         <div className="contact-grid">
