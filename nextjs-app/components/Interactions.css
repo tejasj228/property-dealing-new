@@ -1,7 +1,7 @@
 /* SVG icons replace the font glyphs while keeping existing sizing hooks. */
-i.brand-icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:1em; height:1em; vertical-align:-.12em; font-style:normal; line-height:1; }
+i.brand-icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:1em; height:1em; min-width:18px; min-height:18px; vertical-align:-.12em; font-style:normal; line-height:1; }
 i.brand-icon::before,i.brand-icon::after { content:none!important; }
-i.brand-icon>svg { display:block; width:1em; height:1em; overflow:visible; }
+i.brand-icon>svg { display:block; width:100%; height:100%; overflow:visible; }
 @media(prefers-reduced-motion:no-preference) {
   body :is(a,button,[role='link'],[role='option']) { transition:color .18s ease,background-color .18s ease,border-color .18s ease,box-shadow .18s ease!important; }
   body i.brand-icon { transition:translate .2s ease,rotate .2s ease,scale .2s ease,color .18s ease!important; }
@@ -16,3 +16,7 @@ i.brand-icon>svg { display:block; width:1em; height:1em; overflow:visible; }
   @keyframes brand-spin { to { transform:rotate(360deg); } }
 }
 @media(prefers-reduced-motion:reduce) { body i.brand-icon { animation:none!important; transition:none!important; translate:none!important; rotate:none!important; scale:none!important; } }
+
+/* Keep small text from shrinking action glyphs to caption size. */
+body :is(button,a,.custom-select-trigger)>.brand-icon { min-width:20px; min-height:20px; }
+body :is(.contact-item-icon,.contact-item-text)>.brand-icon { min-width:23px; min-height:23px; }

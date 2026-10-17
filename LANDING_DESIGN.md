@@ -138,3 +138,8 @@ The contact office now has a full framed flat roof with a large skylight, transp
 All four public select locations (contact interest, property location, landing area and society map) use a shared Radix Select wrapper: themed portal, viewport collision handling, keyboard/typeahead navigation, selected ticks, disabled options and optional empty values. Form field names/values and existing callbacks remain intact. Admin Material Select/Menu/MenuItem theme now provides consistent dark green menus, highlighted/selected options and animated chevrons; menu scroll lock is disabled to avoid changing document width.
 
 Public icon fonts replaced with a shared outlined Phosphor SVG family while preserving legacy sizing hooks. Admin icons now consistently use available outlined Material variants and direct imports. Hover/focus responses use bounded icon translation/rotation/scale and colour changes, with reduced-motion guards; no page-sized layers or new animation loops were added. Removed the global Font Awesome stylesheet. Both production builds, 27 scene/progress tests, 3 custom-control DOM tests and 12 admin tests passed. Run public DOM tests with npm run check:controls in nextjs-app (uses the installed sibling admin Jest runtime). Source/build/DOM validation only; no live enquiry submissions.
+
+
+## Icon readability follow-up
+
+Public SVG glyphs now have an 18px minimum, 20px in direct link/button actions, and 23px in contact method badges. Existing larger illustration/empty-state icons retain their size. Admin small icons are 22px, regular icons 24px, button adornments 22px, and icon-only targets at least 40px. This avoids caption text reducing SVGs to 8–12px. CSS/theme change only; production builds checked.
