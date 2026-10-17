@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import useAreas from '@/hooks/useAreas';
 import './Contact.css';
+import ContactOffice from './ContactOffice';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -193,10 +194,11 @@ const Contact = () => {
   return (
     <div className="contact-page">
       <div className="container">
-        <div className="section-title">
+        <div className="contact-intro"><div className="section-title">
           <span className="page-kicker">Contact</span><h1>Let’s talk about your next move.</h1>
           <p>A home, a plot, a space for your business. Tell us what you have in mind, or visit either of our offices.</p>
-        </div>
+          <div className="contact-intro-actions"><a className="btn btn-primary" href="#contact-enquiry">Tell us your plans <i className="fa-solid fa-arrow-down" aria-hidden="true" /></a><a href="tel:+919811186086">Prefer a call?</a></div>
+        </div><ContactOffice /></div>
         
         <div className="contact-grid">
           <div className="contact-info">
@@ -224,7 +226,7 @@ const Contact = () => {
             </div>
           </div>
 
-          <div className="contact-form">
+          <div className="contact-form" id="contact-enquiry">
             <h3>What are you looking for?</h3>
             
             {submitSuccess && (

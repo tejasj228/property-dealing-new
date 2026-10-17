@@ -424,3 +424,22 @@ test('pedestrian routes stay clear of furniture throughout a full walking cycle'
     illustration.dispose();
   }
 });
+
+
+const { createContactOffice } = await import('../components/landing/contact-office.mjs');
+test('contact office stays framed when turned, and its door responds without ambient motion', () => {
+  const office=createContactOffice(),camera=createSpatialCamera('office');
+  const door=office.model.getObjectByName('office-door');
+  for(const aspect of [.8,1.2,1.8]){
+    frameSpatialCamera(camera,aspect*1000,1000,'office');
+    for(const open of [0,.5,1])for(const yaw of [-.8,.8])for(const pitch of [-.18,.18]){
+      office.update(open,true,10);office.model.rotation.set(pitch,yaw,0);office.model.updateMatrixWorld(true);
+      assert.equal(door.rotation.y,-open*Math.PI*.62);
+      office.model.traverseVisible(object=>assertFits(object,camera,'contact office'));
+    }
+  }
+  office.update(1,true,0);office.model.updateMatrixWorld(true);const frozen=office.model.toJSON();
+  office.update(1,true,50);office.model.updateMatrixWorld(true);assert.deepEqual(office.model.toJSON(),frozen);
+  const resources=new Set();office.model.traverse(object=>{if(object.geometry)resources.add(object.geometry);if(object.material)resources.add(object.material);});
+  let released=0;resources.forEach(resource=>resource.addEventListener('dispose',()=>released++));office.dispose();assert.equal(released,resources.size);
+});

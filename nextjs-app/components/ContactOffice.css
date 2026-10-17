@@ -1,0 +1,21 @@
+.public-pages .contact-page .contact-intro { display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); align-items:center; gap:24px; margin-bottom:64px; }
+.public-pages .contact-intro .section-title { margin:0; padding:0; text-align:left; }
+.public-pages .contact-intro .section-title h1 { font-size:clamp(38px,4.3vw,65px); max-width:560px; line-height:1.08; }
+.public-pages .contact-intro .section-title p { max-width:440px; }
+.contact-intro-actions { display:flex; flex-wrap:wrap; gap:24px; align-items:center; margin-top:28px; }
+.public-pages .contact-intro-actions>a:last-child { font-size:13px; color:var(--ink); text-underline-offset:6px; }
+.contact-office { min-width:0; margin:0; }
+.contact-office-stage { position:relative; width:100%; height:470px; isolation:isolate; }
+.contact-office-stage:has([data-ready='true']) .contact-office-fallback { visibility:hidden; }
+.contact-office-fallback { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; }
+.contact-office-fallback span { width:65px; height:100px; background:var(--accent); opacity:.3; transform:skewY(-12deg); }
+.contact-office-fallback span:nth-child(2) { height:155px; opacity:.5; }
+.contact-office-fallback p { position:absolute; bottom:55px; font-size:12px; color:var(--muted); }
+.contact-office figcaption { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px 0; border-top:1px solid var(--line); color:var(--ink); font-size:13px; }
+.contact-office figcaption small { display:block; margin-top:6px; font-size:10px; color:var(--muted); }
+.contact-office-controls { display:flex; gap:6px; flex-shrink:0; }
+.contact-office-controls button { display:flex; align-items:center; gap:9px; min-height:40px; border:1px solid var(--line); border-radius:24px; padding:9px 12px; background:var(--surface-soft); color:var(--ink); font:inherit; font-size:11px; cursor:pointer; }
+.contact-office-controls button:hover { background:var(--accent); color:var(--accent-ink); }
+.public-pages #contact-enquiry { scroll-margin-top:110px; }
+@media(max-width:900px){.public-pages .contact-page .contact-intro { grid-template-columns:1fr; gap:0; margin-bottom:40px; }.public-pages .contact-intro .section-title h1 { max-width:650px; }.contact-office-stage { height:420px; }}
+@media(max-width:480px){.contact-office-stage { height:330px; }.contact-office figcaption { align-items:flex-start; flex-wrap:wrap; }.contact-office-controls { margin-left:auto; }}

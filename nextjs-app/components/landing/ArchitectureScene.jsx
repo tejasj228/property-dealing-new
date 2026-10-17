@@ -8,6 +8,7 @@ import {
 import { createArchitecture, createSceneCamera, frameSceneCamera, scenePose } from './architecture.mjs';
 import { createDistrict, createKeys, createSpatialCamera, frameSpatialCamera } from './spatial-models.mjs';
 import { createOrbitSpring } from './orbit-spring.mjs';
+import { createContactOffice } from './contact-office.mjs';
 import { createKeySpring } from './key-spring.mjs';
 import styles from './Landing.module.css';
 import { scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
@@ -48,12 +49,12 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
 
     const scene = new Scene();
     const camera = kind === 'house' ? createSceneCamera() : createSpatialCamera(kind);
-    const architecture = kind === 'house' ? createArchitecture({ compact: compact || lowPower }) : kind === 'keys' ? createKeys() : createDistrict({ compact: compact || lowPower, kind });
+    const architecture = kind === 'house' ? createArchitecture({ compact: compact || lowPower }) : kind === 'keys' ? createKeys() : kind === 'office' ? createContactOffice() : createDistrict({ compact: compact || lowPower, kind });
     scene.add(architecture.model);
     const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower });
 
     let visible = false, frame = 0, dirty = true, lastTime = 0, contextLost = false, elapsed = 0;
-    let currentProgress = reduceMotion ? 0 : progress.get();
+    let currentProgress = reduceMotion && kind !== 'office' ? 0 : progress.get();
     let targetProgress = currentProgress;
     let dragging = null, dragX = 0, dragY = 0;
     const spring = createKeySpring(), orbit = createOrbitSpring();
@@ -68,6 +69,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
         if (!reduceMotion) elapsed += delta / 1000;
         currentProgress += (targetProgress - currentProgress) * ease;
       }
+      if (kind === 'office' && (reduceMotion || pausedRef.current)) currentProgress = targetProgress;
       const orbitPose = kind !== 'keys' ? orbit.step(delta / 1000, dragX, dragY, reduceMotion || pausedRef.current) : null;
       const jiggle = kind === 'keys' ? spring.step(delta / 1000, dragX, dragY, reduceMotion || pausedRef.current) : null;
       if (kind === 'house') {
@@ -116,7 +118,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       else { cancelAnimationFrame(frame); frame = 0; lastTime = 0; }
     }, { threshold: 0.01 });
     visibility.observe(host);
-    const unsubscribe = reduceMotion ? () => {} : progress.on('change', value => { targetProgress = value; if (!pausedRef.current) invalidate(); });
+    const unsubscribe = reduceMotion && kind !== 'office' ? () => {} : progress.on('change', value => { targetProgress = value; if (!pausedRef.current || kind === 'office') invalidate(); });
     const onPointerMove = e => {
       if (!dragging) return;
       const dx = (e.clientX - dragging.pointerX) / dragging.width;
