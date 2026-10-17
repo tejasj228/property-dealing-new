@@ -1,5 +1,5 @@
 /* Blend only this small paint-contained sprite, never a full-screen overlay. */
-.brand-cursor { position:fixed; left:0; top:0; width:96px; height:96px; z-index:10000; pointer-events:none; color:#fff; mix-blend-mode:difference; contain:strict; overflow:clip; will-change:transform; }
+.brand-cursor { position:fixed; left:0; top:0; width:min(96px,100vw); height:min(96px,100vh); z-index:10000; pointer-events:none; color:#fff; mix-blend-mode:difference; contain:strict; overflow:clip; will-change:transform; }
 .brand-cursor[hidden] { display:none; }
 .brand-cursor,.brand-cursor * { pointer-events:none!important; transition:none!important; }
 .brand-cursor>span { position:absolute; top:48px; left:48px; width:0; height:0; }

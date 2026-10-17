@@ -30,7 +30,7 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
     function render(time) {
       frame = 0;
       if (!visible || document.hidden || lost || !width || !height) return;
-      if (last && time - last < (compact ? 33 : 22) && !dirty) { frame = requestAnimationFrame(render); return; }
+      if (last && time - last < (compact || lowPower ? 48 : 32)) { frame = requestAnimationFrame(render); return; }
       const delta = Math.min(64, time - (last || time - 16)); last = time;
       if (!pausedRef.current && !reduced) elapsed += delta / 1000;
       map.update(elapsed, reduced);

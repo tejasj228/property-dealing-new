@@ -104,3 +104,16 @@ The map also mixes open parcels, residential buildings with balconies/solar roof
 The cursor originally blended a viewport-sized fixed layer and reassigned the root cursor attribute on every pointer event. The correction confines inversion and the entire trail to a 96px paint-contained sprite, clamps trail distance, and writes root/mode attributes only when their state changes. Passive wheel/scroll listeners cancel the cursor frame loop and restore the native pointer during scrolling. Pointer-over events caused by moving page content cannot restart it; a real mouse move after scrolling settles restores the custom cursor. No listener cancels wheel or touch input or writes a scroll position. Both public and admin implementations are identical.
 
 Three cursor regressions verify that 100 pointer events coalesce into one queued frame and one root attribute write, idle rendering stops, scrolling cancels cursor rendering without preventing wheel input, content hover cannot restart it during scroll, and native grab behaviour remains available. These are DOM/scheduler checks, not a browser frame-rate or visual-scroll measurement.
+
+
+## Cursor boundaries and scroll progress follow-up
+
+The earlier small cursor sprite still allowed its fixed border box to extend beyond the viewport near the bottom and right edges. Both apps now clamp the entire box within the viewport and offset the cursor hotspot inside it. This prevents that overlay from extending scrollable overflow; resizing hides the old position until fresh pointer input. Added DOM tests for six edge/corner positions and resize cleanup. These tests verify coordinates, not browser scroll feel.
+
+The public cursor uses a thicker green ring and a larger dot, switching between mint and deep green according to the nearest opaque surface, with contrasting edges for photographs. It no longer uses difference blending. The admin cursor retains its existing appearance with the same bounds correction. Both still stop rendering during scrolling and preserve native grab cursors over models.
+
+Document scrolling uses stable scrollbar space, disables elastic rebound and anchor corrections, and leaves native wheel handling intact. Removed the public blanket all-property transition; 3D render throttles now apply even when scroll progress invalidates scenes. This reduces render competition without changing model interaction or data.
+
+A slim landing-only progress bar updates its transform once per animation frame, measures page length only on resize/content changes, and exposes percent explored/remaining accessibly. Its regression test checks progress, overscroll bounds, dynamic height, coalescing and cleanup.
+
+Validation: both production builds pass, 12 admin tests and 24 landing/progress checks pass. Source/build/DOM checks only, as requested. No claim of a reproduced or resolved real-device scroll symptom without user confirmation.

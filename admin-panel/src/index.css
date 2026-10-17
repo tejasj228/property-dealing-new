@@ -52,3 +52,7 @@ a { color:inherit; } button,a,input,select,textarea { -webkit-tap-highlight-colo
 
 .admin-panel-heading a:hover,.admin-login-back:hover,.admin-sidebar-bottom>a:hover { color:#e0f1e4; }
 a,button { transition:color .15s ease,background-color .15s ease; }
+
+/* One stable document scroller; no elastic rebound or anchor corrections. */
+html { overflow-x:clip; overflow-y:auto; scrollbar-gutter:stable; overscroll-behavior-y:none; overflow-anchor:none; scroll-behavior:auto; }
+body { overflow-x:clip; overflow-y:visible; }

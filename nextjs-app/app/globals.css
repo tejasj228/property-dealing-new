@@ -39,7 +39,7 @@ html {
   --shadow-dark: rgba(44, 62, 80, 0.25);
   --primary-font: 'Gilmer Light', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   --secondary-font: 'Gilmer Light', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  --theme-transition: all 0.3s ease;
+  --theme-transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   --hover-transition: all 0.3s ease;
   --transform-transition: transform 0.3s ease;
 }
@@ -94,9 +94,7 @@ h3, h4 { font-weight: 400; }
   font-weight: 400;
 }
 
-*, *::before, *::after {
-  transition: var(--theme-transition);
-}
+/* Components opt into transitions; layout and canvas dimensions remain immediate. */
 
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-light); }
@@ -345,3 +343,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { width:9px; height:9px; }
 html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background:var(--scroll-track); }
 html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background:var(--scroll-thumb); border:2px solid var(--scroll-track); border-radius:8px; }
 html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover { background:var(--scroll-hover); }
+
+/* One stable document scroller; no elastic rebound or anchor corrections. */
+html { overflow-x:clip; overflow-y:auto; scrollbar-gutter:stable; overscroll-behavior-y:none; overflow-anchor:none; scroll-behavior:auto; }
+body { overflow-x:clip; overflow-y:visible; }

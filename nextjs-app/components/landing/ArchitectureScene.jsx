@@ -61,7 +61,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     function render(time = 0) {
       frame = 0;
       if (!visible || document.hidden || contextLost) return;
-      if (lastTime && time - lastTime < (compact ? 32 : 16) && !dirty) { frame = requestAnimationFrame(render); return; }
+      if (lastTime && time - lastTime < (compact || lowPower ? 48 : 32)) { frame = requestAnimationFrame(render); return; }
       const delta = Math.min(64, time - (lastTime || time - 16)); lastTime = time;
       const ease = 1 - Math.exp(-delta / 105);
       if (!pausedRef.current) {

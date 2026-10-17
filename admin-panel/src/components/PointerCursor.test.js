@@ -53,3 +53,21 @@ test('hovering a draggable 3D surface leaves only the native grab cursor',()=>{
   expect(cursor.hidden).toBe(true);expect(frames.size).toBe(0);
   expect(document.documentElement.hasAttribute('data-brand-cursor')).toBe(false);
 });
+
+// Geometry regression: the fixed cursor box must never extend document overflow.
+test.each([[0,0],[1023,767],[1010,750],[512,768],[-20,-20],[1100,900]])('cursor stays inside the viewport at %s,%s', (x,y)=>{
+  const {cursor,surface}=mount();
+  act(()=>{ pointer(surface,'pointermove',x,y); const pending=[...frames.values()];frames.clear();pending.forEach(callback=>callback(now+=16)); });
+  const [left,top]=cursor.style.transform.match(/-?[\d.]+(?=px)/g).map(Number);
+  expect(left).toBeGreaterThanOrEqual(0);expect(top).toBeGreaterThanOrEqual(0);
+  expect(left+96).toBeLessThanOrEqual(window.innerWidth);expect(top+96).toBeLessThanOrEqual(window.innerHeight);
+  const [hotX,hotY]=cursor.firstChild.style.transform.match(/-?[\d.]+(?=px)/g).map(Number);
+  expect(left+48+hotX).toBe(Math.max(0,Math.min(x,window.innerWidth)));
+  expect(top+48+hotY).toBe(Math.max(0,Math.min(y,window.innerHeight)));
+});
+
+test('resize hides the old cursor position until new viewport bounds are available',()=>{
+  const {cursor,surface}=mount();act(()=>pointer(surface));
+  act(()=>window.dispatchEvent(new Event('resize')));
+  expect(cursor.hidden).toBe(true);expect(frames.size).toBe(0);
+});

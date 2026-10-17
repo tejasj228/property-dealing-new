@@ -9,7 +9,10 @@ export default function PointerCursor() {
   useEffect(() => {
     const node = host.current, root = document.documentElement;
     const media = matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+    let surfaceTarget = null;
     const parts = Array.from(node.children), points = parts.map(() => ({ x: 0, y: 0 }));
+    let viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    let viewportHeight = document.documentElement.clientHeight || window.innerHeight;
     let x = 0, y = 0, frame = 0, active = false, enabled = media.matches, lastScroll = -Infinity;
     function hide() {
       if (active) { active = false; node.hidden = true; delete root.dataset.brandCursor; }
@@ -18,7 +21,11 @@ export default function PointerCursor() {
     function draw() {
       frame = 0;
       if (!active || !enabled || document.hidden) return;
-      node.style.transform = `translate3d(${x - 48}px,${y - 48}px,0)`;
+      // A transformed fixed box can enlarge document overflow at viewport edges.
+      // Keep its entire border box inside the viewport; move the hotspot within it.
+      const left = Math.max(0, Math.min(x - 48, viewportWidth - 96));
+      const top = Math.max(0, Math.min(y - 48, viewportHeight - 96));
+      node.style.transform = `translate3d(${left}px,${top}px,0)`;
       let unsettled = false;
       points.forEach((point, i) => {
         const factor = [1, .3, .23, .18][i];
@@ -26,7 +33,7 @@ export default function PointerCursor() {
         // Keep all painted pixels inside one small compositing layer.
         const dx = point.x - x, dy = point.y - y, distance = Math.hypot(dx, dy);
         if (distance > 22) { point.x = x + dx / distance * 22; point.y = y + dy / distance * 22; }
-        parts[i].style.transform = `translate3d(${point.x - x}px,${point.y - y}px,0)`;
+        parts[i].style.transform = `translate3d(${point.x - left - 48}px,${point.y - top - 48}px,0)`;
         if (Math.abs(x - point.x) + Math.abs(y - point.y) > .15) unsettled = true;
       });
       if (unsettled) frame = requestAnimationFrame(draw);
@@ -36,13 +43,29 @@ export default function PointerCursor() {
       if (target.closest('input,textarea,[contenteditable="true"],dialog[open],iframe')) return false;
       const interactive = target.closest('a,button,[role="button"],[role="link"],select,summary,label[for]');
       if (!interactive && target.closest('[data-cursor="grab"],[data-draggable="true"]')) return false;
+      if (surfaceTarget !== target) {
+        surfaceTarget = target;
+        // Read only when entering a different surface, never each animation frame.
+        let surface = target, light = false;
+        while (surface) {
+          const color = getComputedStyle(surface).backgroundColor;
+          const channels = color.match(/[\d.]+/g)?.map(Number);
+          if (channels?.length >= 3 && (channels.length < 4 || channels[3] >= .8)) {
+            light = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722 > 145;
+            break;
+          }
+          surface = surface.parentElement;
+        }
+        const tone = light ? 'deep' : 'mint';
+        if (node.dataset.tone !== tone) node.dataset.tone = tone;
+      }
       const mode = interactive ? 'link' : 'default';
       if (node.dataset.mode !== mode) node.dataset.mode = mode;
       return true;
     }
     function move(event) {
       if (!enabled || event.pointerType !== 'mouse' || performance.now() - lastScroll < 160 || !targetMode(event.target)) { hide(); return; }
-      x = event.clientX; y = event.clientY;
+      x = Math.max(0, Math.min(event.clientX, viewportWidth)); y = Math.max(0, Math.min(event.clientY, viewportHeight));
       if (!active) {
         points.forEach(point => { point.x = x; point.y = y; });
         active = true; node.hidden = false; root.dataset.brandCursor = 'on';
@@ -57,6 +80,8 @@ export default function PointerCursor() {
     const leave = event => { if (!event.relatedTarget) hide(); };
     const visibility = () => { if (document.hidden) hide(); };
     const change = () => { enabled = media.matches; hide(); };
+    const resize = () => { viewportWidth = root.clientWidth || window.innerWidth; viewportHeight = root.clientHeight || window.innerHeight; hide(); };
+    window.addEventListener('resize', resize, { passive: true });
     document.addEventListener('pointermove', move, { passive: true });
     document.addEventListener('pointerover', over, { passive: true });
     document.addEventListener('pointerout', leave, { passive: true });
@@ -65,7 +90,7 @@ export default function PointerCursor() {
     document.addEventListener('scroll', scroll, { passive: true, capture: true });
     document.addEventListener('visibilitychange', visibility); window.addEventListener('blur', hide); media.addEventListener('change', change);
     return () => {
-      hide(); document.removeEventListener('pointermove', move); document.removeEventListener('pointerover', over); document.removeEventListener('pointerout', leave);
+      hide(); window.removeEventListener('resize', resize); document.removeEventListener('pointermove', move); document.removeEventListener('pointerover', over); document.removeEventListener('pointerout', leave);
       document.removeEventListener('pointerdown', down); document.removeEventListener('pointerup', up);
       document.removeEventListener('wheel', scroll); document.removeEventListener('scroll', scroll, true);
       document.removeEventListener('visibilitychange', visibility); window.removeEventListener('blur', hide); media.removeEventListener('change', change);
