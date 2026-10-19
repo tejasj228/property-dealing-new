@@ -44,7 +44,7 @@ export function addCityLandmarks(model,t,parcel) {
  const fin=new Mesh(finGeometry,t.materials.green);fin.position.set(-.018,.08,-.62);plane.add(fin);
  for(const side of [-1,1]){ball(plane,'metal',[.115,.115,.3],[side*.55,-.14,-.16]);ball(plane,'dark',[.08,.08,.015],[side*.55,-.14,.13]);b(plane,'lamp',[.045,.035,.09],[side*1.48,.01,-.7]);}
  for(let z=-.65;z<.65;z+=.16)for(const side of [-1,1])b(plane,'glass',[.013,.05,.06],[side*.175,.05,z]);
- const gear=new Group();gear.name='aircraft-landing-gear';plane.add(gear);
+ const gear=new Group();gear.name='aircraft-landing-gear';gear.userData.rigid=true;plane.add(gear);
  for(const [x,z] of [[-.16,-.25],[.16,-.25],[0,.65]]) {b(gear,'metal',[.025,.11,.025],[x,-.2,z]);ball(gear,'dark',[.045,.055,.055],[x,-.28,z]);}
 
  const park=new Group();park.name='large-city-park';park.position.set(-4,.1,0);model.add(park);

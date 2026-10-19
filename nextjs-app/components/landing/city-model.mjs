@@ -4,6 +4,7 @@ import { BoxGeometry, BufferGeometry, CatmullRomCurve3, ExtrudeGeometry, Float32
 import { createDetailKit } from './scene-details.mjs';
 import { batchSceneMeshes } from './scene-batching.mjs';
 import { disposeSpatialModel } from './spatial-models.mjs';
+import { createFleet } from './vehicle-fleet.mjs';
 
 import { CITY_DISTRICTS } from './city-districts.mjs';
 
@@ -20,7 +21,7 @@ export function frameCityCamera(camera,width,height,overscan=1) {
 // A fictional district atlas. These buildings never represent available listings.
 export function createCity({compact=false}={}) {
   const world=new Group(),model=new Group();world.name='illustrative-city';world.add(model);
-  const t=createDetailKit({compact:true}), hitAreas=[], outlines=[], cars=[];
+  const t=createDetailKit({compact:true,rounded:false}), hitAreas=[], outlines=[], routes=[];
   const hitGeometry=new BoxGeometry(1,1,1), hitMaterial=new MeshBasicMaterial({visible:false});
   const extraGeometries=[],roadCorridors=[];
   const parcelLineMaterial=new LineBasicMaterial({color:'#f1e7ce'});
@@ -56,7 +57,7 @@ export function createCity({compact=false}={}) {
   }
   // A winding ring road and offset neighbourhood streets replace the square grid.
   const ring=road([[-12.7,-3],[-11.9,-6.9],[-7.5,-7.9],[-1,-7.7],[5.8,-7.8],[11.6,-6.8],[12.6,-2.8],[12.2,2.8],[11.4,6.7],[6.6,7.8],[.5,7.5],[-5.9,8],[-11.3,6.3],[-12.5,2]],true,.7);
-  for(const z of [-2.5,2.5])road([-12.5,-8,-4,0,4,8,12.3].map(x=>warp(x,z)));
+  for(const z of [-2.5,2.5])routes.push(road([-12.5,-8,-4,0,4,8,12.3].map(x=>warp(x,z))));
   for(const x of [-8,-4,0,4,8]) {
     const segments=x===-4?[[-7.7,-5,-2.5]]:x===4?[[-7.7,-5,-2.5],[2.5,5,7.7]]:[[-7.7,-5,-2.5,0,2.5,5,7.7]];
     segments.forEach(zs=>road(zs.map(z=>warp(x,z)),false,.46));
@@ -76,9 +77,21 @@ export function createCity({compact=false}={}) {
       }
       if(office)b('metal',[width+.025,.025,width+.025],[0,floor-.14,0],g);
     }
+    // Facade rhythm: piers split residential strips into rooms, mullions grid the offices,
+    // with balcony rails and wall-mounted AC units below some windows.
+    const bays=office?[-.36,-.24,-.12,0,.12,.24,.36]:[-.2,0,.2];
+    for(let floor=.3,level=0;floor<height-.1;floor+=(compact?.5:.36),level++)for(const side of [-1,1])for(const bay of bays) {
+      const pier=office?[.014,.23,.03]:[.032,.23,.04],material=office?'metal':'ivory',offset=width/2+(office?.022:.026);
+      b(material,pier,[bay*width,floor,side*offset],g);b(material,[pier[2],pier[1],pier[0]],[side*offset,floor,bay*width],g);
+      if(!office&&bay!==0&&random(x*13+z*7+level*3+side+bay*5)>.62)b('silver',[.04,.055,.07],[side*(width/2+.025),floor-.165,bay*width+.07],g);
+    }
+    if(!office)for(let floor=.3;floor<height-.1;floor+=(compact?.5:.36))for(const side of [-1,1])b('metal',[width+.1,.035,.012],[0,floor-.085,side*(width/2+.12)],g);
+    // Parapet, stair headroom, black rooftop water tanks or plant and condenser units.
+    for(const side of [-1,1]){b('ivory',[width+.12,.09,.035],[0,height+.14,side*(width/2+.043)],g);b('ivory',[.035,.09,width+.05],[side*(width/2+.043),height+.14,0],g);}
     b('dark',[.25,.25,.3],[-.16,height+.2,0],g);b('metal',[.3,.04,.35],[-.16,height+.34,0],g);
-    b('glass',[.4,.025,.4],[.2,height+.13,.15],g);
-    b('glass',[.34,.3,.035],[0,.16,width/2+.02],g);
+    if(office){for(const dx of [.12,.32]){b('silver',[.15,.1,.17],[dx,height+.15,-.25],g);b('dark',[.11,.012,.11],[dx,height+.206,-.25],g);}b('glass',[.4,.025,.4],[.2,height+.13,.18],g);}
+    else for(const [dx,dz] of [[.24,-.22],[.24,.08],[.05,-.3]]){t.round(g,'dark',[.075,.13,.075],[dx*width,height+.165,dz*width]);t.round(g,'dark',[.078,.012,.078],[dx*width,height+.236,dz*width]);}
+    b('glass',[.34,.3,.035],[0,.16,width/2+.02],g);b('stone',[.5,.03,.18],[0,.32,width/2+.1],g);
     return g;
   }
   function shop(parent,x,z) {
@@ -95,7 +108,13 @@ export function createCity({compact=false}={}) {
     const g=new Group();g.name=modern?'courtyard-villa':'pitched-roof-home';g.position.set(x,.21,z);parent.add(g);
     b('ivory',[.95,.62,.86],[0,.31,0],g);b('glass',[.67,.34,.025],[0,.33,.44],g);
     b('trunk',[.14,.52,.04],[.37,.28,.46],g);
+    if(!modern) {
+      // Low compound wall with a gate opening on the street side.
+      for(const side of [-1,1]){b('stone',[.035,.14,1.12],[side*.6,.07,.05],g);b('stone',[.42,.14,.035],[side*.39,.07,.6],g);}
+      b('stone',[1.24,.14,.035],[0,.07,-.5],g);b('metal',[.36,.1,.012],[0,.08,.6],g);
+    }
     if(modern) {
+      t.round(g,'dark',[.06,.1,.06],[-.38,1.2,-.3]);
       b('stone',[1.05,.07,1],[0,.67,0],g);b('ivory',[.42,.4,.6],[-.26,.9,-.12],g);
       b('glass',[.43,.26,.03],[-.26,.91,.19],g);b('stone',[.55,.06,.72],[-.26,1.12,-.12],g);
       b('trunk',[.6,.04,.55],[.38,.15,.67],g);
@@ -192,7 +211,14 @@ export function createCity({compact=false}={}) {
     b('metal',[.035,.8,.035],[x,.5,z]);b('lamp',[.2,.045,.12],[x,.92,z]);
     if(i%3===0)t.tree(model,x-v.z*.35,z+v.x*.35,.55);
   }
-  for(let i=0;i<(compact?2:4);i++){const car=t.car(model,0,0,0,i%2?'green':'ivory');car.scale.setScalar(.55);cars.push(car);}
+  // Two-way traffic keeps to the left on the ring and the two cross streets; more cars
+  // wait in the mall bays and at the terminal kerb. One fleet draws them all.
+  const crossStreets=routes.slice(0,2), traffic=[];
+  for(let i=0;i<(compact?3:6);i++)traffic.push({curve:ring,closed:true,lane:.17,direction:i%2?-1:1,speed:.0065+random(i+71)*.004,phase:i/(compact?3:6)+random(i+5)*.08});
+  crossStreets.forEach((curve,s)=>{for(let i=0;i<(compact?1:2);i++)traffic.push({curve,closed:false,lane:.14,direction:i%2?-1:1,speed:.012+random(s*3+i)*.006,phase:random(s*9+i+2)});});
+  const parked=[...[0,1,3,5,6,8].map(bay=>[1.3+bay*.6,.24,1.35,Math.PI]),...[-4,-1.5,1].map(x=>[x,.2,-9.27,Math.PI/2])];
+  const fleet=createFleet(t,model,traffic.length+parked.length,{offset:2});
+  parked.forEach(([x,y,z,yaw],i)=>fleet.place(traffic.length+i,x,y,z,yaw,.52));
   const landmarks=addCityLandmarks(model,t,parcel);
   // The landmark blocks replace six small parcels, keeping the new park and mall clear of streets.
   for(const [x,z,type,width,depth,height] of [[-4,0,'society',7.1,3.5,.8],[4,0,'commercial',7.1,3.5,1.9],[-4,5,'commercial',7.1,3.4,1.5]]) {
@@ -203,19 +229,21 @@ export function createCity({compact=false}={}) {
   model.traverse(o=>{if(o.name==='botanical-tree'){const p=o.getWorldPosition(new Vector3());if(!clearOfRoads(p.x,p.z,.52,roadCorridors))unsafeTrees.push(o);}});
   unsafeTrees.forEach(tree=>{tree.traverse(o=>{if(o.isInstancedMesh)o.dispose();});tree.removeFromParent();});
   model.position.z=4.2;
-  batchSceneMeshes(model);
+  batchSceneMeshes(model,{tint:true});
   let selected=null;
   function select(id) {selected=CITY_DISTRICTS.some(d=>d.id===id)?id:null;outlines.forEach(item=>item.outline.visible=item.type===selected);}
   function update(progress,reduced=false,seconds=0) {
     const time=reduced?0:seconds;
     world.rotation.y=-.12+(reduced?0:Math.max(0,Math.min(1,progress))*.24);
     t.animate(time,reduced); landmarks.update(time,reduced);
-    cars.forEach((car,i)=>{
-      const along=(time*.009+i/cars.length)%1,p=ring.getPointAt(along),v=ring.getTangentAt(along);
-      car.position.set(p.x,.16,p.z);car.rotation.y=Math.atan2(v.x,v.z);
-      car.userData.wheels.forEach(w=>w.rotation.x=reduced?0:time*2.5);
+    traffic.forEach(({curve,closed,lane,direction,speed,phase},i)=>{
+      const travel=((time*speed+phase)%1+1)%1,along=direction>0?travel:1-travel,p=curve.getPointAt(along),v=curve.getTangentAt(along).multiplyScalar(direction);
+      // Open streets fade cars in and out where they meet the ring road.
+      const size=closed?.52:.52*Math.min(1,along*14,(1-along)*14);
+      fleet.place(i,p.x+v.z*lane,.16,p.z-v.x*lane,Math.atan2(v.x,v.z),size);
     });
+    fleet.commit();
   }
   update(0,true);
-  return {model:world,roadCorridors,hitAreas,select,update,dispose(){disposeSpatialModel(world,{geometries:[...t.resources.geometries,hitGeometry,...extraGeometries,...landmarks.resources.geometries],materials:[...t.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial,...landmarks.resources.materials]});}};
+  return {model:world,roadCorridors,hitAreas,movingCars:traffic.length,select,update,dispose(){disposeSpatialModel(world,{geometries:[...t.resources.geometries,hitGeometry,...extraGeometries,...landmarks.resources.geometries],materials:[...t.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial,...landmarks.resources.materials]});}};
 }

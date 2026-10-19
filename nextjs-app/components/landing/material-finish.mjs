@@ -24,7 +24,7 @@ export function surfaceTexture(kind, size = 128) {
   texture.repeat.set(3, 3); texture.needsUpdate = true; return texture;
 }
 
-export function finishArchitecture(scene, model, renderer, compact, invalidate = () => {}) {
+export function finishArchitecture(scene, model, renderer, compact, invalidate = () => {}, prepare = invalidate) {
   const textures = new Map(), materials = new Set(), leases = [];
   let disposed = false;
   const loader = renderer.isWebGLRenderer ? new TextureLoader() : null;
@@ -55,7 +55,11 @@ export function finishArchitecture(scene, model, renderer, compact, invalidate =
       material.normalMap = textureFor(`pbr/${scanned}-normal`);
       material.normalScale.setScalar(scanned === 'ground' ? .65 : .45);
       material.roughnessMap = textureFor(`pbr/${scanned}-roughness`);
+      // Lift the scanned albedo while keeping some authored contrast: darker stone trims
+      // stay distinct from rendered walls, and bare plots read paler than planted ground.
+      const authored = material.color.clone();
       material.color.set(scanned === 'ground' ? '#c8ab73' : scanned === 'wood' ? '#dfd2b8' : scanned === 'bark' ? '#c5b29e' : '#eeeae2');
+      if (scanned === 'concrete' || name === 'sand') material.color.lerp(authored, name === 'sand' ? .5 : .6);
       material.roughness = .92;
     }
     const surface = /timber|trunk/.test(name) ? 'wood' : /concrete|ivory|edge/.test(name) ? 'plaster' : /road/.test(name) ? 'asphalt' : /stone|sand|soil/.test(name) ? 'stone' : /grass|leaf|hedge/.test(name) ? 'foliage' : name === 'water' ? 'water' : /silver|metal/.test(name) ? 'metal' : null;
@@ -83,14 +87,15 @@ export function finishArchitecture(scene, model, renderer, compact, invalidate =
       const studio = new RoomEnvironment(), generator = new PMREMGenerator(renderer);
       environment = generator.fromScene(studio, .04, .1, 50, { size:64 });
       scene.environment = environment.texture;
-      studio.dispose(); generator.dispose(); wake();
+      studio.dispose(); generator.dispose(); if (!disposed) prepare();
     } else {
       const applyEnvironment = () => {
         if (disposed || !hdrLease?.asset.image?.data || environment) return;
         const generator = new PMREMGenerator(renderer);
         environment = generator.fromEquirectangular(hdrLease.asset);
         scene.environment = environment.texture; scene.environmentRotation.set(0,-.7,0);
-        generator.dispose(); wake();
+        // A new environment changes shader variants; let the renderer compile them off-frame.
+        generator.dispose(); if (!disposed) prepare();
       };
       hdrLease = hdrPool.acquire('outdoor', ready => new HDRLoader().load('/textures/pbr/autumn-sky.hdr', ready, undefined, wake), applyEnvironment);
       applyEnvironment();

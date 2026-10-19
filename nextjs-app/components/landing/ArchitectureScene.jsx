@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { createCity, createCityCamera, frameCityCamera, CITY_OVERSCAN } from './city-model.mjs';
 import {
   ACESFilmicToneMapping,
-  PCFSoftShadowMap, Raycaster, Vector2, Scene, Vector3, WebGLRenderer,
+  PCFShadowMap, Raycaster, Vector2, Scene, Vector3, WebGLRenderer,
 } from 'three';
 import { createArchitecture, createSceneCamera, frameSceneCamera, scenePose } from './architecture.mjs';
 import { createDistrict, createKeys, createSpatialCamera, frameSpatialCamera } from './spatial-models.mjs';
@@ -12,7 +12,7 @@ import { createOrbitSpring } from './orbit-spring.mjs';
 import { createContactOffice } from './contact-office.mjs';
 import { createKeySpring } from './key-spring.mjs';
 import styles from './Landing.module.css';
-import { scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
+import { compileScene, scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
 import { createSceneLighting, observeSceneTheme } from './scene-lighting.mjs';
 
 export default function ArchitectureScene({ progress, reduceMotion, paused, kind = 'house', selectedDistrict = null, onDistrictSelect, zoom = 1 }) {
@@ -46,9 +46,10 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     renderer.toneMapping = ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.38;
     renderer.shadowMap.enabled = !compact && !lowPower && kind !== 'keys';
-    renderer.shadowMap.autoUpdate = true;
+    // Shadow maps are redrawn when the model turns or on alternate ambient frames.
+    renderer.shadowMap.autoUpdate = false;
     renderer.shadowMap.needsUpdate = true;
-    renderer.shadowMap.type = PCFSoftShadowMap;
+    renderer.shadowMap.type = PCFShadowMap;
     renderer.domElement.setAttribute('aria-hidden', 'true');
     host.appendChild(renderer.domElement);
 
@@ -58,9 +59,9 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     scene.add(architecture.model);
     if (kind === 'city') { cityRef.current = architecture; architecture.select(selectionRef.current); }
     const raycaster = new Raycaster(), pointer = new Vector2();
-    const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower, invalidate });
+    const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower, invalidate, prepare });
 
-    let visible = false, frame = 0, dirty = true, lastTime = 0, contextLost = false, elapsed = 0;
+    let visible = false, frame = 0, dirty = true, lastTime = 0, contextLost = false, elapsed = 0, compiling = 0, shadowTick = 0, lastYaw = 0, lastPitch = 0, disposed = false;
     let currentProgress = reduceMotion && kind !== 'office' ? 0 : progress.get();
     let targetProgress = currentProgress;
     let dragging = null, dragX = 0, dragY = 0;
@@ -68,7 +69,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     const cameraRight = new Vector3(), cameraUp = new Vector3();
     function render(time = 0) {
       frame = 0;
-      if (!visible || document.hidden || contextLost) return;
+      if (!visible || document.hidden || contextLost || compiling) return;
       if (lastTime && time - lastTime < (compact || lowPower ? 48 : 32)) { frame = requestAnimationFrame(render); return; }
       const delta = Math.min(64, time - (lastTime || time - 16)); lastTime = time;
       const ease = 1 - Math.exp(-delta / 105);
@@ -100,6 +101,12 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
         architecture.model.rotation.z += jiggle.angle * 0.25;
       }
       if (kind === 'city' && camera.zoom !== zoomRef.current) { camera.zoom = zoomRef.current; camera.updateProjectionMatrix(); }
+      if (renderer.shadowMap.enabled) {
+        const turning = Math.abs(architecture.model.rotation.y - lastYaw) + Math.abs(architecture.model.rotation.x - lastPitch) > 1e-4 || Math.abs(targetProgress - currentProgress) > 1e-3;
+        const ambient = !reduceMotion && !pausedRef.current;
+        renderer.shadowMap.needsUpdate = !ambient || turning || dragging !== null || shadowTick++ % 2 === 0;
+        lastYaw = architecture.model.rotation.y; lastPitch = architecture.model.rotation.x;
+      }
       renderer.render(scene, camera);
       if (host.dataset.ready !== 'true') host.dataset.ready = 'true';
       if (!reduceMotion && !pausedRef.current) frame = requestAnimationFrame(render);
@@ -109,7 +116,13 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       dirty = true;
       if (!frame && visible && !document.hidden && !contextLost) frame = requestAnimationFrame(render);
     }
-    const stopTheme = observeSceneTheme(host, lighting, invalidate);
+    // New shader variants (first mount, environment bake, theme lights) compile through
+    // KHR_parallel_shader_compile where available; the last frame stays on screen meanwhile.
+    function prepare() {
+      compiling++;
+      compileScene(renderer, scene, camera).then(() => { compiling--; if (disposed) return; renderer.shadowMap.needsUpdate = true; invalidate(); });
+    }
+    const stopTheme = observeSceneTheme(host, lighting, prepare);
     invalidateRef.current = invalidate;
     const resize = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
@@ -189,7 +202,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     renderer.domElement.addEventListener('webglcontextrestored', onContextRestored);
     return () => {
-      cancelAnimationFrame(frame); unsubscribe(); resize.disconnect(); visibility.disconnect();
+      disposed = true; cancelAnimationFrame(frame); unsubscribe(); resize.disconnect(); visibility.disconnect();
       host.removeEventListener('pointermove', onPointerMove); host.removeEventListener('pointerleave', onPointerLeave);
       host.removeEventListener('pointerdown', onPointerDown); host.removeEventListener('blur', onBlur);
       host.removeEventListener('pointerup', onPointerUp); host.removeEventListener('pointercancel', onPointerUp); host.removeEventListener('lostpointercapture', onPointerUp);

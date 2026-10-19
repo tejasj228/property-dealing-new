@@ -5,7 +5,7 @@ import { disposeSpatialModel } from './spatial-models.mjs';
 
 // A welcoming glass-fronted studio; an illustration, not a replica of either office.
 export function createContactOffice() {
-  const t=createDetailKit(),model=new Group(),office=new Group();model.add(office);
+  const t=createDetailKit(),model=new Group(),office=new Group();office.userData.rigid=true;model.add(office);
   t.box(office,'stone',[8.8,.3,6.6],[0,-.2,0]);
   t.box(office,'grass',[8.55,.06,6.35],[0,-.015,0],false);
   t.box(office,'ivory',[5.9,.15,4.3],[-.3,.09,-.55]);
@@ -58,7 +58,7 @@ export function createContactOffice() {
   for(const x of [1.05,2.4])t.box(office,'ivory',[.12,2.35,.16],[x,1.36,1.57]);
   t.box(office,'green',[1.62,.3,.32],[1.72,2.62,1.57]);
   t.box(office,'lamp',[1.25,.035,.07],[1.72,2.43,1.75],false);
-  const door=new Group();door.name='office-door';door.position.set(1.12,.2,1.57);office.add(door);
+  const door=new Group();door.name='office-door';door.userData.rigid=true;door.position.set(1.12,.2,1.57);office.add(door);
   pane(door,'office-glass-door',1.19,2.13,[.595,1.065,0]);
   for(const x of [0,1.19])t.box(door,'metal',[.04,2.13,.09],[x,1.065,0]);
   for(const y of [.02,2.11])t.box(door,'metal',[1.19,.04,.09],[.595,y,0]);

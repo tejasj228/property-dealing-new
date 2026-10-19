@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { ACESFilmicToneMapping, OrthographicCamera, Scene, WebGLRenderer } from 'three';
 import { createPropertyMapModel, framePropertyMapCamera } from './property-map-model.mjs';
 import styles from './PropertyMap.module.css';
-import { scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
+import { compileScene, scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
 import { createSceneLighting, observeSceneTheme } from './scene-lighting.mjs';
 
 export default function PropertyMapScene({ properties, viewport, markers, yaw, zoom, paused, reduced }) {
@@ -23,13 +23,13 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
     renderer.domElement.setAttribute('aria-hidden', 'true');
     const scene = new Scene();
     const map = createPropertyMapModel(properties, compact || lowPower); scene.add(map.model);
-    const lighting = createSceneLighting(scene, map.model, renderer, { kind: 'map', compact: compact || lowPower, invalidate });
+    const lighting = createSceneLighting(scene, map.model, renderer, { kind: 'map', compact: compact || lowPower, invalidate, prepare });
     const camera = new OrthographicCamera(-14, 14, 10, -10, 0.1, 300);
-    let width = 0, height = 0, frame = 0, visible = false, lost = false, last = 0, elapsed = 0, dirty = true;
+    let width = 0, height = 0, frame = 0, visible = false, lost = false, last = 0, elapsed = 0, dirty = true, compiling = 0, disposed = false;
     const point = camera.position.clone();
     function render(time) {
       frame = 0;
-      if (!visible || document.hidden || lost || !width || !height) return;
+      if (!visible || document.hidden || lost || !width || !height || compiling) return;
       if (last && time - last < (compact || lowPower ? 48 : 32)) { frame = requestAnimationFrame(render); return; }
       const delta = Math.min(64, time - (last || time - 16)); last = time;
       if (!pausedRef.current && !reduced) elapsed += delta / 1000;
@@ -45,7 +45,11 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
       if (!pausedRef.current && !reduced) frame = requestAnimationFrame(render);
     }
     function invalidate() { dirty = true; if (!frame && visible && !document.hidden && !lost) frame = requestAnimationFrame(render); }
-    const stopTheme = observeSceneTheme(element, lighting, invalidate);
+    // Shader variants compile in parallel where supported instead of stalling a frame.
+    function prepare() {
+      compiling++; compileScene(renderer, scene, camera).then(() => { compiling--; if (!disposed) invalidate(); });
+    }
+    const stopTheme = observeSceneTheme(element, lighting, prepare);
     wake.current = invalidate;
     const resize = new ResizeObserver(([entry]) => { width = entry.contentRect.width; height = entry.contentRect.height; if (width && height) { renderer.setPixelRatio(scenePixelRatio(width, height, { devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize })); renderer.setSize(width, height, false); } invalidate(); }); resize.observe(element);
     const visibility = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) invalidate(); else { cancelAnimationFrame(frame); frame = 0; last = 0; } }, { rootMargin: '180px' }); visibility.observe(element);
@@ -56,7 +60,7 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
     document.addEventListener('visibilitychange', onVisibility);
     renderer.domElement.addEventListener('webglcontextlost', onLost); renderer.domElement.addEventListener('webglcontextrestored', onRestored);
     return () => {
-      cancelAnimationFrame(frame); resize.disconnect(); visibility.disconnect(); unsubYaw(); unsubZoom(); wake.current = null;
+      disposed = true; cancelAnimationFrame(frame); resize.disconnect(); visibility.disconnect(); unsubYaw(); unsubZoom(); wake.current = null;
       document.removeEventListener('visibilitychange', onVisibility);
       renderer.domElement.removeEventListener('webglcontextlost', onLost); renderer.domElement.removeEventListener('webglcontextrestored', onRestored);
       delete root.dataset.ready; stopTheme(); lighting.dispose(); map.dispose(); renderer.dispose(); renderer.domElement.remove();

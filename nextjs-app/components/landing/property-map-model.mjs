@@ -4,6 +4,7 @@ import { createDetailKit } from './scene-details.mjs';
 import { disposeSpatialModel } from './spatial-models.mjs';
 import { layoutProperties, mapBounds, mapRandom, mapSeed } from './property-map-layout.mjs';
 import { addMapArchitecture, mapArchitectureKind } from './map-architecture.mjs';
+import { createFleet } from './vehicle-fleet.mjs';
 export { layoutProperties } from './property-map-layout.mjs';
 export const propertyColours = { residential: '#44886a', commercial: '#c58a51', other: '#798994' };
 
@@ -47,7 +48,7 @@ export function createPropertyMapModel(properties, compact = false) {
     roadCorridors.push(roadCorridor(curve,.47));
     const road = new Mesh(new TubeGeometry(curve,compact?32:52,.47,6,false),roadMaterial); road.scale.y=.07; road.position.y=.1; model.add(road);
     for(let i=1;i<Math.min(80,Math.ceil(width*1.5));i++) { const t=i/Math.min(80,Math.ceil(width*1.5)), p=curve.getPoint(t), tangent=curve.getTangent(t), dash=new Mesh(dashGeometry,dashMaterial);dash.position.set(p.x,.15,p.z);dash.rotation.y=-Math.atan2(tangent.z,tangent.x);model.add(dash); }
-    if(index<4) cars.push({car:kit.car(model,0,z,Math.PI/2,index%2?'green':'ivory'),curve});
+    if(index<4) cars.push(curve);
   }
   // A meandering side lane joins the district roads; each block has a different frontage.
   if(rows.length>1) {
@@ -55,6 +56,7 @@ export function createPropertyMapModel(properties, compact = false) {
     roadCorridors.push(roadCorridor(side,.38));
     const road=new Mesh(new TubeGeometry(side,Math.min(100,rows.length*12),.38,6,false),roadMaterial);road.scale.y=.07;road.position.y=.1;model.add(road);
   }
+  const fleet = createFleet(kit, model, cars.length, { offset: 1 });
   const markerPositions = [], structures = [];
   for(const plot of plots) {
     const group = new Group();group.position.set(plot.x,0,plot.z);group.rotation.y=plot.rotation;group.scale.set(plot.scaleX,1,plot.scaleZ);model.add(group);
@@ -104,7 +106,7 @@ export function createPropertyMapModel(properties, compact = false) {
   function update(seconds,reduced) {
     kit.animate(seconds,reduced);
     grassSpots.forEach((spot,i)=>{blade.position.set(spot.x,.16,spot.z);blade.scale.setScalar(grassClearance[i]?spot.scale:0);blade.rotation.set(0,i*2.4,reduced?.06:(.25+Math.sin(seconds*.8+spot.x*.3)*.12+Math.sin(seconds*2.6+i*.4)*.24));blade.updateMatrix();grass.setMatrixAt(i,blade.matrix);});grass.instanceMatrix.needsUpdate=true;
-    cars.forEach(({car,curve},i)=>{const t=reduced?.28+i*.05:(seconds*.022+i*.27+.1)%1,p=curve.getPoint(t),tangent=curve.getTangent(t);car.position.set(p.x,.14,p.z);car.rotation.y=Math.atan2(tangent.x,tangent.z);car.scale.setScalar(Math.min(1,t*20,(1-t)*20));car.userData.wheels.forEach(wheel=>{wheel.rotation.x=reduced?0:seconds*2;});});
+    cars.forEach((curve,i)=>{const t=reduced?.28+i*.05:(seconds*.022+i*.27+.1)%1,p=curve.getPoint(t),tangent=curve.getTangent(t);fleet.place(i,p.x,.14,p.z,Math.atan2(tangent.x,tangent.z),Math.min(1,t*20,(1-t)*20));});fleet.commit();
   }
   // Preserve animated cars, branches and light pools while batching every static parcel.
   model.updateMatrixWorld(true);const batches=new Map();

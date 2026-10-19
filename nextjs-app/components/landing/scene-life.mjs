@@ -11,7 +11,7 @@ export function createSceneLife(parent, { compact = false, kind = 'house' } = {}
   };
   cloudMaterial.customProgramCacheKey = () => 'soft-cumulus-v1';
   for (let i = 0; i < (compact ? 1 : 2); i++) {
-    const cloud = new Group(); cloud.name = 'drifting-cloud';
+    const cloud = new Group(); cloud.name = 'drifting-cloud'; cloud.userData.rigid = true;
     const x = i ? -2.6 : 2.4, y = i ? 4.7 : 5.15, z = i ? -2.3 : -1.4;
     cloud.position.set(x, y, z);
     const volume = new Mesh(cloudGeometry, cloudMaterial); volume.name = 'continuous-cloud-volume';

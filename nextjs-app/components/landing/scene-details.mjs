@@ -3,12 +3,13 @@ import { createBotanicalKit } from './botanical-trees.mjs';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { BoxGeometry, CylinderGeometry, Group, IcosahedronGeometry, Mesh, MeshPhysicalMaterial, PlaneGeometry, ShaderMaterial, SphereGeometry } from 'three';
 
-export function createDetailKit({ compact = false } = {}) {
+export function createDetailKit({ compact = false, rounded = true } = {}) {
   const botanical = createBotanicalKit({ compact });
   const people = [];
   const carBody = vehicleBodyGeometry(), carCabin = vehicleBodyGeometry(true);
   const vehiclePaint = new Map();
-  const cube = new RoundedBoxGeometry(1, 1, 1, 1, 0.006);
+  // Rounded edges catch light at close range; distant city blocks use 12-triangle boxes.
+  const cube = rounded ? new RoundedBoxGeometry(1, 1, 1, 1, 0.006) : new BoxGeometry(1, 1, 1);
   const cylinder = new CylinderGeometry(1, 1, 1, 16);
   const leaf = new IcosahedronGeometry(1, 2);
   const sphere = new SphereGeometry(1, 16, 12);
@@ -26,7 +27,7 @@ export function createDetailKit({ compact = false } = {}) {
   materials.lamp.userData.nightLamp = true;
   const glowGeometry = new PlaneGeometry(1, 1);
   const glowMaterial = new ShaderMaterial({ transparent: true, depthWrite: false,
-    vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; vec4 p=vec4(position,1.0);\n#ifdef USE_INSTANCING\np=instanceMatrix*p;\n#endif\ngl_Position=projectionMatrix*modelViewMatrix*p; }',
     fragmentShader: 'varying vec2 vUv; void main(){ float falloff=pow(max(0.0,1.0-length((vUv-0.5)*2.0)),1.5); gl_FragColor=vec4(1.0,0.77,0.36,falloff*0.48); }',
   });
   function glow(parent, x, z, width, length, height = 0.12) {
@@ -43,7 +44,8 @@ export function createDetailKit({ compact = false } = {}) {
   function car(parent, x, z, angle = 0, color = 'ivory') {
     const g = new Group(); g.name = 'car'; g.userData.animated = true; g.position.set(x, 0.11, z); g.rotation.y = angle; parent.add(g);
     if (!vehiclePaint.has(color)) {
-      const paint=materials[color].clone();paint.name='vehicle-paint';paint.roughness=.22;paint.metalness=.3;paint.clearcoat=1;paint.clearcoatRoughness=.1;vehiclePaint.set(color,paint);
+      // Named kit colours or an exact automotive paint such as '#ffffff' for instanced fleets.
+      const paint=(materials[color]||materials.ivory).clone();if(!materials[color])paint.color.set(color);paint.name='vehicle-paint';paint.roughness=.22;paint.metalness=.3;paint.clearcoat=1;paint.clearcoatRoughness=.1;vehiclePaint.set(color,paint);
     }
     const body=new Mesh(carBody,vehiclePaint.get(color));body.castShadow=true;body.receiveShadow=true;g.add(body);
     const cabin=new Mesh(carCabin,materials.windscreen);cabin.castShadow=true;g.add(cabin);
@@ -64,7 +66,7 @@ export function createDetailKit({ compact = false } = {}) {
     }
     const wheels = [];
     for (const side of [-1, 1]) for (const end of [-1, 1]) {
-      const axle = new Group(); axle.position.set(side * 0.245, 0.12, end * 0.3); g.add(axle);
+      const axle = new Group(); axle.userData.animated = true; axle.position.set(side * 0.245, 0.12, end * 0.3); g.add(axle);
       const wheel = round(axle, 'dark', [0.1, 0.06, 0.1], [0, 0, 0]); wheel.rotation.z = Math.PI / 2;
       const hub = round(axle, 'silver', [0.05, 0.065, 0.05], [0, 0, 0]); hub.rotation.z = Math.PI / 2;
       box(axle, 'dark', [0.07, 0.015, 0.08], [0, 0, 0], false);
@@ -80,10 +82,10 @@ export function createDetailKit({ compact = false } = {}) {
     mesh(g, sphere, 'dark', [0.078, 0.045, 0.077], [0, 0.51, -0.01]);
     const limbs = [];
     for (const side of [-1, 1]) {
-      const leg = new Group(); leg.position.set(side * 0.04, 0.17, 0); g.add(leg);
+      const leg = new Group(); leg.userData.animated = true; leg.position.set(side * 0.04, 0.17, 0); g.add(leg);
       mesh(leg, sphere, 'dark', [.025,.09,.027], [0,-.085,0]);
       box(leg, 'ivory', [0.055, 0.035, 0.1], [0, -0.17, 0.02]);
-      const arm = new Group(); arm.position.set(side * 0.09, 0.35, 0); g.add(arm);
+      const arm = new Group(); arm.userData.animated = true; arm.position.set(side * 0.09, 0.35, 0); g.add(arm);
       mesh(arm, sphere, color, [.023,.09,.025], [0,-.075,0]);
       mesh(arm, sphere, 'person', [.023,.03,.025], [0,-.16,0]);
       limbs.push({ leg, arm, side });

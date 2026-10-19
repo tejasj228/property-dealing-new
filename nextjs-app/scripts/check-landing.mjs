@@ -330,7 +330,8 @@ test('night lamps and road pools switch with the theme', () => {
     const lighting = createSceneLighting(scene, illustration.model, {}, {kind}); lighting.setNight(true);
     let pools = 0, lamps = 0, calls = 0, equivalent = 0;
     illustration.model.traverse(o => {
-      if (o.userData.nightOnly) { pools++; assert.equal(o.visible, true); }
+      // Instanced fleets draw every headlight pool of a scene from one mesh.
+      if (o.userData.nightOnly) { pools += o.isInstancedMesh ? o.count : 1; assert.equal(o.visible, true); }
       if (o.material?.userData.nightLamp) { lamps++; assert.equal(o.material.emissiveIntensity, 1.3); }
       if (o.isMesh) { calls++; equivalent += o.isInstancedMesh ? o.count : 1; }
     });
