@@ -69,3 +69,14 @@ Models:
 - The open-land scene has an excavator on a dig-lift-dump cycle.
 
 All motion follows the scene clock, so reduced motion and paused scenes stay static. The desktop city now has 169 draws (originally 305) and about 105k triangles (originally 185k), with 87 trees instead of 18. Visual checks used a headless-browser render harness outside the repository; frame rates on real devices are not measured.
+
+## Loading
+
+All the 3D scenes on a page share one WebGL context through `scene-renderer.mjs`. Each scene renders into a corner of the shared drawing buffer and copies it into its own visible canvas, so later sections reuse shader programs, textures and HDR environments the hero already prepared. A same-size studio environment is in place from the first frame, so swapping in an HDR sky never recompiles shaders. Shadow state is bound before the up-front async compile, so the first frame needs no second compile. Bloom and occlusion attach after the first frame is on screen.
+
+Measured on the homepage in a headless browser (software WebGL), scrolling through every section:
+- WebGL contexts: 5 → 1.
+- Shader programs linked: 251 → 94.
+- Hero first frame: unchanged, about 2.5 s in software rendering.
+
+Shader compilation is the main load cost on real devices; its absolute timing was not measured there.

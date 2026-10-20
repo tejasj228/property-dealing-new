@@ -65,7 +65,8 @@ export function createCity({compact=false}={}) {
     segments.forEach(zs=>road(zs.map(z=>warp(x,z)),false,.46));
   }
   road([[7.5,-7.8],[8,-9.1],[7,-10]],false,.65);
-  const river=new CatmullRomCurve3([[-10,8.3],[-6.4,8.9],[-2,8.25],[2.8,8.6],[6.4,8.9],[9.6,8.1]].map(([x,z])=>new Vector3(x,0,z)));
+  // The canal runs between the ring road and the land edge, starting and ending inside the land.
+  const river=new CatmullRomCurve3([[-8.8,8.05],[-6.4,8.9],[-2,8.25],[2.8,8.6],[6.4,8.9],[9.4,8.05]].map(([x,z])=>new Vector3(x,0,z)));
   ribbon(river,.55,'stone',.104,'canal-bank');ribbon(river,.4,'water',.115,'curving-canal');
   function tower(parent,x,z,height,office=false,width=1.08) {
     const g=new Group();g.name=office?'office-building':'apartment-building';g.position.set(x,.21,z);parent.add(g);
@@ -154,7 +155,15 @@ export function createCity({compact=false}={}) {
     if([7,8,9,10,13,14].includes(index))return;
     const district=new Group();district.name=`city-block-${index}`;district.position.set(x,0,z);district.rotation.y=(random(index+17)-.5)*.18;
     district.userData.cityZone=type==='park'?'society':type;model.add(district);
-    const w=1.45+random(index+32)*.13,d=1.65+random(index+48)*.22;
+    // Each block shrinks, and nudges if needed, until its whole footprint sits clear of
+    // the surrounding streets; the largest clear fit nearest the planned spot wins.
+    const w=1.45+random(index+32)*.13,d0=1.65+random(index+48)*.22,cos=Math.cos(district.rotation.y),sin=Math.sin(district.rotation.y);
+    const shapeAt=scale=>[[-w,-d0+.28],[-w+.3,-d0],[w-.24,-d0*.94],[w,-d0*.5],[w-.12,d0*.78],[w-.43,d0],[-w,d0-.16]].map(([px,pz])=>[px*scale,pz*scale]);
+    const clear=(scale,ox,oz)=>{const points=shapeAt(scale);return points.every(([px,pz],i)=>{const [qx,qz]=points[(i+1)%points.length];return [0,.25,.5,.75].every(t=>{const fx=px+(qx-px)*t,fz=pz+(qz-pz)*t;return clearOfRoads(x+ox+fx*cos+fz*sin,z+oz-fx*sin+fz*cos,.06,roadCorridors);});});};
+    let fit=0,shift=[0,0];
+    for(const radius of [0,.15,.3,.45,.6])for(let a=0;a<(radius?8:1);a++){const ox=Math.cos(a*Math.PI/4)*radius,oz=Math.sin(a*Math.PI/4)*radius;let scale=1;while(scale>.6&&!clear(scale,ox,oz))scale-=.02;if(scale>fit+.04){fit=scale;shift=[ox,oz];}}
+    district.position.x+=shift[0];district.position.z+=shift[1];district.scale.setScalar(fit);
+    const d=d0;
     const footprint=[[-w,-d+.28],[-w+.3,-d],[w-.24,-d*.94],[w,-d*.5],[w-.12,d*.78],[w-.43,d],[-w,d-.16]];
     parcel(district,footprint,'stone',.065,.1,'district-footprint');parcel(district,footprint.map(([x,z])=>[x*.94,z*.94]),type==='plots'?'sand':'grass',.025,.165,'district-landscape');
     if(type==='park') park(district);
@@ -278,5 +287,5 @@ export function createCity({compact=false}={}) {
     site?.update(time,reduced); crowd.update(time,reduced);
   }
   update(0,true);
-  return {model:world,roadCorridors,hitAreas,movingCars:traffic.length,traffic:traffic.map(({type,slot})=>({type,slot})),parkedSlots:{type:'hatch',first:firstParked,count:parked.length},select,update,dispose(){disposeSpatialModel(world,{geometries:[...t.resources.geometries,...crowd.resources.geometries,hitGeometry,...extraGeometries,...landmarks.resources.geometries],materials:[...t.resources.materials,...crowd.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial,...landmarks.resources.materials]});}};
+  return {model:world,landEdge:boundary.map(([x,z])=>[x*.993,z*.993]),roadCorridors,hitAreas,movingCars:traffic.length,traffic:traffic.map(({type,slot})=>({type,slot})),parkedSlots:{type:'hatch',first:firstParked,count:parked.length},select,update,dispose(){disposeSpatialModel(world,{geometries:[...t.resources.geometries,...crowd.resources.geometries,hitGeometry,...extraGeometries,...landmarks.resources.geometries],materials:[...t.resources.materials,...crowd.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial,...landmarks.resources.materials]});}};
 }

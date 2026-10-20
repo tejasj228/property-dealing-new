@@ -63,8 +63,9 @@ function Hero() {
               <ArchitecturalFallback />
               <ArchitectureScene kind="city" progress={scrollYProgress} reduceMotion={Boolean(reduce)} paused={paused} selectedDistrict={district} onDistrictSelect={setDistrict} zoom={zoom} />
               {selection && <div className={styles.cityPopover}><button type="button" onClick={()=>setDistrict(null)} aria-label="Close district details">×</button><strong>{selection.label}</strong><Link href={selection.href}>{selection.action}<Icon name="arrow-up-right-from-square" /></Link></div>}
-              <div className={styles.cityZoom} role="group" aria-label="City map zoom"><button type="button" aria-label="Zoom out city" disabled={zoom<=1} onClick={()=>setZoom(value=>Math.max(1,value-.15))}>−</button><button type="button" aria-label="Zoom in city" disabled={zoom>=1.45} onClick={()=>setZoom(value=>Math.min(1.45,value+.15))}>+</button></div>
             </div>
+            {/* Outside the overscanned stage so it stays on screen at every width. */}
+            <div className={styles.cityZoom} role="group" aria-label="City map zoom"><button type="button" aria-label="Zoom out city" disabled={zoom<=1} onClick={()=>setZoom(value=>Math.max(1,value-.15))}>−</button><button type="button" aria-label="Zoom in city" disabled={zoom>=1.45} onClick={()=>setZoom(value=>Math.min(1.45,value+.15))}>+</button></div>
             <m.figcaption className={styles.sceneCaption} >
               <span><span className={styles.captionLine} />Drag to turn · double-click to reset</span>
               {!systemReduced && <button type="button" onClick={() => setPaused(value => !value)} aria-pressed={paused}>

@@ -222,3 +222,22 @@ test('real HDR skies ship small, valid and with matching sizes for both themes',
   }
   assert.equal(sizes[0], sizes[1]);
 });
+
+test('city blocks sit clear of every street and the canal stays inside the land', () => {
+  const city = createCity(), model = city.model.children[0];
+  city.model.updateMatrixWorld(true);
+  const inverse = model.matrixWorld.clone().invert(), point = new Vector3();
+  model.traverse(o => {
+    if (!['district-landscape', 'district-footprint', 'surveyed-irregular-plot'].includes(o.name)) return;
+    const positions = o.geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(o.matrixWorld).applyMatrix4(inverse);
+      assert.ok(clearOfRoads(point.x, point.z, 0, city.roadCorridors), `${o.parent.name} ${o.name} reaches a street`);
+    }
+  });
+  const canal = model.getObjectByName('curving-canal'), edge = city.landEdge;
+  const inside = (x, z) => { let hit = false; for (let i = 0, j = edge.length - 1; i < edge.length; j = i++) { const [ax, az] = edge[i], [bx, bz] = edge[j]; if ((az > z) !== (bz > z) && x < (bx - ax) * (z - az) / (bz - az) + ax) hit = !hit; } return hit; };
+  const water = canal.geometry.attributes.position;
+  for (let i = 0; i < water.count; i++) { point.fromBufferAttribute(water, i).applyMatrix4(canal.matrixWorld).applyMatrix4(inverse); assert.ok(inside(point.x, point.z), `canal vertex ${i} off the land`); }
+  city.dispose();
+});
