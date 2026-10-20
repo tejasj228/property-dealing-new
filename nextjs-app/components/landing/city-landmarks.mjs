@@ -16,7 +16,10 @@ export function flightPosition(seconds=0,reduced=false) {
 export function addCityLandmarks(model,t,parcel) {
  const geometries=[],materials=[],b=(p,m,size,pos)=>t.box(p,m,size,pos);
  for(const [name,color] of [['saffron','#ce7940'],['marketGreen','#577b56'],['marketRed','#a84336']]){const m=new MeshPhysicalMaterial({name,color,roughness:.8});t.materials[name]=m;materials.push(m);}
- const sphere=new SphereGeometry(1,20,12);geometries.push(sphere);
+ // Aviation lighting: red/green wingtips, white strobes, blue taxiway edges and a
+ // sequenced approach run along each runway threshold. All dark by day.
+ for(const [name,lampColor,blink] of [['navRed','#ff2414'],['navGreen','#2cff6a'],['strobe','#ffffff','beacon'],['taxiBlue','#2f6dff'],['approach','#fff1d2','sequence']]){const m=new MeshPhysicalMaterial({name,color:'#3a3a3a',roughness:.4});Object.assign(m.userData,{nightLamp:true,lampColor,...(blink?{blink}:{})});t.materials[name]=m;materials.push(m);}
+ const sphere=new SphereGeometry(1,12,8);geometries.push(sphere);
  const ball=(parent,material,size,position)=>t.mesh(parent,sphere,material,size,position);
  const airport=new Group();airport.name='airport';model.add(airport);
  b(airport,'stone',[24,.06,7.5],[0,.1,-13.65]);b(airport,'road',[23.3,.035,1.3],[0,.15,-15.7]);
@@ -25,6 +28,8 @@ export function addCityLandmarks(model,t,parcel) {
  for(const x of [-10.5,10.5])for(let i=0;i<6;i++)b(airport,'paint',[.6,.012,.055],[x,.178,-16.2+i*.18]);
  for(let x=-11;x<=11;x+=1.1)for(const side of [-1,1])b(airport,'lamp',[.065,.04,.065],[x,.19,-15.7+side*.69]);
  for(const x of [-10,10])b(airport,'stone',[.6,.03,2],[x,.16,-14.6]);
+ for(let x=-10.4;x<=10.4;x+=1.3)b(airport,'taxiBlue',[.05,.04,.05],[x,.19,-14.15+.4*(x>0?1:-1)*0+.4]);
+ for(const end of [-1,1])for(let i=0;i<9;i++)b(airport,'approach',[.07,.03,.07],[end*(11.2-i*.42),.19,-15.7]);
  // Terminal glazing, overlapping roof shells and enclosed boarding bridges.
  b(airport,'ivory',[8,1.05,1.5],[-1,.69,-10.7]);b(airport,'glass',[7.7,.7,.035],[-1,.77,-11.47]);
  for(let x=-4.4;x<3;x+=.72)b(airport,'metal',[.03,.8,.04],[x,.79,-11.51]);
@@ -32,6 +37,10 @@ export function addCityLandmarks(model,t,parcel) {
  for(const x of [-3.4,-.7,2]){b(airport,'glass',[.28,.26,1.2],[x,.54,-11.9]);b(airport,'metal',[.38,.035,1.3],[x,.7,-11.9]);b(airport,'metal',[.06,.4,.06],[x,.35,-12.3]);}
  b(airport,'stone',[.48,2.2,.48],[5,1.25,-10.9]);b(airport,'glass',[.95,.55,.85],[5,2.6,-10.9]);b(airport,'ivory',[1.1,.1,1],[5,2.94,-10.9]);b(airport,'metal',[.035,.65,.035],[5,3.3,-10.9]);
  b(airport,'road',[10,.025,.6],[-1,.15,-9.4]);
+ // Apron: yellow lead-in lines to each stand, baggage tugs with carts, a fuel bowser.
+ for(const x of [-3.4,-.7,2]){b(airport,'saffron',[.035,.008,1.5],[x,.172,-13.1],false);b(airport,'saffron',[.5,.008,.035],[x,.172,-12.45],false);}
+ for(const [x,z] of [[-2.1,-12.2],[.55,-12.25]]){b(airport,'saffron',[.14,.08,.2],[x,.21,z]);for(let i=1;i<3;i++)b(airport,'metal',[.12,.07,.16],[x,.2,z-i*.22]);}
+ b(airport,'ivory',[.18,.14,.42],[3.1,.24,-12.2]);t.round(airport,'silver',[.075,.36,.075],[3.1,.33,-12.27]).rotation.x=Math.PI/2;
  for(let x=-4.5;x<3.5;x+=.65)b(airport,'paint',[.025,.01,.5],[x,.18,-8.9]);
  for(const x of [-6,7,9])t.tree(airport,x,-10,.55);
 
@@ -42,7 +51,8 @@ export function addCityLandmarks(model,t,parcel) {
  const finShape=new Shape();finShape.moveTo(0,0);finShape.lineTo(0,.63);finShape.lineTo(.55,0);finShape.closePath();
  const finGeometry=new ExtrudeGeometry(finShape,{depth:.035,bevelEnabled:false});finGeometry.rotateY(Math.PI/2);geometries.push(finGeometry);
  const fin=new Mesh(finGeometry,t.materials.green);fin.position.set(-.018,.08,-.62);plane.add(fin);
- for(const side of [-1,1]){ball(plane,'metal',[.115,.115,.3],[side*.55,-.14,-.16]);ball(plane,'dark',[.08,.08,.015],[side*.55,-.14,.13]);b(plane,'lamp',[.045,.035,.09],[side*1.48,.01,-.7]);}
+ for(const side of [-1,1]){ball(plane,'metal',[.115,.115,.3],[side*.55,-.14,-.16]);ball(plane,'dark',[.08,.08,.015],[side*.55,-.14,.13]);b(plane,side<0?'navRed':'navGreen',[.045,.035,.09],[side*1.48,.01,-.7]);}
+ b(plane,'strobe',[.04,.04,.04],[0,.66,-.98]);b(plane,'strobe',[.05,.03,.05],[0,-.1,.1]);
  for(let z=-.65;z<.65;z+=.16)for(const side of [-1,1])b(plane,'glass',[.013,.05,.06],[side*.175,.05,z]);
  const gear=new Group();gear.name='aircraft-landing-gear';gear.userData.rigid=true;plane.add(gear);
  for(const [x,z] of [[-.16,-.25],[.16,-.25],[0,.65]]) {b(gear,'metal',[.025,.11,.025],[x,-.2,z]);ball(gear,'dark',[.045,.055,.055],[x,-.28,z]);}

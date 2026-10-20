@@ -106,7 +106,7 @@ export function createPropertyMapModel(properties, compact = false) {
   function update(seconds,reduced) {
     kit.animate(seconds,reduced);
     grassSpots.forEach((spot,i)=>{blade.position.set(spot.x,.16,spot.z);blade.scale.setScalar(grassClearance[i]?spot.scale:0);blade.rotation.set(0,i*2.4,reduced?.06:(.25+Math.sin(seconds*.8+spot.x*.3)*.12+Math.sin(seconds*2.6+i*.4)*.24));blade.updateMatrix();grass.setMatrixAt(i,blade.matrix);});grass.instanceMatrix.needsUpdate=true;
-    cars.forEach((curve,i)=>{const t=reduced?.28+i*.05:(seconds*.022+i*.27+.1)%1,p=curve.getPoint(t),tangent=curve.getTangent(t);fleet.place(i,p.x,.14,p.z,Math.atan2(tangent.x,tangent.z),Math.min(1,t*20,(1-t)*20));});fleet.commit();
+    cars.forEach((curve,i)=>{const t=reduced?.28+i*.05:(seconds*.022+i*.27+.1)%1,p=curve.getPoint(t),tangent=curve.getTangent(t);fleet.place(i,p.x,.135,p.z,Math.atan2(tangent.x,tangent.z),Math.min(1,t*20,(1-t)*20));});fleet.commit();
   }
   // Preserve animated cars, branches and light pools while batching every static parcel.
   model.updateMatrixWorld(true);const batches=new Map();

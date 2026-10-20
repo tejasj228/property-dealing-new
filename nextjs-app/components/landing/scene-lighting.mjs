@@ -5,7 +5,7 @@ import { AmbientLight, Color, DirectionalLight, Fog, HemisphereLight } from 'thr
 // Ground plane, occlusion band and texture density per model, in that model's own units.
 // Fog distances follow each camera so far edges pick up a little aerial perspective.
 const SURFACES = {
-  city: { ground: .17, range: .5, texelScale: 2, windowCell: [3.4, 2.78], fog: [24, 175] },
+  city: { ground: .17, range: .5, texelScale: 2, windowCell: [3.4, 2.78], fog: [24, 175], clouds: .42 },
   house: { ground: .2, range: .7, texelScale: .9, windowCell: [2.2, 1.6], fog: [16, 150] },
   land: { ground: .04, range: .45, texelScale: 1.6, windowCell: [2.6, 2.4], fog: [17, 160] },
   society: { ground: .1, range: .55, texelScale: 1.6, windowCell: [2.6, 2.4], fog: [17, 160] },
@@ -44,22 +44,27 @@ export function createSceneLighting(scene, model, renderer, { kind = 'house', co
   function setNight(night) {
     finish.setNight(night);
     nightDetails.forEach(object => { object.visible = night; });
-    sky.color.set(night ? '#789cc9' : '#e3edf8'); sky.groundColor.set(night ? '#122d31' : '#a99d80'); sky.intensity = night ? 0.45 : 0.62;
-    ambient.color.set(night ? '#a1bdd4' : '#ffffff'); ambient.intensity = night ? 0.15 : 0.1;
-    sun.color.set(night ? '#b6d2ff' : '#fff0da'); sun.intensity = night ? 1.5 : 3.25;
+    realism.setNight(night);
+    // Day: warm sun under a blue sky dome. Night: cool moonlight, with the scene lit mostly
+    // by its own windows, lamps and headlights (HDR intensities that bloom).
+    sky.color.set(night ? '#6d8fc4' : '#cfe0f5'); sky.groundColor.set(night ? '#14232a' : '#8f8668'); sky.intensity = night ? 1.1 : 0.75;
+    ambient.color.set(night ? '#9cb6d6' : '#ffffff'); ambient.intensity = night ? 0.22 : 0.06;
+    sun.color.set(night ? '#a9c6ff' : '#ffecd2'); sun.intensity = night ? 1.6 : 3.6;
     scene.fog?.color.copy(night ? NIGHT_HAZE : DAY_HAZE);
     renderer.toneMappingExposure = 1.12;
 
     original.forEach(({ material, color, emissive, intensity }) => {
       material.color.copy(color); material.emissive.copy(emissive); material.emissiveIntensity = intensity;
       if (night && material.userData.nightWindow) {
-        material.color.set('#4e514b'); material.emissive.set('#efbc70'); material.emissiveIntensity = 0.42;
+        material.color.set('#1d2529'); material.emissive.set('#ffc98a'); material.emissiveIntensity = 1.25;
       }
-      if (night && material.userData.nightLamp) { material.emissive.set('#efbc70'); material.emissiveIntensity = 1.3; }
+      if (night && material.userData.nightLamp) { material.emissive.set(material.userData.lampColor || '#ffd29a'); material.emissiveIntensity = 3; }
+      if (night && material.userData.nightTail) { material.emissive.set('#ff2a1a'); material.emissiveIntensity = 3.2; }
+      if (night && material.name === 'soft-cloud') material.color.set('#3a4350');
     });
   }
   setNight(false);
-  return { setNight, dispose() {
+  return { setNight, setTime: realism.setTime, dispose() {
     finish.dispose(); realism.dispose(); sun.shadow.dispose(); scene.remove(sky, ambient, sun);
     scene.onBeforeRender = previousBeforeRender; if (surface.fog) scene.fog = null;
   } };

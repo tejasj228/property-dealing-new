@@ -2,10 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { createCity, createCityCamera, frameCityCamera, CITY_OVERSCAN } from './city-model.mjs';
-import {
-  ACESFilmicToneMapping,
-  PCFShadowMap, Raycaster, Vector2, Scene, Vector3, WebGLRenderer,
-} from 'three';
+import { Raycaster, Vector2, Scene, Vector3 } from 'three';
+import { createSceneRenderer } from './scene-renderer.mjs';
 import { createArchitecture, createSceneCamera, frameSceneCamera, scenePose } from './architecture.mjs';
 import { createDistrict, createKeys, createSpatialCamera, frameSpatialCamera } from './spatial-models.mjs';
 import { createOrbitSpring } from './orbit-spring.mjs';
@@ -32,31 +30,25 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    let renderer;
+    const compact = window.matchMedia('(max-width: 767px)').matches;
+    const lowPower = prefersLightweightScene(navigator);
+    let view;
     try {
-      renderer = new WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
+      // HDR post-processing (bloom, ambient occlusion) on capable desktops only. Shadow
+      // maps are redrawn when the model turns or on alternate ambient frames.
+      view = createSceneRenderer({ post: !compact && !lowPower, shadows: !compact && !lowPower && kind !== 'keys', occlusion: kind !== 'keys' });
     } catch {
       // The permanent CSS sculpture below remains available if WebGL is disabled.
       return;
     }
-    const compact = window.matchMedia('(max-width: 767px)').matches;
-    const lowPower = prefersLightweightScene(navigator);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1 : 1.35));
-    renderer.setClearColor(0x000000, 0);
-    renderer.toneMapping = ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.38;
-    renderer.shadowMap.enabled = !compact && !lowPower && kind !== 'keys';
-    // Shadow maps are redrawn when the model turns or on alternate ambient frames.
-    renderer.shadowMap.autoUpdate = false;
-    renderer.shadowMap.needsUpdate = true;
-    renderer.shadowMap.type = PCFShadowMap;
+    const renderer = view.renderer;
     renderer.domElement.setAttribute('aria-hidden', 'true');
     host.appendChild(renderer.domElement);
 
     const scene = new Scene();
     const camera = kind === 'city' ? createCityCamera() : kind === 'house' ? createSceneCamera() : createSpatialCamera(kind);
     const architecture = kind === 'city' ? createCity({ compact: compact || lowPower }) : kind === 'house' ? createArchitecture({ compact: compact || lowPower }) : kind === 'keys' ? createKeys() : kind === 'office' ? createContactOffice() : createDistrict({ compact: compact || lowPower, kind });
-    scene.add(architecture.model);
+    scene.add(architecture.model); view.attach(scene, camera);
     if (kind === 'city') { cityRef.current = architecture; architecture.select(selectionRef.current); }
     const raycaster = new Raycaster(), pointer = new Vector2();
     const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower, invalidate, prepare });
@@ -107,7 +99,8 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
         renderer.shadowMap.needsUpdate = !ambient || turning || dragging !== null || shadowTick++ % 2 === 0;
         lastYaw = architecture.model.rotation.y; lastPitch = architecture.model.rotation.x;
       }
-      renderer.render(scene, camera);
+      lighting.setTime(elapsed);
+      view.render();
       if (host.dataset.ready !== 'true') host.dataset.ready = 'true';
       if (!reduceMotion && !pausedRef.current) frame = requestAnimationFrame(render);
       dirty = false;
@@ -122,7 +115,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       compiling++;
       compileScene(renderer, scene, camera).then(() => { compiling--; if (disposed) return; renderer.shadowMap.needsUpdate = true; invalidate(); });
     }
-    const stopTheme = observeSceneTheme(host, lighting, prepare);
+    const stopTheme = observeSceneTheme(host, { setNight(night) { lighting.setNight(night); view.setNight(night); } }, prepare);
     invalidateRef.current = invalidate;
     const resize = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
@@ -130,8 +123,8 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       if (kind === 'city') frameCityCamera(camera, width, height, CITY_OVERSCAN);
       else if (kind === 'house') frameSceneCamera(camera, width, height);
       else frameSpatialCamera(camera, width, height, kind);
-      renderer.setPixelRatio(scenePixelRatio(width, height, { devicePixelRatio: window.devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize }));
-      renderer.setSize(width, height, false); invalidate();
+      view.setSize(width, height, scenePixelRatio(width, height, { devicePixelRatio: window.devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize }));
+      invalidate();
     });
     resize.observe(host);
     const visibility = new IntersectionObserver(([entry]) => {
@@ -211,7 +204,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
       invalidateRef.current = null; cityRef.current = null;
-      stopTheme(); lighting.dispose(); architecture.dispose(); renderer.dispose(); renderer.domElement.remove(); delete host.dataset.ready;
+      stopTheme(); lighting.dispose(); architecture.dispose(); view.dispose(); renderer.domElement.remove(); delete host.dataset.ready;
     };
   }, [progress, reduceMotion, kind]);
 

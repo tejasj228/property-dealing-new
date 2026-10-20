@@ -49,7 +49,7 @@ export function finishArchitecture(scene, model, renderer, compact, invalidate =
   model.traverse(object => { if (object.material?.isMeshStandardMaterial) materials.add(object.material); });
   for (const material of materials) {
     const name = material.name;
-    const scanned = /timber/.test(name) ? 'wood' : /trunk/.test(name) ? 'bark' : /road/.test(name) ? 'asphalt' : /^(grass|soil|sand)$/.test(name) ? 'ground' : /concrete|stone|ivory|edge/.test(name) ? 'concrete' : null;
+    const scanned = /timber/.test(name) ? 'wood' : /trunk/.test(name) ? 'bark' : /road/.test(name) ? 'asphalt' : /^(grass|soil|sand)$/.test(name) ? 'ground' : /concrete|stone|ivory|edge|render/.test(name) ? 'concrete' : null;
     if (scanned) {
       material.map = textureFor(`pbr/${scanned}-color`, true);
       material.normalMap = textureFor(`pbr/${scanned}-normal`);
@@ -58,8 +58,9 @@ export function finishArchitecture(scene, model, renderer, compact, invalidate =
       // Lift the scanned albedo while keeping some authored contrast: darker stone trims
       // stay distinct from rendered walls, and bare plots read paler than planted ground.
       const authored = material.color.clone();
-      material.color.set(scanned === 'ground' ? '#c8ab73' : scanned === 'wood' ? '#dfd2b8' : scanned === 'bark' ? '#c5b29e' : '#eeeae2');
-      if (scanned === 'concrete' || name === 'sand') material.color.lerp(authored, name === 'sand' ? .5 : .6);
+      // Natural ground: planted turf reads olive-green, bare plots and soil dusty; asphalt stays dark.
+      material.color.set(name === 'grass' ? '#b4c27a' : name === 'sand' ? '#d8c69c' : scanned === 'ground' ? '#c4ab7c' : scanned === 'asphalt' ? '#a2a5a5' : scanned === 'wood' ? '#dfd2b8' : scanned === 'bark' ? '#c5b29e' : '#eeeae2');
+      if (scanned === 'concrete') material.color.lerp(authored, .6);
       material.roughness = .92;
     }
     const surface = /timber|trunk/.test(name) ? 'wood' : /concrete|ivory|edge/.test(name) ? 'plaster' : /road/.test(name) ? 'asphalt' : /stone|sand|soil/.test(name) ? 'stone' : /grass|leaf|hedge/.test(name) ? 'foliage' : name === 'water' ? 'water' : /silver|metal/.test(name) ? 'metal' : null;
@@ -68,44 +69,52 @@ export function finishArchitecture(scene, model, renderer, compact, invalidate =
       material.roughnessMap = material.bumpMap;
       material.roughness = surface === 'water' ? .16 : surface === 'wood' ? .65 : .86;
     }
-    if (material.userData.nightWindow) {
-      material.emissiveMap = textureFor('window');
-    }
     if (/glass|windscreen|solar/.test(name)) {
       material.roughness = .085; material.metalness = name === 'solar' ? .35 : .08; material.envMapIntensity = 1.7;
       if (material.isMeshPhysicalMaterial) { material.clearcoat = 1; material.clearcoatRoughness = .07; material.ior = 1.5; }
     }
-    if (name === 'water' && material.isMeshPhysicalMaterial) { material.clearcoat = 1; material.clearcoatRoughness = .05; material.ior = 1.333; material.envMapIntensity = 1.8; }
+    // Coated architectural glazing: a tinted mirror for the sky by day; panes, frames and
+    // lit rooms are drawn by the window shading.
+    if (material.userData.nightWindow && !material.transparent) { material.color.set('#3d525b'); material.metalness = .55; material.roughness = .06; material.envMapIntensity = 2.1; }
+    if (name === 'water') {
+      material.color.set('#2f5b5f'); material.roughness = .03; material.metalness = 0; material.envMapIntensity = 2.2;
+      material.bumpMap = null; material.roughnessMap = null;
+      if (material.isMeshPhysicalMaterial) { material.clearcoat = 1; material.clearcoatRoughness = .02; material.ior = 1.333; }
+    }
     if (/silver|metal/.test(name)) { material.roughness = .23; material.metalness = .92; material.envMapIntensity = 1.6; }
   }
-  let environment, hdrLease, environmentTimer;
-  // Let the first model frame render before baking reflection lighting. Desktop
-  // bakes the outdoor sky only; compact devices use one smaller studio bake.
-  if (renderer.isWebGLRenderer) environmentTimer = setTimeout(() => {
-    if (disposed) return;
+  // Image-based lighting from real HDR skies: an autumn daytime sky, and a moonless night
+  // sky that is fetched only once a scene is shown in the dark theme. Both are 512x256,
+  // so switching themes keeps the same shader variants. Compact devices use one small
+  // studio bake. The first model frame renders before any bake.
+  const environments = {}, hdrLeases = {};
+  let environmentTimer, ready = false, wanted = 'day';
+  function applyEnvironment() {
+    if (disposed || !ready) return;
     if (compact) {
-      const studio = new RoomEnvironment(), generator = new PMREMGenerator(renderer);
-      environment = generator.fromScene(studio, .04, .1, 50, { size:64 });
-      scene.environment = environment.texture;
-      studio.dispose(); generator.dispose(); if (!disposed) prepare();
-    } else {
-      const applyEnvironment = () => {
-        if (disposed || !hdrLease?.asset.image?.data || environment) return;
-        const generator = new PMREMGenerator(renderer);
-        environment = generator.fromEquirectangular(hdrLease.asset);
-        scene.environment = environment.texture; scene.environmentRotation.set(0,-.7,0);
-        // A new environment changes shader variants; let the renderer compile them off-frame.
-        generator.dispose(); if (!disposed) prepare();
-      };
-      hdrLease = hdrPool.acquire('outdoor', ready => new HDRLoader().load('/textures/pbr/autumn-sky.hdr', ready, undefined, wake), applyEnvironment);
-      applyEnvironment();
+      if (!environments.studio) {
+        const studio = new RoomEnvironment(), generator = new PMREMGenerator(renderer);
+        environments.studio = generator.fromScene(studio, .04, .1, 50, { size:64 }); studio.dispose(); generator.dispose();
+        scene.environment = environments.studio.texture; prepare();
+      }
+      return;
     }
-  }, 120);
+    const lease = hdrLeases[wanted] ||= hdrPool.acquire(wanted, done => new HDRLoader().load(`/textures/pbr/${wanted === 'night' ? 'night' : 'autumn'}-sky.hdr`, done, undefined, wake), applyEnvironment);
+    if (!lease.asset.image?.data) return;
+    if (!environments[wanted]) { const generator = new PMREMGenerator(renderer); environments[wanted] = generator.fromEquirectangular(lease.asset); generator.dispose(); }
+    if (scene.environment === environments[wanted].texture) return;
+    const first = !scene.environment;
+    scene.environment = environments[wanted].texture; scene.environmentRotation.set(0, wanted === 'night' ? .4 : -.7, 0);
+    // A first environment changes shader variants; let the renderer compile them off-frame.
+    if (first) prepare(); else wake();
+  }
+  if (renderer.isWebGLRenderer) environmentTimer = setTimeout(() => { ready = true; applyEnvironment(); }, 120);
   return {
-    setNight(night) { scene.environmentIntensity = night ? .24 : .48; },
+    // The studio bake is neutral and bright, so compact devices dim it far more at night.
+    setNight(night) { scene.environmentIntensity = night ? (compact ? .14 : .55) : .85; wanted = night ? 'night' : 'day'; applyEnvironment(); },
     dispose() {
       disposed = true; clearTimeout(environmentTimer); scene.environment = null;
-      environment?.dispose(); hdrLease?.release();
+      Object.values(environments).forEach(environment => environment.dispose()); Object.values(hdrLeases).forEach(lease => lease.release());
       if (loader) leases.forEach(lease => lease.release());
       else textures.forEach(texture => texture.dispose());
     },

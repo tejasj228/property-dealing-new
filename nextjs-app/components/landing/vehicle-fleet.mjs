@@ -6,8 +6,8 @@ export const CAR_PAINTS = ['#eceae4', '#c2c5c9', '#f6f5f0', '#7c8288', '#25282c'
 // Every car in a scene shares one instanced draw per part (body, cabin, trim, lamps,
 // wheels, night headlight pools), so traffic costs the same few draws at any count.
 // Paint is per car through instance colours on a single white clearcoat material.
-export function createFleet(kit, parent, count, { paints = CAR_PAINTS, offset = 0 } = {}) {
-  const template = kit.car(new Group(), 0, 0, 0, '#ffffff');
+export function createFleet(kit, parent, count, { paints = CAR_PAINTS, offset = 0, type = 'hatch' } = {}) {
+  const template = kit.car(new Group(), 0, 0, 0, '#ffffff', type);
   template.position.set(0, 0, 0); template.rotation.set(0, 0, 0); template.updateMatrixWorld(true);
   const buckets = new Map();
   template.traverse(part => {
@@ -16,7 +16,7 @@ export function createFleet(kit, parent, count, { paints = CAR_PAINTS, offset = 
     if (!buckets.has(key)) buckets.set(key, []);
     buckets.get(key).push(part);
   });
-  const group = new Group(); group.name = 'traffic'; group.userData.animated = true; parent.add(group);
+  const group = new Group(); group.name = type === 'hatch' ? 'traffic' : `traffic-${type}`; group.userData.animated = true; parent.add(group);
   const colour = new Color();
   const meshes = [...buckets.values()].map(parts => {
     const [first] = parts, mesh = new InstancedMesh(first.geometry, first.material, parts.length * count);

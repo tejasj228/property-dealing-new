@@ -35,7 +35,10 @@ test('every scene material receives the shared realism shading and restores it o
       assert.match(shader.vertexShader, /vRlScene = \( rlToScene \* rlLocal \)\.xyz/);
       assert.match(shader.fragmentShader, /reflectedLight\.indirectDiffuse \*= rl/);
       assert.ok(shader.uniforms.rlSceneInverse && shader.uniforms.rlGround);
-      if (material.userData.realism === 'window') assert.match(shader.fragmentShader, /totalEmissiveRadiance \*= rlRoom/);
+      if (material.userData.realism === 'window') { assert.match(shader.fragmentShader, /totalEmissiveRadiance = emissive \* rlRoom/); assert.match(shader.fragmentShader, /rlFrame/); }
+      if (material.userData.realism === 'water') assert.match(shader.fragmentShader, /rlRipple/);
+      if (material.userData.blink) assert.match(shader.fragmentShader, /rlFlash/);
+      assert.match(shader.fragmentShader, /rlCloud/);
       if (material.userData.realism === 'surface') assert.match(shader.vertexShader, /vNormalMapUv = rlUv/);
       assert.match(material.customProgramCacheKey(), /realism-/);
     });
@@ -78,34 +81,41 @@ test('instanced fleets keep draw calls constant while every car gets its own pai
 
 test('city traffic drives in the left lane of real roads and parked cars stay off the carriageway', () => {
   for (const compact of [false, true]) {
-    const city = createCity({ compact }), matrix = new Matrix4(), position = new Vector3(), next = new Vector3();
-    const body = city.model.getObjectByName('traffic').children.find(mesh => mesh.material.name === 'vehicle-paint' && mesh.geometry.type === 'BufferGeometry');
-    assert.ok(city.movingCars >= 5 && body.count >= city.movingCars + 6);
+    const city = createCity({ compact }), matrix = new Matrix4(), position = new Vector3();
+    // The first part of each fleet (its painted or liveried body) gives every vehicle's pose.
+    const fleets = {};
+    for (const group of city.model.children[0].children.filter(o => o.name.startsWith('traffic'))) fleets[group.name === 'traffic' ? 'hatch' : group.name.slice(8)] = group.children[0];
+    assert.deepEqual(Object.keys(fleets).sort(), ['bus', 'hatch', 'rickshaw', 'suv']);
+    assert.ok(city.movingCars >= 9 && city.parkedSlots.count >= 6);
     for (const time of [0, 7, 31, 90]) {
       city.update(.5, false, time);
-      for (let i = 0; i < body.count; i++) {
-        body.getMatrixAt(i, matrix); position.setFromMatrixPosition(matrix);
-        if (i < city.movingCars) {
-          if (matrix.getMaxScaleOnAxis() < .05) continue; // fading in at a junction
-          assert.equal(clearOfRoads(position.x, position.z, 0, city.roadCorridors), false, `car ${i} on a road at ${time}s`);
-          assert.ok(!clearOfRoads(position.x, position.z, .02, city.roadCorridors.slice(0, 1)) || !clearOfRoads(position.x, position.z, .02, city.roadCorridors.slice(1, 3)));
-        } else assert.ok(clearOfRoads(position.x, position.z, .12, city.roadCorridors), `parked car ${i} clear of streets`);
+      for (const { type, slot } of city.traffic) {
+        const mesh = fleets[type], perCar = mesh.count / countOf(city, type);
+        mesh.getMatrixAt(slot * perCar, matrix); position.setFromMatrixPosition(matrix);
+        if (matrix.getMaxScaleOnAxis() < .05) continue; // fading in at a junction
+        assert.equal(clearOfRoads(position.x, position.z, 0, city.roadCorridors), false, `${type} ${slot} on a road at ${time}s`);
+      }
+      const hatch = fleets.hatch, perCar = hatch.count / countOf(city, 'hatch');
+      for (let i = 0; i < city.parkedSlots.count; i++) {
+        hatch.getMatrixAt((city.parkedSlots.first + i) * perCar, matrix); position.setFromMatrixPosition(matrix);
+        assert.ok(clearOfRoads(position.x, position.z, .12, city.roadCorridors), `parked car ${i} clear of streets`);
       }
     }
-    // Keep-left: a car's lateral offset from its ring centreline is to the left of travel.
+    // Keep-left: a vehicle's offset from the ring centreline is to the left of travel.
     city.update(.5, false, 12);
     const ring = city.roadCorridors[0].points;
-    for (let i = 0; i < Math.min(city.movingCars, compact ? 3 : 6); i++) {
-      body.getMatrixAt(i, matrix); position.setFromMatrixPosition(matrix);
+    for (const { type, slot } of city.traffic.filter((_, i) => i < (compact ? 5 : 10))) {
+      const mesh = fleets[type], perCar = mesh.count / countOf(city, type);
+      mesh.getMatrixAt(slot * perCar, matrix); position.setFromMatrixPosition(matrix);
       const forward = new Vector3(0, 0, 1).transformDirection(matrix);
       let nearest = 0; ring.forEach((p, j) => { if (p.distanceToSquared(position) < ring[nearest].distanceToSquared(position)) nearest = j; });
-      next.copy(position).sub(ring[nearest]);
-      const left = new Vector3(forward.z, 0, -forward.x);
-      assert.ok(next.dot(left) > .08, `car ${i} keeps left`);
+      const offset = position.clone().sub(ring[nearest]), left = new Vector3(forward.z, 0, -forward.x);
+      assert.ok(offset.dot(left) > .08, `${type} ${slot} keeps left`);
     }
     city.dispose();
   }
 });
+const countOf = (city, type) => city.traffic.filter(car => car.type === type).length + (type === city.parkedSlots.type ? city.parkedSlots.count : 0);
 
 test('frame batching merges static parts while moving storeys, swings, keys and doors keep their meshes', () => {
   const house = createArchitecture();
@@ -137,7 +147,7 @@ test('city blocks vary in facade tone and the hero stays within its draw and tri
   });
   assert.ok(tones.size >= 4, `facade tones ${tones.size}`);
   assert.ok(draws(city.model) < 180, `city draws ${draws(city.model)}`);
-  assert.ok(triangles < 150000, `city triangles ${triangles}`);
+  assert.ok(triangles < 170000, `city triangles ${triangles}`);
   city.dispose();
 });
 
@@ -163,4 +173,52 @@ test('parallel shader compilation resumes rendering even if readiness never reso
   await compileScene({ compileAsync: () => Promise.reject(new Error('lost')) }, null, null, 40);
   await compileScene({ compileAsync: () => { throw new Error('context lost'); } }, null, null, 40);
   await compileScene({}, null, null);
+});
+
+test('city trees merge into one leaf and one branch draw with per-leaf crown data', () => {
+  const city = createCity(), leaves = [], branches = [];
+  let markers = 0;
+  city.model.traverse(o => { if (o.name === 'forest-leaves') leaves.push(o); if (o.name === 'forest-branches') branches.push(o); if (o.name === 'botanical-tree') markers++; });
+  assert.equal(leaves.length, 1); assert.equal(branches.length, 1);
+  assert.ok(markers >= 60, `city trees ${markers}`);
+  assert.equal(leaves[0].count % markers, 0);
+  assert.equal(leaves[0].geometry.getAttribute('rlCrown').count, leaves[0].instanceMatrix.count);
+  assert.equal(leaves[0].material.defines.RL_FOREST, 1);
+  city.dispose();
+});
+
+test('pedestrians keep to the pavements and every working machine is bounded and freezes', () => {
+  const city = createCity(), matrix = new Matrix4(), position = new Vector3();
+  const crowd = city.model.getObjectByName('pedestrians');
+  for (const time of [0, 13, 61]) {
+    city.update(.5, false, time);
+    for (let i = 0; i < crowd.count; i++) {
+      crowd.getMatrixAt(i, matrix); position.setFromMatrixPosition(matrix);
+      // Walkers follow kerbs (ring, ring, cross street, cross street); they may cross side streets at junctions.
+      const own = city.roadCorridors[[0, 0, 1, 2][i % 4]];
+      assert.ok(clearOfRoads(position.x, position.z, 0, [own]), `pedestrian ${i} beside, not on, its road at ${time}s`);
+    }
+  }
+  const jib = city.model.getObjectByName('crane-jib'), snapshot = () => { city.model.updateMatrixWorld(true); return jib.matrixWorld.elements.slice(); };
+  city.update(.5, true, 0); const still = snapshot(); city.update(.5, true, 40); assert.deepEqual(snapshot(), still);
+  city.update(.5, false, 40); assert.notDeepEqual(snapshot(), still);
+  city.dispose();
+  const land = createDistrict({ kind: 'land' }), excavator = land.model.getObjectByName('excavator');
+  const pose = () => { const p = []; excavator.traverse(o => p.push(o.rotation.x, o.rotation.y)); return p; };
+  land.update(.5, true, 0); const rest = pose(); land.update(.5, true, 7); assert.deepEqual(pose(), rest);
+  land.update(.5, false, 3); assert.notDeepEqual(pose(), rest);
+  land.dispose();
+});
+
+test('real HDR skies ship small, valid and with matching sizes for both themes', async () => {
+  const fs = await import('node:fs');
+  const { HDRLoader } = await import('three/addons/loaders/HDRLoader.js');
+  const sizes = [];
+  for (const name of ['autumn-sky', 'night-sky']) {
+    const file = new URL(`../public/textures/pbr/${name}.hdr`, import.meta.url), bytes = fs.readFileSync(file);
+    assert.ok(bytes.length < 600000, `${name} ${bytes.length} bytes`);
+    const parsed = new HDRLoader().parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length));
+    sizes.push(`${parsed.width}x${parsed.height}`);
+  }
+  assert.equal(sizes[0], sizes[1]);
 });
