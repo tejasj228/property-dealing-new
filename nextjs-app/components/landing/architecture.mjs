@@ -100,7 +100,7 @@ export function createArchitecture({ compact = false } = {}) {
   box(model, 'water', [1.48, 0.045, 3.6], [3.3, 0.19, -0.9], false);
   box(model, 'edge', [0.04, 0.01, 3.25], [2.73, 0.217, -0.9], false);
   // Upper storey moves as one coherent architectural piece.
-  const upperFloor = new Group(); model.add(upperFloor);
+  const upperFloor = new Group(); upperFloor.userData.rigid = true; model.add(upperFloor);
   box(upperFloor, 'edge', [3.5, 0.16, 3.1], [-1.15, 2.12, -1]);
   box(upperFloor, 'concrete', [3.12,1.35,.14], [-1.15,2.84,-2.45]);
   box(upperFloor, 'concrete', [.14,1.35,2.84], [-2.64,2.84,-1.1]);
@@ -117,11 +117,11 @@ export function createArchitecture({ compact = false } = {}) {
   box(upperFloor, 'glass', [0.06, 1.02, 2.24], [0.44, 2.83, -1.05]);
   box(upperFloor, 'timber', [0.08, 1.35, 2.8], [-2.76, 2.84, -1.08]);
   // Flat roof with a deep, crisply defined overhang.
-  const roof = new Group(); upperFloor.add(roof);
+  const roof = new Group(); roof.userData.rigid = true; upperFloor.add(roof);
   box(roof, 'edge', [3.65, 0.18, 3.32], [-1.15, 3.59, -1.07]);
   box(roof, 'stone', [3.23, 0.045, 2.9], [-1.15, 3.71, -1.07], false);
   // A supported terrace extension: every pergola post terminates on this slab.
-  const pergola = new Group(); pergola.name = 'supported-pergola'; model.add(pergola);
+  const pergola = new Group(); pergola.name = 'supported-pergola'; pergola.userData.rigid = true; model.add(pergola);
   box(pergola, 'edge', [1.45, .18, 1.72], [1.45, 1.94, -1.43]);
   for (const x of [.9, 2]) for (const z of [-2, -.86]) {
     const post = box(pergola, 'dark', [.07, .81, .07], [x, 2.425, z]);

@@ -108,6 +108,14 @@
     "asset": "autumn_field_puresky",
     "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/autumn_field_puresky_1k.hdr",
     "license": "CC0-1.0",
-    "page": "https://polyhaven.com/a/autumn_field_puresky"
+    "page": "https://polyhaven.com/a/autumn_field_puresky",
+    "note": "Resampled to 512x256 RLE by scripts/resample-hdr.mjs"
+  },
+  {
+    "asset": "moonless_golf",
+    "url": "https://raw.githubusercontent.com/mrdoob/three.js/r170/examples/textures/equirectangular/moonless_golf_1k.hdr",
+    "license": "CC0-1.0",
+    "page": "https://polyhaven.com/a/moonless_golf",
+    "note": "Night sky as night-sky.hdr, resampled to 512x256 RLE by scripts/resample-hdr.mjs"
   }
 ]

@@ -2,17 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 import { createCity, createCityCamera, frameCityCamera, CITY_OVERSCAN } from './city-model.mjs';
-import {
-  ACESFilmicToneMapping,
-  PCFSoftShadowMap, Raycaster, Vector2, Scene, Vector3, WebGLRenderer,
-} from 'three';
+import { Raycaster, Vector2, Scene, Vector3 } from 'three';
+import { createSceneRenderer } from './scene-renderer.mjs';
 import { createArchitecture, createSceneCamera, frameSceneCamera, scenePose } from './architecture.mjs';
 import { createDistrict, createKeys, createSpatialCamera, frameSpatialCamera } from './spatial-models.mjs';
 import { createOrbitSpring } from './orbit-spring.mjs';
 import { createContactOffice } from './contact-office.mjs';
 import { createKeySpring } from './key-spring.mjs';
 import styles from './Landing.module.css';
-import { scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
+import { compileScene, scenePixelRatio, prefersLightweightScene } from './render-policy.mjs';
 import { createSceneLighting, observeSceneTheme } from './scene-lighting.mjs';
 
 export default function ArchitectureScene({ progress, reduceMotion, paused, kind = 'house', selectedDistrict = null, onDistrictSelect, zoom = 1 }) {
@@ -32,35 +30,30 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    let renderer;
+    const compact = window.matchMedia('(max-width: 767px)').matches;
+    const lowPower = prefersLightweightScene(navigator);
+    let view;
     try {
-      renderer = new WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
+      // HDR post-processing (bloom, ambient occlusion) on capable desktops only. Shadow
+      // maps are redrawn when the model turns or on alternate ambient frames.
+      view = createSceneRenderer({ post: !compact && !lowPower, shadows: !compact && !lowPower && kind !== 'keys', occlusion: kind !== 'keys' });
     } catch {
       // The permanent CSS sculpture below remains available if WebGL is disabled.
       return;
     }
-    const compact = window.matchMedia('(max-width: 767px)').matches;
-    const lowPower = prefersLightweightScene(navigator);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1 : 1.35));
-    renderer.setClearColor(0x000000, 0);
-    renderer.toneMapping = ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.38;
-    renderer.shadowMap.enabled = !compact && !lowPower && kind !== 'keys';
-    renderer.shadowMap.autoUpdate = true;
-    renderer.shadowMap.needsUpdate = true;
-    renderer.shadowMap.type = PCFSoftShadowMap;
+    const renderer = view.renderer;
     renderer.domElement.setAttribute('aria-hidden', 'true');
     host.appendChild(renderer.domElement);
 
     const scene = new Scene();
     const camera = kind === 'city' ? createCityCamera() : kind === 'house' ? createSceneCamera() : createSpatialCamera(kind);
     const architecture = kind === 'city' ? createCity({ compact: compact || lowPower }) : kind === 'house' ? createArchitecture({ compact: compact || lowPower }) : kind === 'keys' ? createKeys() : kind === 'office' ? createContactOffice() : createDistrict({ compact: compact || lowPower, kind });
-    scene.add(architecture.model);
+    scene.add(architecture.model); view.attach(scene, camera);
     if (kind === 'city') { cityRef.current = architecture; architecture.select(selectionRef.current); }
     const raycaster = new Raycaster(), pointer = new Vector2();
-    const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower, invalidate });
+    const lighting = createSceneLighting(scene, architecture.model, renderer, { kind, compact: compact || lowPower, invalidate, prepare });
 
-    let visible = false, frame = 0, dirty = true, lastTime = 0, contextLost = false, elapsed = 0;
+    let visible = false, frame = 0, dirty = true, lastTime = 0, contextLost = false, elapsed = 0, compiling = 0, shadowTick = 0, lastYaw = 0, lastPitch = 0, disposed = false;
     let currentProgress = reduceMotion && kind !== 'office' ? 0 : progress.get();
     let targetProgress = currentProgress;
     let dragging = null, dragX = 0, dragY = 0;
@@ -68,7 +61,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     const cameraRight = new Vector3(), cameraUp = new Vector3();
     function render(time = 0) {
       frame = 0;
-      if (!visible || document.hidden || contextLost) return;
+      if (!visible || document.hidden || contextLost || compiling) return;
       if (lastTime && time - lastTime < (compact || lowPower ? 48 : 32)) { frame = requestAnimationFrame(render); return; }
       const delta = Math.min(64, time - (lastTime || time - 16)); lastTime = time;
       const ease = 1 - Math.exp(-delta / 105);
@@ -100,7 +93,14 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
         architecture.model.rotation.z += jiggle.angle * 0.25;
       }
       if (kind === 'city' && camera.zoom !== zoomRef.current) { camera.zoom = zoomRef.current; camera.updateProjectionMatrix(); }
-      renderer.render(scene, camera);
+      if (renderer.shadowMap.enabled) {
+        const turning = Math.abs(architecture.model.rotation.y - lastYaw) + Math.abs(architecture.model.rotation.x - lastPitch) > 1e-4 || Math.abs(targetProgress - currentProgress) > 1e-3;
+        const ambient = !reduceMotion && !pausedRef.current;
+        renderer.shadowMap.needsUpdate = !ambient || turning || dragging !== null || shadowTick++ % 2 === 0;
+        lastYaw = architecture.model.rotation.y; lastPitch = architecture.model.rotation.x;
+      }
+      lighting.setTime(elapsed);
+      view.render();
       if (host.dataset.ready !== 'true') host.dataset.ready = 'true';
       if (!reduceMotion && !pausedRef.current) frame = requestAnimationFrame(render);
       dirty = false;
@@ -109,7 +109,13 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       dirty = true;
       if (!frame && visible && !document.hidden && !contextLost) frame = requestAnimationFrame(render);
     }
-    const stopTheme = observeSceneTheme(host, lighting, invalidate);
+    // New shader variants (first mount, environment bake, theme lights) compile through
+    // KHR_parallel_shader_compile where available; the last frame stays on screen meanwhile.
+    function prepare() {
+      compiling++;
+      compileScene(renderer, scene, camera).then(() => { compiling--; if (disposed) return; renderer.shadowMap.needsUpdate = true; invalidate(); });
+    }
+    const stopTheme = observeSceneTheme(host, { setNight(night) { lighting.setNight(night); view.setNight(night); } }, prepare);
     invalidateRef.current = invalidate;
     const resize = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
@@ -117,8 +123,8 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       if (kind === 'city') frameCityCamera(camera, width, height, CITY_OVERSCAN);
       else if (kind === 'house') frameSceneCamera(camera, width, height);
       else frameSpatialCamera(camera, width, height, kind);
-      renderer.setPixelRatio(scenePixelRatio(width, height, { devicePixelRatio: window.devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize }));
-      renderer.setSize(width, height, false); invalidate();
+      view.setSize(width, height, scenePixelRatio(width, height, { devicePixelRatio: window.devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize }));
+      invalidate();
     });
     resize.observe(host);
     const visibility = new IntersectionObserver(([entry]) => {
@@ -189,7 +195,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
     renderer.domElement.addEventListener('webglcontextlost', onContextLost);
     renderer.domElement.addEventListener('webglcontextrestored', onContextRestored);
     return () => {
-      cancelAnimationFrame(frame); unsubscribe(); resize.disconnect(); visibility.disconnect();
+      disposed = true; cancelAnimationFrame(frame); unsubscribe(); resize.disconnect(); visibility.disconnect();
       host.removeEventListener('pointermove', onPointerMove); host.removeEventListener('pointerleave', onPointerLeave);
       host.removeEventListener('pointerdown', onPointerDown); host.removeEventListener('blur', onBlur);
       host.removeEventListener('pointerup', onPointerUp); host.removeEventListener('pointercancel', onPointerUp); host.removeEventListener('lostpointercapture', onPointerUp);
@@ -198,7 +204,7 @@ export default function ArchitectureScene({ progress, reduceMotion, paused, kind
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
       invalidateRef.current = null; cityRef.current = null;
-      stopTheme(); lighting.dispose(); architecture.dispose(); renderer.dispose(); renderer.domElement.remove(); delete host.dataset.ready;
+      stopTheme(); lighting.dispose(); architecture.dispose(); view.dispose(); renderer.domElement.remove(); delete host.dataset.ready;
     };
   }, [progress, reduceMotion, kind]);
 

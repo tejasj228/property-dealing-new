@@ -2,7 +2,7 @@ import test from 'node:test';
 import { createPropertyMapModel, framePropertyMapCamera, layoutProperties } from '../components/landing/property-map-model.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { Box3, Matrix4, OrthographicCamera, Vector3 } from 'three';
+import { Box3, Group, Matrix4, OrthographicCamera, Vector3 } from 'three';
 import { createArchitecture, createSceneCamera, frameSceneCamera, scenePose } from '../components/landing/architecture.mjs';
 import { createDistrict, createKeys, createSpatialCamera, frameSpatialCamera } from '../components/landing/spatial-models.mjs';
 
@@ -330,8 +330,10 @@ test('night lamps and road pools switch with the theme', () => {
     const lighting = createSceneLighting(scene, illustration.model, {}, {kind}); lighting.setNight(true);
     let pools = 0, lamps = 0, calls = 0, equivalent = 0;
     illustration.model.traverse(o => {
-      if (o.userData.nightOnly) { pools++; assert.equal(o.visible, true); }
-      if (o.material?.userData.nightLamp) { lamps++; assert.equal(o.material.emissiveIntensity, 1.3); }
+      // Instanced fleets draw every headlight pool of a scene from one mesh.
+      if (o.userData.nightOnly) { pools += o.isInstancedMesh ? o.count : 1; assert.equal(o.visible, true); }
+      // HDR intensity: lamps exceed the bloom threshold at night.
+      if (o.material?.userData.nightLamp) { lamps++; assert.equal(o.material.emissiveIntensity, 3); }
       if (o.isMesh) { calls++; equivalent += o.isInstancedMesh ? o.count : 1; }
     });
     if (kind !== 'house') { assert.ok(pools >= 2); assert.ok(lamps >= 1); }
@@ -508,17 +510,20 @@ test('hero has furnished rooms behind clear glazing with separate night illumina
   assert.equal(panes,4);assert.equal(lights,2);house.dispose();
 });
 
-const { vehicleBodyGeometry } = await import('../components/landing/vehicle-geometry.mjs');
-test('car shells have outward-facing closed surfaces rather than inverted faces', () => {
-  for(const cabin of [false,true]) {
-    const geometry=vehicleBodyGeometry(cabin), points=geometry.getAttribute('position'), indices=geometry.index;
-    let volume=0;
-    for(let i=0;i<indices.count;i+=3) {
-      const a=new Vector3().fromBufferAttribute(points,indices.getX(i));
-      const b=new Vector3().fromBufferAttribute(points,indices.getX(i+1));
-      const c=new Vector3().fromBufferAttribute(points,indices.getX(i+2));
-      volume+=a.dot(b.cross(c))/6;
+const { createDetailKit } = await import('../components/landing/scene-details.mjs');
+test('vehicle shells have outward-facing closed surfaces rather than inverted faces', () => {
+  const kit = createDetailKit();
+  for (const type of ['hatch', 'sedan', 'suv']) {
+    const car = kit.car(new Group(), 0, 0, 0, '#ffffff', type);
+    for (const mesh of car.children.filter(o => o.isMesh && o.geometry.type === 'ExtrudeGeometry')) {
+      const points = mesh.geometry.getAttribute('position');
+      let volume = 0;
+      for (let i = 0; i < points.count; i += 3) {
+        const a = new Vector3().fromBufferAttribute(points, i), b = new Vector3().fromBufferAttribute(points, i + 1), c = new Vector3().fromBufferAttribute(points, i + 2);
+        volume += a.dot(b.cross(c)) / 6;
+      }
+      assert.ok(volume > 0, `${type} shell winds outward`);
     }
-    assert.ok(volume>0, 'Outward winding gives positive signed volume');geometry.dispose();
   }
+  kit.resources.geometries.forEach(g => g.dispose()); kit.resources.materials.forEach(m => m.dispose());
 });

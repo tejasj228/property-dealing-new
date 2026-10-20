@@ -1,9 +1,12 @@
 import { addCityLandmarks } from './city-landmarks.mjs';
 import { roadCorridor, clearOfRoads } from './road-clearance.mjs';
-import { BoxGeometry, BufferGeometry, CatmullRomCurve3, ExtrudeGeometry, Float32BufferAttribute, Shape, Group, LineLoop, LineBasicMaterial, Mesh, MeshBasicMaterial, OrthographicCamera, Vector3 } from 'three';
+import { Box3, Vector2, BoxGeometry, BufferGeometry, CatmullRomCurve3, ExtrudeGeometry, Float32BufferAttribute, Shape, Group, LineLoop, LineBasicMaterial, Mesh, MeshBasicMaterial, OrthographicCamera, Vector3 } from 'three';
 import { createDetailKit } from './scene-details.mjs';
 import { batchSceneMeshes } from './scene-batching.mjs';
 import { disposeSpatialModel } from './spatial-models.mjs';
+import { createFleet } from './vehicle-fleet.mjs';
+import { addConstructionSite } from './construction-site.mjs';
+import { createCrowd } from './city-crowd.mjs';
 
 import { CITY_DISTRICTS } from './city-districts.mjs';
 
@@ -20,10 +23,10 @@ export function frameCityCamera(camera,width,height,overscan=1) {
 // A fictional district atlas. These buildings never represent available listings.
 export function createCity({compact=false}={}) {
   const world=new Group(),model=new Group();world.name='illustrative-city';world.add(model);
-  const t=createDetailKit({compact:true}), hitAreas=[], outlines=[], cars=[];
+  const t=createDetailKit({compact:true,rounded:false,forest:true}), hitAreas=[], outlines=[], routes=[];let site=null;
   const hitGeometry=new BoxGeometry(1,1,1), hitMaterial=new MeshBasicMaterial({visible:false});
   const extraGeometries=[],roadCorridors=[];
-  const parcelLineMaterial=new LineBasicMaterial({color:'#f1e7ce'});
+  const parcelLineMaterial=new LineBasicMaterial({color:'#958c74'});
   const outlineMaterial=new LineBasicMaterial({color:'#f5d47c',depthTest:false});
   const b=(material,size,pos,parent=model)=>t.box(parent,material,size,pos);
   const random=n=>{const v=Math.sin(n*127.1+41.7)*43758.5453;return v-Math.floor(v);};
@@ -56,7 +59,7 @@ export function createCity({compact=false}={}) {
   }
   // A winding ring road and offset neighbourhood streets replace the square grid.
   const ring=road([[-12.7,-3],[-11.9,-6.9],[-7.5,-7.9],[-1,-7.7],[5.8,-7.8],[11.6,-6.8],[12.6,-2.8],[12.2,2.8],[11.4,6.7],[6.6,7.8],[.5,7.5],[-5.9,8],[-11.3,6.3],[-12.5,2]],true,.7);
-  for(const z of [-2.5,2.5])road([-12.5,-8,-4,0,4,8,12.3].map(x=>warp(x,z)));
+  for(const z of [-2.5,2.5])routes.push(road([-12.5,-8,-4,0,4,8,12.3].map(x=>warp(x,z))));
   for(const x of [-8,-4,0,4,8]) {
     const segments=x===-4?[[-7.7,-5,-2.5]]:x===4?[[-7.7,-5,-2.5],[2.5,5,7.7]]:[[-7.7,-5,-2.5,0,2.5,5,7.7]];
     segments.forEach(zs=>road(zs.map(z=>warp(x,z)),false,.46));
@@ -76,9 +79,21 @@ export function createCity({compact=false}={}) {
       }
       if(office)b('metal',[width+.025,.025,width+.025],[0,floor-.14,0],g);
     }
+    // Facade rhythm: piers split residential strips into rooms, mullions grid the offices,
+    // with balcony rails and wall-mounted AC units below some windows.
+    const bays=office?[-.36,-.24,-.12,0,.12,.24,.36]:[-.2,0,.2];
+    for(let floor=.3,level=0;floor<height-.1;floor+=(compact?.5:.36),level++)for(const side of [-1,1])for(const bay of bays) {
+      const pier=office?[.014,.23,.03]:[.032,.23,.04],material=office?'metal':'ivory',offset=width/2+(office?.022:.026);
+      b(material,pier,[bay*width,floor,side*offset],g);b(material,[pier[2],pier[1],pier[0]],[side*offset,floor,bay*width],g);
+      if(!office&&bay!==0&&random(x*13+z*7+level*3+side+bay*5)>.62)b('silver',[.04,.055,.07],[side*(width/2+.025),floor-.165,bay*width+.07],g);
+    }
+    if(!office)for(let floor=.3;floor<height-.1;floor+=(compact?.5:.36))for(const side of [-1,1])b('metal',[width+.1,.035,.012],[0,floor-.085,side*(width/2+.12)],g);
+    // Parapet, stair headroom, black rooftop water tanks or plant and condenser units.
+    for(const side of [-1,1]){b('ivory',[width+.12,.09,.035],[0,height+.14,side*(width/2+.043)],g);b('ivory',[.035,.09,width+.05],[side*(width/2+.043),height+.14,0],g);}
     b('dark',[.25,.25,.3],[-.16,height+.2,0],g);b('metal',[.3,.04,.35],[-.16,height+.34,0],g);
-    b('glass',[.4,.025,.4],[.2,height+.13,.15],g);
-    b('glass',[.34,.3,.035],[0,.16,width/2+.02],g);
+    if(office){for(const dx of [.12,.32]){b('silver',[.15,.1,.17],[dx,height+.15,-.25],g);b('dark',[.11,.012,.11],[dx,height+.206,-.25],g);}b('glass',[.4,.025,.4],[.2,height+.13,.18],g);}
+    else for(const [dx,dz] of [[.24,-.22],[.24,.08],[.05,-.3]]){t.round(g,'dark',[.075,.13,.075],[dx*width,height+.165,dz*width]);t.round(g,'dark',[.078,.012,.078],[dx*width,height+.236,dz*width]);}
+    b('glass',[.34,.3,.035],[0,.16,width/2+.02],g);b('stone',[.5,.03,.18],[0,.32,width/2+.1],g);
     return g;
   }
   function shop(parent,x,z) {
@@ -95,7 +110,13 @@ export function createCity({compact=false}={}) {
     const g=new Group();g.name=modern?'courtyard-villa':'pitched-roof-home';g.position.set(x,.21,z);parent.add(g);
     b('ivory',[.95,.62,.86],[0,.31,0],g);b('glass',[.67,.34,.025],[0,.33,.44],g);
     b('trunk',[.14,.52,.04],[.37,.28,.46],g);
+    if(!modern) {
+      // Low compound wall with a gate opening on the street side.
+      for(const side of [-1,1]){b('stone',[.035,.14,1.12],[side*.6,.07,.05],g);b('stone',[.42,.14,.035],[side*.39,.07,.6],g);}
+      b('stone',[1.24,.14,.035],[0,.07,-.5],g);b('metal',[.36,.1,.012],[0,.08,.6],g);
+    }
     if(modern) {
+      t.round(g,'dark',[.06,.1,.06],[-.38,1.2,-.3]);
       b('stone',[1.05,.07,1],[0,.67,0],g);b('ivory',[.42,.4,.6],[-.26,.9,-.12],g);
       b('glass',[.43,.26,.03],[-.26,.91,.19],g);b('stone',[.55,.06,.72],[-.26,1.12,-.12],g);
       b('trunk',[.6,.04,.55],[.38,.15,.67],g);
@@ -145,6 +166,10 @@ export function createCity({compact=false}={}) {
         const wing=tower(district,-.6,0,1.4,false,.9);wing.scale.z=2.15;
         const cross=tower(district,.35,-.65,1.4,false,.9);cross.scale.x=1.65;
         t.tree(district,.65,.72,.48);
+      } else if(index===6) {
+        // A gated high-rise society, the familiar Greater Noida skyline.
+        for(const [dx,dz,height] of [[-.72,-.72,3.05],[.62,-.78,3.35],[-.05,.62,2.75]])tower(district,dx,dz,height,false,.74);
+        b('water',[.7,.03,.36],[.72,.21,.55],district);t.bench(district,.75,1.05);
       } else {
         villa(district,-.63,-.72,index%2===0);villa(district,.64,.67,index%2!==0);
         if(index===13)villa(district,.65,-.7,true);
@@ -180,42 +205,78 @@ export function createCity({compact=false}={}) {
         const line=new LineLoop(geometry,parcelLineMaterial);district.add(line);
         shape.forEach(([x,z])=>b('ivory',[.035,.16,.035],[x,.32,z],district));
       });
+      if(index===16) site=addConstructionSite(t,district,{x:-.15,y:.245,z:-.1,scale:.72,floors:7,rotation:.3});
     }
     const h=type==='commercial'?4.3:type==='society'?3.2:.5;
     const hit=new Mesh(hitGeometry,hitMaterial);hit.userData.cityZone=district.userData.cityZone;hit.scale.set(3.25,h,3.8);hit.position.y=h/2;district.add(hit);hitAreas.push(hit);
     const geometry=new BufferGeometry().setFromPoints(footprint.map(([x,z])=>new Vector3(x,.23,z)));extraGeometries.push(geometry);
     const outline=new LineLoop(geometry,outlineMaterial);outline.renderOrder=5;outline.visible=false;outline.name='district-selection';district.add(outline);outlines.push({outline,type:district.userData.cityZone});
     if(type!=='park')t.tree(district,-1.25,1.38,.38+random(index)*.15);
+    // Trees line each compound just inside its boundary, clear of its buildings.
+    if(type!=='park'&&type!=='plots'){
+      district.updateMatrixWorld(true);const inverse=district.matrixWorld.clone().invert(),built=[];
+      district.children.forEach(child=>{if(child.isGroup&&child.name&&child.name!=='botanical-tree'){const box=new Box3().setFromObject(child).applyMatrix4(inverse);if(!box.isEmpty())built.push(box.expandByScalar(.18));}});
+      const ring=footprint.map(([x,z])=>new Vector3(x*.8,.5,z*.8));
+      ring.forEach((a,i)=>{const c=ring[(i+1)%ring.length],steps=Math.floor(a.distanceTo(c)/.62);for(let k=0;k<steps;k++){const p=a.clone().lerp(c,(k+.5)/steps);if(!built.some(box=>box.containsPoint(p)))t.tree(district,p.x,p.z,.3+random(index*31+i*7+k)*.16);}});
+    }
   });
   for(let i=0;i<18;i++) {
     const p=ring.getPointAt(i/18),v=ring.getTangentAt(i/18),x=p.x-v.z*.55,z=p.z+v.x*.55;
     b('metal',[.035,.8,.035],[x,.5,z]);b('lamp',[.2,.045,.12],[x,.92,z]);
-    if(i%3===0)t.tree(model,x-v.z*.35,z+v.x*.35,.55);
+    t.tree(model,x-v.z*.35,z+v.x*.35,.5+random(i+90)*.15);
   }
-  for(let i=0;i<(compact?2:4);i++){const car=t.car(model,0,0,0,i%2?'green':'ivory');car.scale.setScalar(.55);cars.push(car);}
+  // Avenue trees on both kerbs of the ring and cross streets, and a green belt between
+  // the ring road and the edge of the land. Anything too close to a carriageway is
+  // removed below, before the forest is merged into two draws.
+  const avenue=[];
+  for(let i=0;i<60;i++){const u=(i+.5)/60,p=ring.getPointAt(u),v=ring.getTangentAt(u);for(const offset of [.95,-.95,1.55+random(i)*.5,-1.55-random(i+3)*.5])avenue.push(t.tree(model,p.x-v.z*offset,p.z+v.x*offset,.4+random(i*3+1)*.22));}
+  routes.forEach((curve,r)=>{for(let i=0;i<24;i++){const u=(i+.5)/24,p=curve.getPointAt(u),v=curve.getTangentAt(u),side=i%2?1:-1;avenue.push(t.tree(model,p.x+v.z*.86*side,p.z-v.x*.86*side,.36+random(r*40+i)*.14));}});
+  // Two-way traffic keeps to the left on the ring and the two cross streets: hatchbacks,
+  // SUVs, CNG autos and city buses, plus cars waiting in the mall bays and at the
+  // terminal kerb. Each vehicle type is one instanced fleet, so the draw count is fixed.
+  const crossStreets=routes.slice(0,2), traffic=[], scale=.52;
+  const mix=compact?['hatch','rickshaw','suv','hatch','bus']:['hatch','suv','rickshaw','hatch','bus','hatch','rickshaw','suv','hatch','hatch'];
+  mix.forEach((type,i)=>traffic.push({type,curve:ring,closed:true,lane:.17,direction:i%2?-1:1,speed:(type==='bus'?.0045:type==='rickshaw'?.0055:.0068)+random(i+71)*.0035,phase:i/mix.length+random(i+5)*.05}));
+  crossStreets.forEach((curve,s)=>{for(let i=0;i<(compact?2:4);i++)traffic.push({type:i===1?'rickshaw':i===3?'suv':'hatch',curve,closed:false,lane:.14,direction:i%2?-1:1,speed:.011+random(s*3+i)*.006,phase:random(s*9+i+2)});});
+  const parked=[...[0,1,3,5,6,8].map(bay=>[1.3+bay*.6,.2,1.35,Math.PI]),...[-4,-1.5,1].map(x=>[x,.163,-9.27,Math.PI/2])];
+  // Moving vehicles take the first slots of each fleet; parked hatchbacks follow.
+  const counts={hatch:0,suv:0,rickshaw:0,bus:0};
+  traffic.forEach(car=>{car.slot=counts[car.type]++;});
+  const firstParked=counts.hatch;counts.hatch+=parked.length;
+  const fleets=Object.fromEntries(Object.entries(counts).map(([type,count],i)=>[type,createFleet(t,model,count,{offset:i*3+2,type})]));
+  parked.forEach(([x,y,z,yaw],i)=>fleets.hatch.place(firstParked+i,x,y,z,yaw,scale));
+  const crowd=createCrowd(model,[{curve:ring,offset:.405,y:.1,closed:true},{curve:ring,offset:-.405,y:.1,closed:true},...crossStreets.map(curve=>({curve,offset:.345,y:.1,closed:false}))],compact?22:52);
   const landmarks=addCityLandmarks(model,t,parcel);
   // The landmark blocks replace six small parcels, keeping the new park and mall clear of streets.
   for(const [x,z,type,width,depth,height] of [[-4,0,'society',7.1,3.5,.8],[4,0,'commercial',7.1,3.5,1.9],[-4,5,'commercial',7.1,3.4,1.5]]) {
     const hit=new Mesh(hitGeometry,hitMaterial);hit.position.set(x,height/2,z);hit.scale.set(width,height,depth);hit.userData.cityZone=type;model.add(hit);hitAreas.push(hit);
   }
   model.updateMatrixWorld(true);
-  const unsafeTrees=[];
-  model.traverse(o=>{if(o.name==='botanical-tree'){const p=o.getWorldPosition(new Vector3());if(!clearOfRoads(p.x,p.z,.52,roadCorridors))unsafeTrees.push(o);}});
+  const unsafeTrees=new Set();
+  model.traverse(o=>{if(o.name==='botanical-tree'){const p=o.getWorldPosition(new Vector3());if(!clearOfRoads(p.x,p.z,.18+o.scale.x*.6,roadCorridors))unsafeTrees.add(o);}});
+  // Avenue planting stays off blocks, landmarks, the airport and the land edge.
+  const blocked=hitAreas.map(hit=>new Box3().setFromObject(hit).expandByScalar(.25)),edge=new Shape(boundary.map(([x,z])=>new Vector2(x*.94,z*.94)));
+  const inside=(x,z)=>{let hit=false;const points=edge.getPoints();for(let i=0,j=points.length-1;i<points.length;j=i++){const a=points[i],c=points[j];if((a.y>z)!==(c.y>z)&&x<(c.x-a.x)*(z-a.y)/(c.y-a.y)+a.x)hit=!hit;}return hit;};
+  avenue.forEach(tree=>{const p=tree.getWorldPosition(new Vector3());if(p.z<-7||!inside(p.x,p.z)||blocked.some(box=>box.containsPoint(p.setY(.5))))unsafeTrees.add(tree);});
   unsafeTrees.forEach(tree=>{tree.traverse(o=>{if(o.isInstancedMesh)o.dispose();});tree.removeFromParent();});
+  t.plantForest(model);
   model.position.z=4.2;
-  batchSceneMeshes(model);
+  batchSceneMeshes(model,{tint:true});
   let selected=null;
   function select(id) {selected=CITY_DISTRICTS.some(d=>d.id===id)?id:null;outlines.forEach(item=>item.outline.visible=item.type===selected);}
   function update(progress,reduced=false,seconds=0) {
     const time=reduced?0:seconds;
     world.rotation.y=-.12+(reduced?0:Math.max(0,Math.min(1,progress))*.24);
     t.animate(time,reduced); landmarks.update(time,reduced);
-    cars.forEach((car,i)=>{
-      const along=(time*.009+i/cars.length)%1,p=ring.getPointAt(along),v=ring.getTangentAt(along);
-      car.position.set(p.x,.16,p.z);car.rotation.y=Math.atan2(v.x,v.z);
-      car.userData.wheels.forEach(w=>w.rotation.x=reduced?0:time*2.5);
+    traffic.forEach(({type,slot,curve,closed,lane,direction,speed,phase})=>{
+      const travel=((time*speed+phase)%1+1)%1,along=direction>0?travel:1-travel,p=curve.getPointAt(along),v=curve.getTangentAt(along).multiplyScalar(direction);
+      // Open streets fade vehicles in and out where they meet the ring road.
+      const size=closed?scale:scale*Math.min(1,along*14,(1-along)*14);
+      fleets[type].place(slot,p.x+v.z*lane,.122,p.z-v.x*lane,Math.atan2(v.x,v.z),size);
     });
+    Object.values(fleets).forEach(fleet=>fleet.commit());
+    site?.update(time,reduced); crowd.update(time,reduced);
   }
   update(0,true);
-  return {model:world,roadCorridors,hitAreas,select,update,dispose(){disposeSpatialModel(world,{geometries:[...t.resources.geometries,hitGeometry,...extraGeometries,...landmarks.resources.geometries],materials:[...t.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial,...landmarks.resources.materials]});}};
+  return {model:world,roadCorridors,hitAreas,movingCars:traffic.length,traffic:traffic.map(({type,slot})=>({type,slot})),parkedSlots:{type:'hatch',first:firstParked,count:parked.length},select,update,dispose(){disposeSpatialModel(world,{geometries:[...t.resources.geometries,...crowd.resources.geometries,hitGeometry,...extraGeometries,...landmarks.resources.geometries],materials:[...t.resources.materials,...crowd.resources.materials,hitMaterial,outlineMaterial,parcelLineMaterial,...landmarks.resources.materials]});}};
 }

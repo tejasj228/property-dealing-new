@@ -10,6 +10,7 @@
     "start:local": "next start --hostname 127.0.0.1 --port 3100",
     "check:connections": "node scripts/check-connections.cjs",
     "check:landing": "node --test scripts/check-landing.mjs",
+    "check:realism": "node --test scripts/check-realism.mjs scripts/check-city.mjs scripts/check-scene-loading.mjs",
     "check:controls": "node scripts/check-controls.cjs",
     "check:scroll": "node --test scripts/check-scroll.mjs",
     "check:management": "node --test scripts/check-management.cjs"

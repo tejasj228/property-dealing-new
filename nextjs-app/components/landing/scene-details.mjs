@@ -1,14 +1,14 @@
-import { vehicleBodyGeometry } from './vehicle-geometry.mjs';
 import { createBotanicalKit } from './botanical-trees.mjs';
+import { createVehicleModels } from './vehicle-models.mjs';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { BoxGeometry, CylinderGeometry, Group, IcosahedronGeometry, Mesh, MeshPhysicalMaterial, PlaneGeometry, ShaderMaterial, SphereGeometry } from 'three';
 
-export function createDetailKit({ compact = false } = {}) {
-  const botanical = createBotanicalKit({ compact });
+export function createDetailKit({ compact = false, rounded = true, forest = false } = {}) {
+  const botanical = createBotanicalKit({ compact, forest });
   const people = [];
-  const carBody = vehicleBodyGeometry(), carCabin = vehicleBodyGeometry(true);
   const vehiclePaint = new Map();
-  const cube = new RoundedBoxGeometry(1, 1, 1, 1, 0.006);
+  // Rounded edges catch light at close range; distant city blocks use 12-triangle boxes.
+  const cube = rounded ? new RoundedBoxGeometry(1, 1, 1, 1, 0.006) : new BoxGeometry(1, 1, 1);
   const cylinder = new CylinderGeometry(1, 1, 1, 16);
   const leaf = new IcosahedronGeometry(1, 2);
   const sphere = new SphereGeometry(1, 16, 12);
@@ -26,7 +26,7 @@ export function createDetailKit({ compact = false } = {}) {
   materials.lamp.userData.nightLamp = true;
   const glowGeometry = new PlaneGeometry(1, 1);
   const glowMaterial = new ShaderMaterial({ transparent: true, depthWrite: false,
-    vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; vec4 p=vec4(position,1.0);\n#ifdef USE_INSTANCING\np=instanceMatrix*p;\n#endif\ngl_Position=projectionMatrix*modelViewMatrix*p; }',
     fragmentShader: 'varying vec2 vUv; void main(){ float falloff=pow(max(0.0,1.0-length((vUv-0.5)*2.0)),1.5); gl_FragColor=vec4(1.0,0.77,0.36,falloff*0.48); }',
   });
   function glow(parent, x, z, width, length, height = 0.12) {
@@ -40,37 +40,17 @@ export function createDetailKit({ compact = false } = {}) {
   const box = (parent, material, size, position, cast) => mesh(parent, cube, material, size, position, cast);
   const round = (parent, material, size, position) => mesh(parent, cylinder, material, size, position);
   const tree = botanical.tree;
-  function car(parent, x, z, angle = 0, color = 'ivory') {
-    const g = new Group(); g.name = 'car'; g.userData.animated = true; g.position.set(x, 0.11, z); g.rotation.y = angle; parent.add(g);
+  // Vehicles are modelled in vehicle-models.mjs; paint is a clearcoat clone per colour.
+  function paintFor(color) {
     if (!vehiclePaint.has(color)) {
-      const paint=materials[color].clone();paint.name='vehicle-paint';paint.roughness=.22;paint.metalness=.3;paint.clearcoat=1;paint.clearcoatRoughness=.1;vehiclePaint.set(color,paint);
+      // Named kit colours or an exact automotive paint such as '#ffffff' for instanced fleets.
+      const paint=(materials[color]||materials.ivory).clone();if(!materials[color])paint.color.set(color);paint.name='vehicle-paint';paint.roughness=.22;paint.metalness=.3;paint.clearcoat=1;paint.clearcoatRoughness=.08;vehiclePaint.set(color,paint);
     }
-    const body=new Mesh(carBody,vehiclePaint.get(color));body.castShadow=true;body.receiveShadow=true;g.add(body);
-    const cabin=new Mesh(carCabin,materials.windscreen);cabin.castShadow=true;g.add(cabin);
-    const roof=box(g,'metal',[.3,.018,.31],[0,.453,0]);roof.material=vehiclePaint.get(color);
-    for(const side of [-1,1]) {
-      box(g,'dark',[.012,.14,.025],[side*.186,.363,0]);
-      box(g,'silver',[.025,.022,.065],[side*.234,.27,-.04]);
-      box(g,'dark',[.045,.035,.06],[side*.25,.32,.16]);
-      box(g,'silver',[.018,.025,.65],[side*.239,.145,0]);
-    }
-    box(g,'dark',[.28,.065,.018],[0,.18,.46]);
-    for(const x of [-.1,-.05,0,.05,.1])box(g,'silver',[.014,.04,.02],[x,.18,.472],false);
-    box(g,'ivory',[.14,.038,.012],[0,.14,.48],false);
-    for (const x of [-0.16, 0.16]) {
-      box(g, 'lamp', [0.12, 0.075, 0.025], [x, 0.23, 0.475], false);
-      glow(g, x, 1.05, 0.55, 1.35, 0.045);
-      box(g, 'trunk', [0.1, 0.055, 0.018], [x, 0.23, -0.475], false);
-    }
-    const wheels = [];
-    for (const side of [-1, 1]) for (const end of [-1, 1]) {
-      const axle = new Group(); axle.position.set(side * 0.245, 0.12, end * 0.3); g.add(axle);
-      const wheel = round(axle, 'dark', [0.1, 0.06, 0.1], [0, 0, 0]); wheel.rotation.z = Math.PI / 2;
-      const hub = round(axle, 'silver', [0.05, 0.065, 0.05], [0, 0, 0]); hub.rotation.z = Math.PI / 2;
-      box(axle, 'dark', [0.07, 0.015, 0.08], [0, 0, 0], false);
-      wheels.push(axle);
-    }
-    g.userData.wheels = wheels;
+    return vehiclePaint.get(color);
+  }
+  function car(parent, x, z, angle = 0, color = 'ivory', type = 'hatch') {
+    const g = type === 'rickshaw' ? vehicles.rickshaw() : type === 'bus' ? vehicles.bus() : vehicles.car(paintFor(color), type);
+    g.position.set(x, 0.06, z); g.rotation.y = angle; parent.add(g);
     return g;
   }
   function person(parent, x, z, color = 'cloth') {
@@ -80,10 +60,10 @@ export function createDetailKit({ compact = false } = {}) {
     mesh(g, sphere, 'dark', [0.078, 0.045, 0.077], [0, 0.51, -0.01]);
     const limbs = [];
     for (const side of [-1, 1]) {
-      const leg = new Group(); leg.position.set(side * 0.04, 0.17, 0); g.add(leg);
+      const leg = new Group(); leg.userData.animated = true; leg.position.set(side * 0.04, 0.17, 0); g.add(leg);
       mesh(leg, sphere, 'dark', [.025,.09,.027], [0,-.085,0]);
       box(leg, 'ivory', [0.055, 0.035, 0.1], [0, -0.17, 0.02]);
-      const arm = new Group(); arm.position.set(side * 0.09, 0.35, 0); g.add(arm);
+      const arm = new Group(); arm.userData.animated = true; arm.position.set(side * 0.09, 0.35, 0); g.add(arm);
       mesh(arm, sphere, color, [.023,.09,.025], [0,-.075,0]);
       mesh(arm, sphere, 'person', [.023,.03,.025], [0,-.16,0]);
       limbs.push({ leg, arm, side });
@@ -123,8 +103,10 @@ export function createDetailKit({ compact = false } = {}) {
       person.userData.limbs.forEach(({ leg, arm, side }) => { leg.rotation.x = stride * side; arm.rotation.x = -stride * side; });
     });
   }
-  return { box, round, tree, car, person, bench, mesh, cube, base, materials, animate,
-    resources: { geometries: [cube, cylinder, leaf, sphere, glowGeometry, carBody, carCabin, ...botanical.resources.geometries], materials: [...Object.values(materials), glowMaterial, ...vehiclePaint.values(), ...botanical.resources.materials] },
+  const kit = { box, round, tree, car, person, bench, mesh, cube, sphere, base, glow, materials, animate, plantForest: botanical.plantForest,
+    resources: { geometries: [cube, cylinder, leaf, sphere, glowGeometry, ...botanical.resources.geometries], materials: [...Object.values(materials), glowMaterial, ...botanical.resources.materials] },
   };
+  const vehicles = createVehicleModels(kit);
+  return kit;
 }
 
