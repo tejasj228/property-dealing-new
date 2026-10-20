@@ -327,12 +327,12 @@
 .landing .sectorButton.sectorActive:hover { background:var(--ink); border-color:var(--ink); color:var(--surface); }
 
 /* The hero city has a fixed viewport; exploring it never changes page height. */
-.cityFigure { margin:0; }
+.cityFigure { margin:0; position:relative; }
 .cityStage { flex:1; min-height:330px; max-height:680px; width:126%; margin-left:-7%; }
 .cityMapLabel { position:absolute; top:5%; left:8%; z-index:2; pointer-events:none; display:grid; gap:4px; }
 .cityMapLabel>span { font-size:9px; letter-spacing:1.6px; font-weight:650; color:var(--muted); }
 .cityMapLabel small { font-size:10px; color:var(--muted); }
-.cityZoom { position:absolute; right:5%; top:5%; z-index:2; display:flex; background:var(--surface-card); border:1px solid var(--line); border-radius:24px; overflow:hidden; }
+.cityZoom { position:absolute; right:0; top:3%; z-index:3; display:flex; background:var(--surface-card); border:1px solid var(--line); border-radius:24px; overflow:hidden; }
 .cityZoom button { width:40px; height:40px; border:0; background:transparent; font-size:20px; }
 .cityZoom button:disabled { opacity:.35; cursor:default; }
 .cityZoom button:not(:disabled):hover { background:var(--surface-soft); color:var(--accent); }

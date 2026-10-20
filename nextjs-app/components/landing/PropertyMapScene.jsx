@@ -18,8 +18,8 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
     const lowPower = prefersLightweightScene(navigator);
     let view;
     try { view = createSceneRenderer({ post: !compact && !lowPower, shadows: false, exposure: 1.3 }); } catch { return; }
-    const renderer = view.renderer; element.appendChild(renderer.domElement);
-    renderer.domElement.setAttribute('aria-hidden', 'true');
+    const renderer = view.renderer; element.appendChild(view.domElement);
+    view.domElement.setAttribute('aria-hidden', 'true');
     const scene = new Scene();
     const map = createPropertyMapModel(properties, compact || lowPower); scene.add(map.model);
     const lighting = createSceneLighting(scene, map.model, renderer, { kind: 'map', compact: compact || lowPower, invalidate, prepare });
@@ -34,7 +34,8 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
       if (!pausedRef.current && !reduced) elapsed += delta / 1000;
       map.update(elapsed, reduced);
       if (dirty) framePropertyMapCamera(camera, width, height, map.bounds, yaw.get(), zoom.get());
-      lighting.setTime(elapsed); view.render();
+      lighting.setTime(elapsed); view.render(false);
+      if (view.upgradePending && (pausedRef.current || reduced)) setTimeout(invalidate, 60);
       if (dirty) for (const marker of map.markerPositions) {
         const node = markers.current.get(marker.id); if (!node) continue;
         point.copy(marker.position).project(camera);
@@ -46,11 +47,11 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
     function invalidate() { dirty = true; if (!frame && visible && !document.hidden && !lost) frame = requestAnimationFrame(render); }
     // Shader variants compile in parallel where supported instead of stalling a frame.
     function prepare() {
-      compiling++; compileScene(renderer, scene, camera).then(() => { compiling--; if (!disposed) invalidate(); });
+      compiling++; view.bind(); compileScene(renderer, scene, camera).then(() => { compiling--; if (!disposed) invalidate(); });
     }
     const stopTheme = observeSceneTheme(element, { setNight(night) { lighting.setNight(night); view.setNight(night); } }, prepare);
     wake.current = invalidate;
-    const resize = new ResizeObserver(([entry]) => { width = entry.contentRect.width; height = entry.contentRect.height; if (width && height) { view.setSize(width, height, scenePixelRatio(width, height, { devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize })); } invalidate(); }); resize.observe(element);
+    const resize = new ResizeObserver(([entry]) => { width = entry.contentRect.width; height = entry.contentRect.height; if (width && height) { { const ratio = scenePixelRatio(width, height, { devicePixelRatio, compact, lowPower, maxTextureSize: renderer.capabilities.maxTextureSize }); view.setSize(width * ratio, height * ratio); } } invalidate(); }); resize.observe(element);
     const visibility = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) invalidate(); else { cancelAnimationFrame(frame); frame = 0; last = 0; } }, { rootMargin: '180px' }); visibility.observe(element);
     const onVisibility = () => { if (document.hidden) { cancelAnimationFrame(frame); frame = 0; last = 0; } else invalidate(); };
     const onLost = e => { e.preventDefault(); lost = true; cancelAnimationFrame(frame); frame = 0; delete root.dataset.ready; };
@@ -62,7 +63,7 @@ export default function PropertyMapScene({ properties, viewport, markers, yaw, z
       disposed = true; cancelAnimationFrame(frame); resize.disconnect(); visibility.disconnect(); unsubYaw(); unsubZoom(); wake.current = null;
       document.removeEventListener('visibilitychange', onVisibility);
       renderer.domElement.removeEventListener('webglcontextlost', onLost); renderer.domElement.removeEventListener('webglcontextrestored', onRestored);
-      delete root.dataset.ready; stopTheme(); lighting.dispose(); map.dispose(); view.dispose(); renderer.domElement.remove();
+      delete root.dataset.ready; stopTheme(); lighting.dispose(); map.dispose(); view.dispose(); view.domElement.remove();
     };
   }, [properties, viewport, markers, yaw, zoom, reduced]);
   return <div ref={host} className={styles.canvas} aria-hidden="true" />;

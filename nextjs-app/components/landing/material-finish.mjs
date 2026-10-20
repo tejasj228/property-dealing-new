@@ -5,6 +5,35 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const texturePool = createAssetPool();
 const hdrPool = createAssetPool();
+const contexts = new WeakMap();
+
+// Reference-counted PMREM environments for one renderer.
+function environmentsFor(renderer) {
+  let entry = contexts.get(renderer);
+  if (!entry) {
+    const baked = {}, leases = {}, listeners = new Set();
+    entry = { refs: 0, listeners,
+      studio(size) {
+        if (!baked[size]) { const room = new RoomEnvironment(), generator = new PMREMGenerator(renderer); baked[size] = generator.fromScene(room, .04, .1, 50, { size }); room.dispose(); generator.dispose(); }
+        return baked[size];
+      },
+      sky(name, onError) {
+        if (baked[name]) return baked[name];
+        const lease = leases[name] ||= hdrPool.acquire(name, done => new HDRLoader().load(`/textures/pbr/${name === 'night' ? 'night' : 'autumn'}-sky.hdr`, done, undefined, onError), () => listeners.forEach(listener => listener()));
+        if (!lease.asset.image?.data) return null;
+        const generator = new PMREMGenerator(renderer); baked[name] = generator.fromEquirectangular(lease.asset); generator.dispose();
+        return baked[name];
+      },
+      release() {
+        if (--entry.refs > 0) return;
+        Object.values(baked).forEach(target => target.dispose()); Object.values(leases).forEach(lease => lease.release()); contexts.delete(renderer);
+      },
+    };
+    contexts.set(renderer, entry);
+  }
+  entry.refs++;
+  return entry;
+}
 
 // Small repeatable surface maps, generated once per scene, never per frame.
 export function surfaceTexture(kind, size = 128) {
@@ -84,37 +113,25 @@ export function finishArchitecture(scene, model, renderer, compact, invalidate =
     if (/silver|metal/.test(name)) { material.roughness = .23; material.metalness = .92; material.envMapIntensity = 1.6; }
   }
   // Image-based lighting from real HDR skies: an autumn daytime sky, and a moonless night
-  // sky that is fetched only once a scene is shown in the dark theme. Both are 512x256,
-  // so switching themes keeps the same shader variants. Compact devices use one small
-  // studio bake. The first model frame renders before any bake.
-  const environments = {}, hdrLeases = {};
-  let environmentTimer, ready = false, wanted = 'day';
+  // sky fetched only once a scene is shown in the dark theme. Environments are baked once
+  // per WebGL context and shared by every scene. A small studio bake of the same size is
+  // in place from the first frame, so when a sky arrives the shaders do not recompile;
+  // compact devices keep a smaller studio bake.
+  const shared = renderer.isWebGLRenderer ? environmentsFor(renderer) : null;
+  let wanted = 'day';
+  shared?.listeners.add(applyEnvironment);
   function applyEnvironment() {
-    if (disposed || !ready) return;
-    if (compact) {
-      if (!environments.studio) {
-        const studio = new RoomEnvironment(), generator = new PMREMGenerator(renderer);
-        environments.studio = generator.fromScene(studio, .04, .1, 50, { size:64 }); studio.dispose(); generator.dispose();
-        scene.environment = environments.studio.texture; prepare();
-      }
-      return;
-    }
-    const lease = hdrLeases[wanted] ||= hdrPool.acquire(wanted, done => new HDRLoader().load(`/textures/pbr/${wanted === 'night' ? 'night' : 'autumn'}-sky.hdr`, done, undefined, wake), applyEnvironment);
-    if (!lease.asset.image?.data) return;
-    if (!environments[wanted]) { const generator = new PMREMGenerator(renderer); environments[wanted] = generator.fromEquirectangular(lease.asset); generator.dispose(); }
-    if (scene.environment === environments[wanted].texture) return;
-    const first = !scene.environment;
-    scene.environment = environments[wanted].texture; scene.environmentRotation.set(0, wanted === 'night' ? .4 : -.7, 0);
-    // A first environment changes shader variants; let the renderer compile them off-frame.
-    if (first) prepare(); else wake();
+    if (disposed || !shared) return;
+    const environment = compact ? shared.studio(64) : shared.sky(wanted, wake) || shared.studio(128);
+    if (scene.environment === environment.texture) return;
+    // Deferred: the first call happens while the owning scene is still being set up.
+    scene.environment = environment.texture; scene.environmentRotation.set(0, wanted === 'night' ? .4 : -.7, 0); queueMicrotask(wake);
   }
-  if (renderer.isWebGLRenderer) environmentTimer = setTimeout(() => { ready = true; applyEnvironment(); }, 120);
   return {
     // The studio bake is neutral and bright, so compact devices dim it far more at night.
     setNight(night) { scene.environmentIntensity = night ? (compact ? .14 : .55) : .85; wanted = night ? 'night' : 'day'; applyEnvironment(); },
     dispose() {
-      disposed = true; clearTimeout(environmentTimer); scene.environment = null;
-      Object.values(environments).forEach(environment => environment.dispose()); Object.values(hdrLeases).forEach(lease => lease.release());
+      disposed = true; scene.environment = null; shared?.listeners.delete(applyEnvironment); shared?.release();
       if (loader) leases.forEach(lease => lease.release());
       else textures.forEach(texture => texture.dispose());
     },
