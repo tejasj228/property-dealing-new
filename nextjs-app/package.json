@@ -13,7 +13,8 @@
     "check:realism": "node --test scripts/check-realism.mjs scripts/check-city.mjs scripts/check-scene-loading.mjs",
     "check:controls": "node scripts/check-controls.cjs",
     "check:scroll": "node --test scripts/check-scroll.mjs",
-    "check:management": "node --test scripts/check-management.cjs"
+    "check:management": "node --test scripts/check-management.cjs",
+    "check:uploads": "node --test scripts/check-uploads.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",

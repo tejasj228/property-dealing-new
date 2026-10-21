@@ -30,6 +30,7 @@ import SlideshowIcon from '@mui/icons-material/SlideshowOutlined';
 import FolderIcon from '@mui/icons-material/FolderOutlined';
 import UploadIcon from '@mui/icons-material/CloudUploadOutlined';
 import { uploadAPI } from '../services/api';
+import { IMAGE_ACCEPT } from '../utils/imageFormats';
 import { getImageUrl, handleImageError } from '../utils/imageUtils';
 
 function TabPanel({ children, value, index, ...other }) {
@@ -137,7 +138,7 @@ function Images() {
       loadData();
     } catch (error) {
       console.error('Error adding slider image:', error);
-      setError('Failed to add slider image');
+      setError(`Failed to add slider image: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -370,7 +371,7 @@ function Images() {
                 <input
                   type="file"
                   hidden
-                  accept="image/*"
+                  accept={IMAGE_ACCEPT}
                   onChange={handleFileChange}
                 />
               </Button>

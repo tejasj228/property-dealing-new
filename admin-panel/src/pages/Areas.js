@@ -64,6 +64,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 import { areaAPI, propertyAPI, uploadAPI } from '../services/api';
+import { IMAGE_ACCEPT } from '../utils/imageFormats';
 
 // Enhanced Image Upload Component for Societies
 const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange, label = "Society Images & Map" }) => {
@@ -72,6 +73,7 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
 
   const handleFileSelect = async (event, type = 'images') => {
     const files = type === 'map' ? [event.target.files[0]] : Array.from(event.target.files);
+    event.target.value = ''; // lets the same file be chosen again after a failure
     if (files.length === 0 || (type === 'map' && !files[0])) return;
 
     if (type === 'images' && images.length + files.length > 10) {
@@ -85,19 +87,19 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
       
       if (type === 'map') {
         // Upload single map image
-        const response = await uploadAPI.uploadImage(files[0]);
+        const response = await uploadAPI.uploadImage(files[0], null, 'map');
         onMapChange(response.data.imageUrl);
       } else {
-        // Upload multiple gallery images
-        const uploadPromises = files.map(file => uploadAPI.uploadImage(file));
-        const responses = await Promise.all(uploadPromises);
-        const newImageUrls = responses.map(response => response.data.imageUrl);
-        const updatedImages = [...images, ...newImageUrls];
-        onImagesChange(updatedImages);
+        // Upload gallery images together; each photo that succeeds is kept even if another fails
+        const results = await uploadAPI.uploadImages(files, { purpose: 'society' });
+        const added = results.filter(result => result.status === 'done').map(result => result.imageUrl);
+        if (added.length) onImagesChange([...new Set([...images, ...added])]);
+        const failed = results.filter(result => result.status === 'failed');
+        if (failed.length) setError(failed.map(result => `${result.file.name}: ${result.error}`).join(' '));
       }
     } catch (error) {
       console.error('Error uploading:', error);
-      setError(`Failed to upload ${type}. Please try again.`);
+      setError(`Failed to upload ${type}: ${error.message}`);
     } finally {
       setUploading(false);
     }
@@ -178,7 +180,7 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
               <input
                 type="file"
                 hidden
-                accept="image/*"
+                accept={IMAGE_ACCEPT}
                 onChange={(e) => handleFileSelect(e, 'map')}
               />
             </Button>
@@ -206,7 +208,7 @@ const SocietyImageUpload = ({ images = [], onImagesChange, mapImage, onMapChange
           id="gallery-upload"
           type="file"
           hidden
-          accept="image/*"
+          accept={IMAGE_ACCEPT}
           multiple
           onChange={(e) => handleFileSelect(e, 'images')}
         />
@@ -275,13 +277,14 @@ const MapUpload = ({ mapImage, onMapChange, label = "Sub-Area Map" }) => {
 
   const handleFileSelect = async (event) => {
     const file = event.target.files[0];
+    event.target.value = ''; // lets the same file be chosen again after a failure
     if (!file) return;
 
     try {
       setUploading(true);
       setError(null);
       
-      const response = await uploadAPI.uploadImage(file);
+      const response = await uploadAPI.uploadImage(file, null, 'map');
       onMapChange(response.data.imageUrl);
     } catch (error) {
       console.error('❌ Error uploading map:', error);
@@ -356,7 +359,7 @@ const MapUpload = ({ mapImage, onMapChange, label = "Sub-Area Map" }) => {
             <input
               type="file"
               hidden
-              accept="image/*"
+              accept={IMAGE_ACCEPT}
               onChange={handleFileSelect}
             />
           </Button>
@@ -364,7 +367,7 @@ const MapUpload = ({ mapImage, onMapChange, label = "Sub-Area Map" }) => {
       )}
 
       <Typography variant="caption" color="textSecondary">
-        Upload a map image (JPG, PNG, GIF, WebP)
+        Upload a map image (JPG, PNG, HEIC, WebP, AVIF, GIF and more)
       </Typography>
     </Box>
   );

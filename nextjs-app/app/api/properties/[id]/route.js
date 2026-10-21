@@ -2,6 +2,7 @@ import { authorizeAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Property from '@/lib/models/Property';
+import { normalizePropertyInput } from '@/lib/property-input.mjs';
 
 export async function GET(request, { params }) {
   try {
@@ -21,11 +22,8 @@ export async function PUT(request, { params }) {
   try {
     await connectDB();
     const { id } = await params;
-    const body = await request.json();
-
-    if (body.propertyType && !['residential', 'commercial'].includes(body.propertyType)) {
-      return NextResponse.json({ success: false, message: 'Property type must be "residential" or "commercial"' }, { status: 400 });
-    }
+    const { body, error } = normalizePropertyInput(await request.json(), { partial: true });
+    if (error) return NextResponse.json({ success: false, message: error }, { status: 400 });
 
     const property = await Property.findByIdAndUpdate(id, body, { new: true, runValidators: true });
     if (!property) return NextResponse.json({ success: false, message: 'Property not found' }, { status: 404 });

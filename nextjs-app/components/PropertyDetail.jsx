@@ -256,13 +256,19 @@ const PropertyDetail = () => {
                     </div>
                   )}
                   {/* 🆕 IMPROVED: Show property type specific info */}
-                  {property.propertyType === 'commercial' && (
+                  {property.isPlot && (
+                    <div className="feature-item">
+                      <BrandIcon className="fas fa-draw-polygon" />
+                      <span>{property.propertyType === 'commercial' ? 'Commercial plot' : 'Residential plot'}</span>
+                    </div>
+                  )}
+                  {!property.isPlot && property.propertyType === 'commercial' && (
                     <div className="feature-item">
                       <BrandIcon className="fas fa-building" />
                       <span>Commercial Space</span>
                     </div>
                   )}
-                  {property.propertyType === 'residential' && (
+                  {!property.isPlot && property.propertyType === 'residential' && (
                     <div className="feature-item">
                       <BrandIcon className="fas fa-users" />
                       <span>Residential</span>
@@ -370,7 +376,7 @@ const PropertyDetail = () => {
                   <div className="info-item">
                     <span className="label">Property Type:</span>
                     <span className="value">
-                      {property.propertyType === 'commercial' ? 'Commercial' : 'Residential'}
+                      {property.propertyType === 'commercial' ? 'Commercial' : 'Residential'}{property.isPlot ? ' plot' : ''}
                     </span>
                   </div>
                   <div className="info-item">

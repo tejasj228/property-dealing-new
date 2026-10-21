@@ -10,7 +10,10 @@ import { layoutProperties, mapBounds } from './property-map-layout.mjs';
 import styles from './PropertyMap.module.css';
 
 const PropertyMapScene = dynamic(() => import('./PropertyMapScene'), { ssr: false });
-const typeLabel = type => type === 'residential' ? 'Residential' : type === 'commercial' ? 'Commercial' : 'Property';
+const typeLabel = (type, plot) => {
+  const use = type === 'residential' ? 'Residential' : type === 'commercial' ? 'Commercial' : '';
+  return plot ? (use ? `${use} plot` : 'Plot') : use || 'Property';
+};
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export default function PropertyMap({ properties }) {
@@ -33,7 +36,7 @@ export default function PropertyMap({ properties }) {
   function endDrag() { drag.current = null; }
   return <div className={styles.propertyMap}>
     <div className={styles.mapBar}>
-      <div className={styles.legend} aria-label="Property types"><PropertyTypeBadge type="residential"/><PropertyTypeBadge type="commercial"/></div>
+      <div className={styles.legend} aria-label="Property types"><PropertyTypeBadge type="residential"/><PropertyTypeBadge type="commercial"/><PropertyTypeBadge type="plot"/></div>
       <span className={styles.count}>{properties.length} {properties.length === 1 ? 'property' : 'properties'} to explore</span>
     </div>
     <div ref={viewport} className={styles.mapViewport} data-cursor="grab" data-density={properties.length > 50 ? 'high' : 'normal'}
@@ -44,8 +47,8 @@ export default function PropertyMap({ properties }) {
         {properties.map((property, index) => <Link prefetch={false} key={property.id} href={`/property/${encodeURIComponent(property.id)}`}
           ref={node => { if (node) markers.current.set(property.id, node); else markers.current.delete(property.id); }}
           style={{ '--fallback-x': `${50 + layout[index].x / bounds.width * 80}%`, '--fallback-y': `${50 + layout[index].z / bounds.depth * 65}%` }}
-          className={styles.marker} data-type={property.propertyType} data-selected={selected?.id === property.id}
-          aria-label={`${index + 1}. ${property.title}, ${typeLabel(property.propertyType)}, ${property.price || ''}. Open property.`}
+          className={styles.marker} data-type={property.isPlot ? 'plot' : property.propertyType} data-selected={selected?.id === property.id}
+          aria-label={`${index + 1}. ${property.title}, ${typeLabel(property.propertyType, property.isPlot)}, ${property.price || ''}. Open property.`}
           onPointerEnter={() => setSelectedId(property.id)} onFocus={event => { setSelectedId(property.id); if (event.currentTarget.matches(':focus-visible')) { yaw.set(.16); zoom.set(1); } }}>
           <span className={styles.markerPin} aria-hidden="true"><span>{index + 1}</span></span>
           <small className={styles.markerLabel} title={property.title}>{property.title}</small>
@@ -53,9 +56,9 @@ export default function PropertyMap({ properties }) {
       </nav>
     </div>
     <div className={styles.preview}>
-      {selected ? <Link prefetch={false} href={`/property/${encodeURIComponent(selected.id)}`} className={styles.previewLink} data-type={selected.propertyType}>
+      {selected ? <Link prefetch={false} href={`/property/${encodeURIComponent(selected.id)}`} className={styles.previewLink} data-type={selected.isPlot ? 'plot' : selected.propertyType}>
         <span className={styles.previewNumber}>{properties.indexOf(selected) + 1}</span>
-        <span className={styles.previewCopy}><small>{typeLabel(selected.propertyType)}{selected.location ? ` · ${selected.location}` : ''}</small><strong>{selected.title}</strong></span>
+        <span className={styles.previewCopy}><small>{typeLabel(selected.propertyType, selected.isPlot)}{selected.location ? ` · ${selected.location}` : ''}</small><strong>{selected.title}</strong></span>
         <span className={styles.previewPrice}><b>{selected.price}</b><small>{selected.area}</small></span>
         <BrandIcon className="fa-solid fa-arrow-up-right" aria-hidden="true"  />
       </Link> : <p>New places will appear here as they become available.</p>}

@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { uploadImageFile, uploadImageFiles } from './imageUploader';
 
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -135,56 +136,31 @@ export const areaAPI = {
 };
 
 // Upload API functions
+// Photos go straight to Cloudinary with credentials signed by the website, so the website's
+// request-size limit and the short API timeout do not apply to them.
+const signUpload = async purpose => (await api.post('/uploads/sign', { purpose })).data.data;
+const serverUpload = async (file, onProgress) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  const response = await api.post('/uploads/image', formData, {
+    timeout: 120000,
+    onUploadProgress: event => onProgress?.(event.loaded, event.total),
+  });
+  return response.data.data;
+};
+
 export const uploadAPI = {
-  // Upload single image
-  uploadImage: async (file, onProgress = null) => {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    };
-
-    if (onProgress) {
-      config.onUploadProgress = (progressEvent) => {
-        const percentCompleted = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        );
-        onProgress(percentCompleted);
-      };
-    }
-
-    const response = await api.post('/uploads/image', formData, config);
-    return response.data;
-  },
-
-  // Upload multiple images
-  uploadMultiple: async (files, onProgress = null) => {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append('images', file);
+  // Upload single image; resolves in the same shape the website's upload route returns
+  uploadImage: async (file, onProgress = null, purpose = 'property') => {
+    const stored = await uploadImageFile(file, {
+      purpose, sign: signUpload, legacyUpload: serverUpload,
+      onProgress: onProgress ? (loaded, total) => onProgress(Math.round((loaded * 100) / (total || 1))) : undefined,
     });
-
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    };
-
-    if (onProgress) {
-      config.onUploadProgress = (progressEvent) => {
-        const percentCompleted = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        );
-        onProgress(percentCompleted);
-      };
-    }
-
-    const response = await api.post('/uploads/multiple', formData, config);
-    return response.data;
+    return { success: true, data: { imageUrl: stored.imageUrl, filename: stored.publicId, originalName: file.name, size: file.size } };
   },
+
+  // Upload several images; every photo reports on its own and failures do not discard the others
+  uploadImages: (files, options = {}) => uploadImageFiles(files, { sign: signUpload, legacyUpload: serverUpload, ...options }),
 
   // Get all uploaded files
   getFiles: async () => {
@@ -198,18 +174,14 @@ export const uploadAPI = {
     return response.data;
   },
 
-  // Add slider image
-  addSliderImage: async (file, imageData) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('title', imageData.title);
-    formData.append('altText', imageData.altText);
-    formData.append('order', imageData.order);
-
-    const response = await api.post('/uploads/slider', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+  // Add slider image: the photo is uploaded first, then the slide is saved with its address
+  addSliderImage: async (file, imageData, onProgress = null) => {
+    const { data } = await uploadAPI.uploadImage(file, onProgress, 'slider');
+    const response = await api.post('/uploads/slider', {
+      title: imageData.title,
+      altText: imageData.altText,
+      order: imageData.order,
+      imageUrl: data.imageUrl,
     });
     return response.data;
   },

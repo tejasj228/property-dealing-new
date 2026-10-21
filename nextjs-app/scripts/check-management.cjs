@@ -29,5 +29,5 @@ test('every property, area, society and upload mutation checks admin access firs
       }
     }
   }
-  assert.equal(protectedHandlers, 15);
+  assert.equal(protectedHandlers, 16);
 });

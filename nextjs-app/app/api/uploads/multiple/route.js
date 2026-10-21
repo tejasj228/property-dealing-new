@@ -1,39 +1,33 @@
 import { authorizeAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { uploadToCloudinary } from '@/lib/cloudinary';
+import { describeUpload, uploadToCloudinary } from '@/lib/cloudinary';
+import { uniquePublicId } from '@/lib/upload-ids.mjs';
+import { isSupportedImage } from '@/lib/image-formats.mjs';
 
 export async function POST(request) {
   const denied = authorizeAdmin(request);
   if (denied) return denied;
   try {
     const formData = await request.formData();
-    const files = formData.getAll('images');
+    const files = formData.getAll('images').filter(file => file && typeof file !== 'string');
 
-    if (!files || files.length === 0) {
+    if (files.length === 0) {
       return NextResponse.json({ success: false, message: 'No files uploaded' }, { status: 400 });
     }
+    const unsupported = files.find(file => !isSupportedImage(file));
+    if (unsupported) return NextResponse.json({ success: false, message: `${unsupported.name || 'A file'} is not a supported image type` }, { status: 415 });
 
-    const uploadPromises = files.map((file, index) =>
-      file.arrayBuffer().then(buf =>
-        uploadToCloudinary(Buffer.from(buf), { public_id: `property-${Date.now()}-${index}`, resource_type: 'image' })
-          .then(result => ({ result, file }))
-      )
-    );
-
-    const results = await Promise.all(uploadPromises);
-
-    const uploadedFiles = results.map(({ result, file }) => ({
-      filename: result.public_id,
-      originalName: file.name,
-      imageUrl: result.secure_url,
-      size: file.size,
-      cloudinaryData: { public_id: result.public_id, version: result.version, format: result.format },
-    }));
+    const results = await Promise.allSettled(files.map(async file =>
+      describeUpload(await uploadToCloudinary(Buffer.from(await file.arrayBuffer()), { public_id: uniquePublicId('property'), resource_type: 'image' }), file)));
+    const uploaded = results.filter(result => result.status === 'fulfilled').map(result => result.value);
+    const failed = results.length - uploaded.length;
+    if (!uploaded.length) throw results[0].reason;
 
     return NextResponse.json({
       success: true,
-      message: `${files.length} images uploaded successfully`,
-      data: uploadedFiles,
+      message: failed ? `${uploaded.length} of ${files.length} images uploaded` : `${uploaded.length} images uploaded successfully`,
+      data: uploaded,
+      failed,
     });
   } catch (error) {
     console.error('Error uploading images:', error);

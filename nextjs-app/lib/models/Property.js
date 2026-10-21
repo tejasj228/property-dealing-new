@@ -14,6 +14,8 @@ const propertySchema = new mongoose.Schema({
     default: 'residential',
     trim: true,
   },
+  // An empty plot: land with no building, shown as a plot on the landing page map.
+  isPlot: { type: Boolean, default: false },
   description: { type: String, trim: true },
   images: [{ type: String, trim: true }],
   links: {
@@ -31,7 +33,10 @@ propertySchema.pre('save', async function () {
   this.updatedAt = Date.now();
   if (!this.propertyType) this.propertyType = 'residential';
 
-  if (this.propertyType === 'commercial') {
+  if (this.isPlot) {
+    this.beds = null;
+    this.baths = null;
+  } else if (this.propertyType === 'commercial') {
     if (this.beds === 0 || this.beds === '') this.beds = null;
     if (this.baths === 0 || this.baths === '') this.baths = null;
   } else {

@@ -34,6 +34,17 @@ export const getImageUrl = (imageUrl) => {
 };
 
 /**
+ * A small version of a stored photo for lists and previews. Cloudinary resizes it on delivery,
+ * so a 10 MB original never has to load into a card.
+ */
+export const getThumbnailUrl = (imageUrl, width = 480) => {
+  const url = getImageUrl(imageUrl);
+  return /^https:\/\/res\.cloudinary\.com\/.+\/image\/upload\//.test(url) && !/\.(svg|gif)(\?|$)/i.test(url)
+    ? url.replace('/image/upload/', `/image/upload/f_auto,q_auto,w_${width},c_limit/`)
+    : url;
+};
+
+/**
  * Get a placeholder image URL
  * @returns {string} - Placeholder image URL
  */

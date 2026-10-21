@@ -1,17 +1,26 @@
 import { Group } from 'three';
 
 // These are miniature illustrations, never replacements for listing photographs.
-export function mapArchitectureKind(property, seed) {
+// A listing marked as an empty plot always appears as open land. Older listings without the mark
+// fall back to their title, and anything else is drawn as a building.
+export function mapArchitectureKind(property) {
+  if (property.isPlot === true) return 'plot';
   if (property.propertyType === 'commercial') return 'commercial';
   if (/\b(plot|land)\b/i.test(property.title || '')) return 'plot';
-  if (/\b(house|home|villa|apartment|flat|building)\b/i.test(property.title || '')) return 'building';
-  return seed % 3 === 0 ? 'plot' : 'building';
+  return 'building';
 }
 
 export function addMapArchitecture(kit, parent, { kind, seed = 0, compact = false }) {
   if (kind === 'plot') {
-    kit.box(parent, 'sand', [1.4,.025,.13], [0,.26,.65]);
-    for (const x of [-.6,0,.6]) kit.box(parent, 'ivory', [.035,.05,.75], [x,.29,0]);
+    // Levelled ground inside a low boundary wall, corner pillars, survey pegs and a sale board.
+    kit.box(parent, 'sand', [3.05,.03,1.95], [0,.255,0]);
+    kit.box(parent, 'stone', [3.05,.1,.05], [0,.32,.97]); kit.box(parent, 'stone', [3.05,.1,.05], [0,.32,-.97]);
+    kit.box(parent, 'stone', [.05,.1,1.95], [1.5,.32,0]); kit.box(parent, 'stone', [.05,.1,1.95], [-1.5,.32,0]);
+    for (const x of [-1.5,1.5]) for (const z of [-.97,.97]) kit.box(parent, 'ivory', [.1,.22,.1], [x,.37,z]);
+    for (const [x,z] of [[-.55,-.45],[.7,-.5],[.55,.4],[-.7,.35]]) kit.box(parent, 'metal', [.03,.07,.03], [x,.3,z]);
+    kit.box(parent, 'dark', [.035,.5,.035], [-1.05,.52,.7]);
+    kit.box(parent, 'paint', [.62,.3,.03], [-1.05,.78,.7]);
+    kit.box(parent, 'green', [.62,.07,.035], [-1.05,.88,.7]);
     return .3;
   }
   const building = new Group(); building.name = `map-${kind}`; parent.add(building);

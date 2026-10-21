@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -14,63 +14,79 @@ import UploadIcon from '@mui/icons-material/CloudUploadOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ImageIcon from '@mui/icons-material/ImageOutlined';
 import { uploadAPI } from '../../services/api';
-import { getImageUrl, handleImageError } from '../../utils/imageUtils';
+import { fileKey, formatBytes, MAX_SOURCE_BYTES } from '../../services/imageUploader';
+import { IMAGE_ACCEPT, isSupportedImage } from '../../utils/imageFormats';
+import { getImageUrl, getThumbnailUrl, handleImageError } from '../../utils/imageUtils';
 
-function ImageUpload({ 
-  images = [], 
-  onImagesChange, 
-  maxImages = 10, // 🆕 UPDATED: Increased from 5 to 10
-  label = "Property Images" 
+function ImageUpload({
+  images = [],
+  onImagesChange,
+  maxImages = 10,
+  label = "Property Images"
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState(null);
+  const [problems, setProblems] = useState([]);
+  const [status, setStatus] = useState('');
   const fileInputRef = useRef(null);
+  // The latest list, so photos that finish one after another are each added to the right list.
+  const imagesRef = useRef(images);
+  const mounted = useRef(true);
+  const busy = useRef(false);
+  imagesRef.current = images;
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   const handleFileSelect = (event) => {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
+    const chosen = Array.from(event.target.files || []);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (chosen.length === 0 || busy.current) return;
 
-    // Check if adding these files would exceed the limit
-    if (images.length + files.length > maxImages) {
-      setError(`Maximum ${maxImages} images allowed`);
-      return;
+    const notes = [];
+    const seen = new Set();
+    const accepted = [];
+    for (const file of chosen) {
+      const key = fileKey(file);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (!isSupportedImage(file)) notes.push(`${file.name} is not an image type we can use.`);
+      else if (file.size > MAX_SOURCE_BYTES) notes.push(`${file.name} is ${formatBytes(file.size)}; the largest photo accepted is ${formatBytes(MAX_SOURCE_BYTES)}.`);
+      else accepted.push(file);
     }
-
-    uploadFiles(files);
+    const room = Math.max(0, maxImages - imagesRef.current.length);
+    if (accepted.length > room) notes.push(`Only ${room} more ${room === 1 ? 'photo fits' : 'photos fit'} (maximum ${maxImages}); the rest were skipped.`);
+    setProblems(notes);
+    if (room > 0 && accepted.length > 0) uploadFiles(accepted.slice(0, room));
   };
 
   const uploadFiles = async (files) => {
+    busy.current = true;
     setUploading(true);
-    setError(null);
     setUploadProgress(0);
-
+    setStatus(`Uploading ${files.length} ${files.length === 1 ? 'photo' : 'photos'}…`);
+    let finished = 0;
     try {
-      const uploadPromises = files.map(file => 
-        uploadAPI.uploadImage(file, (progress) => {
-          setUploadProgress(progress);
-        })
-      );
-
-      const responses = await Promise.all(uploadPromises);
-      const newImageUrls = responses.map(response => response.data.imageUrl);
-      
-      console.log('🆕 New uploaded image URLs:', newImageUrls);
-      
-      // Add new images to existing ones
-      const updatedImages = [...images, ...newImageUrls];
-      onImagesChange(updatedImages);
-      
-      setUploadProgress(100);
-      setTimeout(() => setUploadProgress(0), 1000);
-    } catch (error) {
-      console.error('Error uploading images:', error);
-      setError('Failed to upload images. Please try again.');
+      const results = await uploadAPI.uploadImages(files, {
+        onProgress: (percent) => { if (mounted.current) setUploadProgress(percent); },
+        onItem: (item) => {
+          finished++;
+          if (!mounted.current) return;
+          if (item.status === 'done' && !imagesRef.current.includes(item.imageUrl)) {
+            const next = [...imagesRef.current, item.imageUrl].slice(0, maxImages);
+            imagesRef.current = next;
+            onImagesChange(next);
+          }
+          setStatus(`Uploaded ${finished} of ${files.length}…`);
+        },
+      });
+      if (!mounted.current) return;
+      const failed = results.filter(result => result.status === 'failed');
+      setProblems(previous => [...previous, ...failed.map(result => `${result.file.name}: ${result.error}`)]);
+      setStatus(failed.length ? `${results.length - failed.length} of ${results.length} uploaded. Add the rest again to retry.` : '');
     } finally {
-      setUploading(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      busy.current = false;
+      if (mounted.current) {
+        setUploading(false);
+        setUploadProgress(0);
       }
     }
   };
@@ -89,10 +105,10 @@ function ImageUpload({
       <Typography variant="h6" gutterBottom>
         {label}
       </Typography>
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
+
+      {problems.length > 0 && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setProblems([])}>
+          {problems.map((problem) => <div key={problem}>{problem}</div>)}
         </Alert>
       )}
 
@@ -102,7 +118,7 @@ function ImageUpload({
           type="file"
           ref={fileInputRef}
           onChange={handleFileSelect}
-          accept="image/*"
+          accept={IMAGE_ACCEPT}
           multiple
           style={{ display: 'none' }}
         />
@@ -116,12 +132,12 @@ function ImageUpload({
         >
           {uploading ? 'Uploading...' : `Upload Images (${images.length}/${maxImages})`}
         </Button>
-        
-        {uploading && (
-          <Box>
-            <LinearProgress variant="determinate" value={uploadProgress} />
+
+        {(uploading || status) && (
+          <Box role="status">
+            {uploading && <LinearProgress variant="determinate" value={uploadProgress} />}
             <Typography variant="caption" color="textSecondary">
-              Uploading... {uploadProgress}%
+              {status}{uploading ? ` ${uploadProgress}%` : ''}
             </Typography>
           </Box>
         )}
@@ -131,18 +147,23 @@ function ImageUpload({
       {images.length > 0 ? (
         <Grid container spacing={2}>
           {images.map((imageUrl, index) => (
-            <Grid item xs={6} sm={4} md={3} key={index}>
+            <Grid item xs={6} sm={4} md={3} key={`${index}-${imageUrl}`}>
               <Card sx={{ position: 'relative' }}>
                 <CardMedia
                   component="img" loading="lazy" decoding="async"
                   height="120"
-                  image={getImageUrl(imageUrl)}
+                  image={getThumbnailUrl(imageUrl)}
                   alt={`Property image ${index + 1}`}
                   sx={{ objectFit: 'cover' }}
-                  onError={(e) => handleImageError(e, imageUrl)}
+                  onError={(e) => {
+                    // Fall back to the original once, then to the placeholder.
+                    if (e.target.dataset.original !== 'tried') { e.target.dataset.original = 'tried'; e.target.src = getImageUrl(imageUrl); return; }
+                    handleImageError(e, imageUrl);
+                  }}
                 />
                 <IconButton
                   size="small"
+                  aria-label={`Remove image ${index + 1}`}
                   onClick={() => handleRemoveImage(index)}
                   sx={{
                     position: 'absolute',
@@ -188,7 +209,7 @@ function ImageUpload({
 
       {/* File format info */}
       <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-        Supported formats: JPG, PNG, GIF, WebP. Max {maxImages} images.
+        Any photo type works: JPG, PNG, HEIC/HEIF, WebP, AVIF, GIF, TIFF, BMP and more, up to {formatBytes(MAX_SOURCE_BYTES)} each (large photos are resized automatically). Max {maxImages} images.
       </Typography>
     </Box>
   );

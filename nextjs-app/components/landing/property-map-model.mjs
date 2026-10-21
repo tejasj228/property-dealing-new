@@ -63,7 +63,7 @@ export function createPropertyMapModel(properties, compact = false) {
     const base=new Mesh(plotGeometries[plot.shape],kit.materials.ivory);base.scale.set(1.055,.45,1.075);base.position.y=.04;group.add(base);
     const tile=new Mesh(plotGeometries[plot.shape],colours[plot.type]||colours.other);tile.position.y=.1;group.add(tile);
     for(const [x,z] of outlines[plot.shape]) kit.box(group,'ivory',[.045,.27,.045],[x,.29,z]);
-    const kind = mapArchitectureKind(properties[plot.index], plot.seed);
+    const kind = mapArchitectureKind(properties[plot.index]);
     const roofHeight = addMapArchitecture(kit, group, { kind, seed:plot.seed, compact });
     const markerHeight = kind === 'plot' ? .75 : roofHeight + .38;
     const pin=new Mesh(markerGeometry,colours[plot.type]||colours.other);pin.position.set(plot.x,markerHeight-.08,plot.z);model.add(pin);

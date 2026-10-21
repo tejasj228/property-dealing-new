@@ -3,7 +3,7 @@ import 'server-only';
 function selectProperties(properties) {
   return (properties || []).filter(p => p.isActive !== false).map(p => ({
     id: String(p._id), title: p.title, price: p.price, location: p.location,
-    area: p.area, areaKey: p.areaKey, propertyType: p.propertyType,
+    area: p.area, areaKey: p.areaKey, propertyType: p.propertyType, isPlot: p.isPlot === true,
     image: p.images?.[0] || null, description: p.description,
   }));
 }

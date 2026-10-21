@@ -2,6 +2,7 @@ import { authorizeAdmin } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Property from '@/lib/models/Property';
+import { normalizePropertyInput } from '@/lib/property-input.mjs';
 
 export async function GET(request) {
   try {
@@ -10,6 +11,7 @@ export async function GET(request) {
     const area = searchParams.get('area');
     const active = searchParams.get('active');
     const propertyType = searchParams.get('propertyType');
+    const plot = searchParams.get('plot');
 
     let filter = {};
     if (area && area !== 'all') filter.areaKey = area;
@@ -19,6 +21,8 @@ export async function GET(request) {
       filter.isActive = true;
     }
     if (propertyType && propertyType !== 'all') filter.propertyType = propertyType;
+    if (plot === 'true') filter.isPlot = true;
+    else if (plot === 'false') filter.isPlot = { $ne: true };
 
     const properties = await Property.find(filter).sort({ order: 1, createdAt: 1 });
 
@@ -39,12 +43,8 @@ export async function POST(request) {
   if (denied) return denied;
   try {
     await connectDB();
-    const body = await request.json();
-    if (!body.propertyType) body.propertyType = 'residential';
-
-    if (body.propertyType && !['residential', 'commercial'].includes(body.propertyType)) {
-      return NextResponse.json({ success: false, message: 'Property type must be "residential" or "commercial"' }, { status: 400 });
-    }
+    const { body, error } = normalizePropertyInput(await request.json());
+    if (error) return NextResponse.json({ success: false, message: error }, { status: 400 });
 
     const property = new Property(body);
     await property.save();

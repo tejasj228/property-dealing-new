@@ -23,6 +23,8 @@ import {
   Paper,
   Fab,
   CardMedia,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/AddOutlined';
 import EditIcon from '@mui/icons-material/EditOutlined';
@@ -38,6 +40,7 @@ import PrevIcon from '@mui/icons-material/ChevronLeftOutlined';
 import NextIcon from '@mui/icons-material/ChevronRightOutlined';
 import CommercialIcon from '@mui/icons-material/BusinessOutlined';
 import ResidentialIcon from '@mui/icons-material/HouseOutlined';
+import PlotIcon from '@mui/icons-material/LandscapeOutlined';
 
 // Modern drag & drop imports
 import {
@@ -66,6 +69,7 @@ import ImageUpload from '../components/ImageUpload/ImageUpload';
 const typeColors = {
   residential: { ink:'#ffffff', background:'#44886a', border:'#44886a', option:'#8dceac' },
   commercial: { ink:'#24180e', background:'#c58a51', border:'#c58a51', option:'#edb17b' },
+  plot: { ink:'#ffffff', background:'#8a7a45', border:'#8a7a45', option:'#d8c57d' },
 };
 const propertyTypeOptions = [
   { value: 'residential', label: 'Residential', icon: <ResidentialIcon /> },
@@ -201,8 +205,9 @@ const PropertyImageCarousel = ({ images, title }) => {
 };
 
 // 🆕 Helper function to get property type icon and color
-const getPropertyTypeInfo = (propertyType) => {
+const getPropertyTypeInfo = (propertyType, isPlot = false) => {
   const typeInfo = propertyTypeOptions.find(option => option.value === propertyType);
+  if (isPlot) return { icon: <PlotIcon />, label: `${typeInfo?.label || 'Property'} plot`, colors: typeColors.plot };
   return {
     icon: typeInfo?.icon || <HomeIcon />,
     label: typeInfo?.label || propertyType,
@@ -228,7 +233,7 @@ const SortablePropertyCard = ({ property, onEdit, onDelete, index, getAreaLabel,
   };
 
   // 🆕 Get property type info
-  const propertyTypeInfo = getPropertyTypeInfo(property.propertyType);
+  const propertyTypeInfo = getPropertyTypeInfo(property.propertyType, property.isPlot === true);
 
   // 🆕 UPDATED: Helper function to check if beds/baths should be shown
   const shouldShowBedsAndBaths = (property) => {
@@ -415,7 +420,7 @@ function Properties() {
   const filtered = Boolean(search.trim() || type !== 'all' || areaFilter !== 'all');
   const visibleProperties = useMemo(() => properties.filter(property => {
     const query = deferredSearch.trim().toLowerCase();
-    return (!query || [property.title, property.location, property.price].some(value => String(value || '').toLowerCase().includes(query))) && (type === 'all' || property.propertyType === type) && (areaFilter === 'all' || property.areaKey === areaFilter);
+    return (!query || [property.title, property.location, property.price].some(value => String(value || '').toLowerCase().includes(query))) && (type === 'all' || (type === 'plot' ? property.isPlot === true : property.propertyType === type)) && (areaFilter === 'all' || property.areaKey === areaFilter);
   }), [properties, deferredSearch, type, areaFilter]);
   const [areas, setAreas] = useState({}); // 🆕 NEW: State for areas
   const [loading, setLoading] = useState(true);
@@ -432,6 +437,7 @@ function Properties() {
     area: '',
     areaKey: '',
     propertyType: 'residential', // 🆕 NEW: Default to residential
+    isPlot: false, // An empty plot: land only, no bedrooms or bathrooms
     description: '',
     features: '',
     images: [],
@@ -440,6 +446,8 @@ function Properties() {
       magicbricks: '',
     },
   });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -533,6 +541,7 @@ function Properties() {
         area: property.area || '',
         areaKey: property.areaKey || '',
         propertyType: property.propertyType || 'residential', // 🆕 NEW
+        isPlot: property.isPlot === true,
         description: property.description || '',
         features: Array.isArray(property.features) ? property.features.join(', ') : '',
         images: property.images || [],
@@ -552,6 +561,7 @@ function Properties() {
         area: '',
         areaKey: '',
         propertyType: 'residential', // 🆕 NEW: Default to residential
+        isPlot: false,
         description: '',
         features: '',
         images: [],
@@ -561,10 +571,15 @@ function Properties() {
         },
       });
     }
+    setSaveError(null);
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
+    if (!saving) resetDialog();
+  };
+
+  const resetDialog = () => {
     setOpenDialog(false);
     setEditingProperty(null);
     setFormData({
@@ -576,6 +591,7 @@ function Properties() {
       area: '',
       areaKey: '',
       propertyType: 'residential', // 🆕 NEW
+      isPlot: false,
       description: '',
       features: '',
       images: [],
@@ -611,7 +627,16 @@ function Properties() {
     }));
   };
 
+  // Land has no rooms, so marking a plot clears bedrooms and bathrooms.
+  const handlePlotChange = (event) => {
+    const isPlot = event.target.checked;
+    setFormData(prev => ({ ...prev, isPlot, ...(isPlot && { beds: '', baths: '' }) }));
+  };
+
   const handleSave = async () => {
+    if (saving) return; // a second click while saving would add the property again
+    setSaving(true);
+    setSaveError(null);
     try {
       // 🆕 FIXED: Clean links before saving
       const cleanLinks = {};
@@ -622,12 +647,12 @@ function Properties() {
         cleanLinks.magicbricks = formData.links.magicbricks.trim();
       }
 
-      // 🆕 UPDATED: Handle optional beds/baths
+      // Beds and baths are optional, and never apply to an empty plot
+      const roomCount = (value) => (formData.isPlot || value === '' ? null : parseInt(value, 10) || 0);
       const propertyData = {
         ...formData,
-        // Only include beds/baths if they have values
-        ...(formData.beds && { beds: parseInt(formData.beds) || 0 }),
-        ...(formData.baths && { baths: parseInt(formData.baths) || 0 }),
+        beds: roomCount(formData.beds),
+        baths: roomCount(formData.baths),
         features: formData.features 
           ? formData.features.split(',').map(f => f.trim()).filter(f => f)
           : [],
@@ -643,11 +668,14 @@ function Properties() {
         await propertyAPI.create(propertyData);
       }
 
-      handleCloseDialog();
+      setSaving(false);
+      resetDialog();
       loadProperties();
     } catch (error) {
       console.error('Error saving property:', error);
-      setError('Failed to save property');
+      const reason = error.response?.data?.error || error.response?.data?.message || error.message;
+      setSaveError(`Failed to save property${reason ? `: ${reason}` : ''}`);
+      setSaving(false);
     }
   };
 
@@ -724,7 +752,7 @@ function Properties() {
 
       <div className="admin-property-filters">
         <TextField label="Search properties" placeholder="Title, location or price" value={search} onChange={event => setSearch(event.target.value)} />
-        <TextField select label="Property type" value={type} onChange={event => setType(event.target.value)}><MenuItem value="all">All types</MenuItem><MenuItem value="residential" sx={{color:typeColors.residential.option}}><ResidentialIcon sx={{mr:1}}/>Residential</MenuItem><MenuItem value="commercial" sx={{color:typeColors.commercial.option}}><CommercialIcon sx={{mr:1}}/>Commercial</MenuItem></TextField>
+        <TextField select label="Property type" value={type} onChange={event => setType(event.target.value)}><MenuItem value="all">All types</MenuItem><MenuItem value="residential" sx={{color:typeColors.residential.option}}><ResidentialIcon sx={{mr:1}}/>Residential</MenuItem><MenuItem value="commercial" sx={{color:typeColors.commercial.option}}><CommercialIcon sx={{mr:1}}/>Commercial</MenuItem><MenuItem value="plot" sx={{color:typeColors.plot.option}}><PlotIcon sx={{mr:1}}/>Empty plots</MenuItem></TextField>
         <TextField select label="Location" value={areaFilter} onChange={event => setAreaFilter(event.target.value)}><MenuItem value="all">All locations</MenuItem>{Object.entries(areas).map(([key, value]) => <MenuItem key={key} value={key}>{value.name}</MenuItem>)}</TextField>
         <Button variant="text" onClick={() => { setSearch(''); setType('all'); setAreaFilter('all'); }} disabled={!filtered}>Clear filters</Button>
       </div><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} role="status">{visibleProperties.length} of {properties.length} properties</Typography>
@@ -785,6 +813,7 @@ function Properties() {
           {editingProperty ? 'Edit Property' : 'Add New Property'}
         </DialogTitle>
         <DialogContent>
+          {saveError && <Alert severity="error" sx={{ mt: 1 }} onClose={() => setSaveError(null)}>{saveError}</Alert>}
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
@@ -805,14 +834,25 @@ function Properties() {
                 required
               />
             </Grid>
+            <Grid item xs={12}>
+              <Paper variant="outlined" sx={{ px: 2, py: 1, borderColor: formData.isPlot ? typeColors.plot.border : undefined }}>
+                <FormControlLabel
+                  control={<Switch checked={formData.isPlot} onChange={handlePlotChange} inputProps={{ 'aria-describedby': 'plot-help' }} />}
+                  label="This is an empty plot"
+                />
+                <Typography id="plot-help" variant="body2" color="text.secondary">
+                  Land with no building. It is drawn as a plot on the landing page map, and bedrooms and bathrooms are not needed.
+                </Typography>
+              </Paper>
+            </Grid>
             {/* 🆕 NEW: Property Type Selection */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required>
-                <InputLabel>Property Type</InputLabel>
+                <InputLabel>{formData.isPlot ? 'Plot use' : 'Property Type'}</InputLabel>
                 <Select
                   value={formData.propertyType}
                   onChange={handleInputChange('propertyType')}
-                  label="Property Type"
+                  label={formData.isPlot ? 'Plot use' : 'Property Type'}
                 >
                   {propertyTypeOptions.map((option) => (
                     <MenuItem key={option.value} value={option.value} sx={{color:typeColors[option.value].option}}>
@@ -852,7 +892,9 @@ function Properties() {
                 required
               />
             </Grid>
-            {/* 🆕 UPDATED: Optional Bedrooms and Bathrooms */}
+            {/* Optional bedrooms and bathrooms; an empty plot has neither */}
+            {!formData.isPlot && (
+              <>
             <Grid item xs={4}>
               <TextField
                 fullWidth
@@ -875,13 +917,15 @@ function Properties() {
                 inputProps={{ min: 0 }}
               />
             </Grid>
-            <Grid item xs={4}>
+              </>
+            )}
+            <Grid item xs={formData.isPlot ? 12 : 4}>
               <TextField
                 fullWidth
-                label="Area Size"
+                label={formData.isPlot ? 'Plot Size' : 'Area Size'}
                 value={formData.area}
                 onChange={handleInputChange('area')}
-                placeholder="e.g., 1250 sq ft"
+                placeholder={formData.isPlot ? 'e.g., 200 sq yd' : 'e.g., 1250 sq ft'}
                 required
               />
             </Grid>
@@ -940,21 +984,23 @@ function Properties() {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog} disabled={saving}>Cancel</Button>
           <Button 
             onClick={handleSave} 
             variant="contained"
             disabled={
+              saving ||
               !formData.title || 
               !formData.price || 
               !formData.location || 
               !formData.areaKey ||
+              !formData.area ||
               !formData.propertyType
               // 🆕 REMOVED: beds and baths are no longer required
               // 🆕 REMOVED: Links are no longer required
             }
           >
-            {editingProperty ? 'Update' : 'Add'} Property
+            {saving ? 'Saving…' : `${editingProperty ? 'Update' : 'Add'} ${formData.isPlot ? 'Plot' : 'Property'}`}
           </Button>
         </DialogActions>
       </Dialog>

@@ -46,7 +46,7 @@ test('architectural finishes share surface maps and release each map once', () =
   assert.notEqual(materials[0].normalMap, materials[2].bumpMap);
   const textures = new Set(materials.flatMap(material => [material.map, material.normalMap, material.roughnessMap, material.bumpMap, material.emissiveMap]).filter(Boolean));
   let releases = 0; textures.forEach(texture => texture.addEventListener('dispose', () => releases++));
-  finish.setNight(true); assert.equal(scene.environmentIntensity, .24);
+  finish.setNight(true); assert.equal(scene.environmentIntensity, .14);
   finish.dispose(); assert.equal(releases, textures.size); assert.equal(scene.environment, null);
   geometry.dispose(); materials.forEach(material => material.dispose());
 });
